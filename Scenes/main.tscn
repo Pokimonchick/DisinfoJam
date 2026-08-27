@@ -1,0 +1,57 @@
+[gd_scene format=3 uid="uid://xd5ofxh2mi8c"]
+
+[node name="Main" type="Node2D" unique_id=943770934]
+
+[node name="GameUI" type="CanvasLayer" parent="." unique_id=137417381]
+
+[node name="Desk" type="Control" parent="GameUI" unique_id=566815695]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="GameUI/Desk" unique_id=188492388]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="GameUI/Desk/CenterContainer" unique_id=487227513]
+layout_mode = 2
+theme_override_constants/separation = 60
+
+[node name="LeftArticle" type="PanelContainer" parent="GameUI/Desk/CenterContainer/HBoxContainer" unique_id=126932690]
+custom_minimum_size = Vector2(400, 500)
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="GameUI/Desk/CenterContainer/HBoxContainer/LeftArticle" unique_id=666640118]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="GameUI/Desk/CenterContainer/HBoxContainer/LeftArticle/MarginContainer" unique_id=556481962]
+layout_mode = 2
+
+[node name="Headline" type="Label" parent="GameUI/Desk/CenterContainer/HBoxContainer/LeftArticle/MarginContainer/VBoxContainer" unique_id=488824075]
+layout_mode = 2
+
+[node name="Body" type="Label" parent="GameUI/Desk/CenterContainer/HBoxContainer/LeftArticle/MarginContainer/VBoxContainer" unique_id=1159099728]
+layout_mode = 2
+
+[node name="RightArticle" type="PanelContainer" parent="GameUI/Desk/CenterContainer/HBoxContainer" unique_id=1960696097]
+custom_minimum_size = Vector2(400, 500)
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="GameUI/Desk/CenterContainer/HBoxContainer/RightArticle" unique_id=560491903]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="GameUI/Desk/CenterContainer/HBoxContainer/RightArticle/MarginContainer" unique_id=1323923758]
+layout_mode = 2
+
+[node name="Headline" type="Label" parent="GameUI/Desk/CenterContainer/HBoxContainer/RightArticle/MarginContainer/VBoxContainer" unique_id=1877141546]
+layout_mode = 2
+
+[node name="Body" type="Label" parent="GameUI/Desk/CenterContainer/HBoxContainer/RightArticle/MarginContainer/VBoxContainer" unique_id=1566507793]
+layout_mode = 2
