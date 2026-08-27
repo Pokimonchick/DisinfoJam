@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://dqovo0obwk8im"]
+
+[ext_resource type="Script" uid="uid://d1t5j4es3puhn" path="res://Scripts/article.gd" id="1_3tpuc"]
+
+[node name="Article" type="PanelContainer" unique_id=817081995]
+custom_minimum_size = Vector2(400, 500)
+script = ExtResource("1_3tpuc")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=658487395]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=93404788]
+layout_mode = 2
+
+[node name="Headline" type="Label" parent="MarginContainer/VBoxContainer" unique_id=679456287]
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="Body" type="Label" parent="MarginContainer/VBoxContainer" unique_id=2024591994]
+layout_mode = 2
+autowrap_mode = 3
