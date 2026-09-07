@@ -1,5 +1,6 @@
 extends Control
 
+
 enum Phase {
 	SUMMARY,
 	READ_CHOICE,
@@ -9,42 +10,119 @@ enum Phase {
 	RESULT
 }
 
+
 const DAY1_DATA = preload("res://Data/day1_data.gd")
+
+@onready var background = $Background
+
+@export var normal_background: Texture2D
+@export var publish_background: Texture2D
 
 @onready var DialogueText = $Interface/DialogueText
 @onready var read_more_button = $Interface/ReadChoiceUI/ReadMoreButton
 @onready var publish_button = $Interface/ReadChoiceUI/PublishButton
 @onready var read_choice_ui = $Interface/ReadChoiceUI
+@onready var publish_choice_ui = $Interface/PublishChoiceUI
+@onready var approve_button = $Interface/PublishChoiceUI/ApproveButton
+@onready var disapprove_button = $Interface/PublishChoiceUI/DisapproveButton
+@onready var hero_ui = $Interface/HeroUI
+@onready var hero_dialogue_text = $Interface/HeroUI/HeroDialogueText
 
 var phase: Phase = Phase.SUMMARY
 var dialogue_index: int = 0
 var current_lines: Array[String] = []
+var society_points: int = 100
+var pending_score_change: int = 0
 
 func _ready() -> void:
+	background.texture = normal_background
+
 	current_lines = DAY1_DATA.SUMMARY_LINES
 	read_choice_ui.hide()
-	show_line()
+	publish_choice_ui.hide()
+	hero_ui.hide()
 
 	read_more_button.pressed.connect(_on_read_more_pressed)
 	publish_button.pressed.connect(_on_publish_pressed)
 
+	approve_button.pressed.connect(_on_approve_pressed)
+	disapprove_button.pressed.connect(_on_disapprove_pressed)
+
+	show_line()
+
+
 func show_line() -> void:
-	DialogueText.text = current_lines[dialogue_index]
+	if phase == Phase.HERO_MONOLOGUE:
+		hero_dialogue_text.text = current_lines[dialogue_index]
+	else:
+		DialogueText.text = current_lines[dialogue_index]
+
 
 func _on_read_more_pressed() -> void:
 	phase = Phase.EXTRA_READING
 	dialogue_index = 0
 	current_lines = DAY1_DATA.EXTRA_LINES
+
 	read_choice_ui.hide()
+
 	show_line()
 
-func _on_publish_pressed() -> void:
+
+func enter_publish_choice() -> void:
 	phase = Phase.PUBLISH_CHOICE
+	dialogue_index = 0
+
+	background.texture = publish_background
+
 	read_choice_ui.hide()
-	print("Переходим к публикации")
+	DialogueText.hide()
+	publish_choice_ui.show()
+
+
+func _on_publish_pressed() -> void:
+	enter_publish_choice()
+
+
+func start_hero_monologue(lines: Array[String]) -> void:
+	phase = Phase.HERO_MONOLOGUE
+
+	background.texture = normal_background
+
+	publish_choice_ui.hide()
+	DialogueText.hide()
+	hero_ui.show()
+
+	current_lines = lines
+	dialogue_index = 0
+	show_line()
+
+
+func _on_approve_pressed() -> void:
+	pending_score_change = DAY1_DATA.APPROVE_SCORE
+	start_hero_monologue(DAY1_DATA.APPROVE_LINES)
+
+
+func _on_disapprove_pressed() -> void:
+	pending_score_change = DAY1_DATA.DISAPPROVE_SCORE
+	start_hero_monologue(DAY1_DATA.DISAPPROVE_LINES)
+
+
+func enter_result() -> void:
+	phase = Phase.RESULT
+	society_points += pending_score_change
+
+	hero_ui.hide()
+	DialogueText.show()
+
+	var sign := ""
+	if pending_score_change > 0:
+		sign = "+"
+
+	DialogueText.text = sign + str(pending_score_change) + " очков общества"
+
 
 func _input(event: InputEvent) -> void:
-	if phase == Phase.SUMMARY or phase == Phase.EXTRA_READING:
+	if phase == Phase.SUMMARY or phase == Phase.EXTRA_READING or phase == Phase.HERO_MONOLOGUE:
 		if event is InputEventMouseButton:
 			if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 				dialogue_index += 1
@@ -57,5 +135,7 @@ func _input(event: InputEvent) -> void:
 						read_choice_ui.show()
 
 					elif phase == Phase.EXTRA_READING:
-						phase = Phase.PUBLISH_CHOICE
-						print("Переходим к публикации")
+						enter_publish_choice()
+
+					elif phase == Phase.HERO_MONOLOGUE:
+						enter_result()
