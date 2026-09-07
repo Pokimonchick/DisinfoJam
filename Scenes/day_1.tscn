@@ -1,0 +1,73 @@
+[gd_scene format=3 uid="uid://06ppe5hv3qcg"]
+
+[ext_resource type="Texture2D" uid="uid://yd14uw2g6jdo" path="res://Assets/Backgrounds/IMG_0986.PNG" id="1_go16o"]
+[ext_resource type="Script" uid="uid://kvhgxqhd8dvm" path="res://Scripts/day_1.gd" id="1_sp5x8"]
+[ext_resource type="Texture2D" uid="uid://501e112soj1h" path="res://Assets/UI/Dialogue background .png" id="2_6m38d"]
+[ext_resource type="FontFile" uid="uid://c48u6ymtqmjxh" path="res://Assets/Fonts/Genshin-Impact-Font/zh-cn.ttf" id="3_o0t7m"]
+
+[node name="Day1" type="Control" unique_id=1911389540]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_sp5x8")
+
+[node name="Background" type="TextureRect" parent="." unique_id=994394167]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_go16o")
+expand_mode = 1
+
+[node name="Interface" type="Control" parent="." unique_id=858258514]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DialogueBackground" type="TextureRect" parent="Interface" unique_id=1310625107]
+layout_mode = 0
+offset_right = 1280.0
+offset_bottom = 720.0
+mouse_filter = 2
+texture = ExtResource("2_6m38d")
+expand_mode = 1
+
+[node name="DialogueText" type="Label" parent="Interface" unique_id=505712185]
+layout_mode = 0
+offset_left = 150.0
+offset_top = 600.0
+offset_right = 1130.0
+offset_bottom = 680.0
+theme_override_fonts/font = ExtResource("3_o0t7m")
+theme_override_font_sizes/font_size = 20
+text = "Помните, что даже мирно дремлющая рядом кошка может услышать больше, чем вам кажется."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="ReadChoiceUI" type="VBoxContainer" parent="Interface" unique_id=1999160110]
+custom_minimum_size = Vector2(330, 0)
+layout_mode = 0
+offset_left = 900.0
+offset_top = 450.0
+offset_right = 1230.0
+offset_bottom = 522.0
+theme_override_constants/separation = 10
+
+[node name="ReadMoreButton" type="Button" parent="Interface/ReadChoiceUI" unique_id=1075914631]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_o0t7m")
+text = "Читать далее"
+
+[node name="PublishButton" type="Button" parent="Interface/ReadChoiceUI" unique_id=1975406575]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_o0t7m")
+text = "Перейти к публикации "
