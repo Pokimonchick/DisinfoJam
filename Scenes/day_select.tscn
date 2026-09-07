@@ -1,0 +1,111 @@
+[gd_scene format=3 uid="uid://buhpskecs1iqg"]
+
+[ext_resource type="Texture2D" uid="uid://7v2g2r8w5gd8" path="res://Assets/UI/Untitled (13)/Rectangle 1869.png" id="1_4yx2o"]
+[ext_resource type="Texture2D" uid="uid://bq2gma71sdro5" path="res://Assets/UI/Untitled (13)/IMG_0986 5.png" id="1_j7t8f"]
+[ext_resource type="Texture2D" uid="uid://fdq6gtvd6uyh" path="res://Assets/UI/Untitled (13)/Ellipse 371.png" id="3_o1erq"]
+[ext_resource type="Texture2D" uid="uid://b5xbarqysx6i4" path="res://Assets/UI/Untitled (13)/Rectangle 1876.png" id="4_1hsn0"]
+
+[node name="DaySelect" type="Control" unique_id=1689438305]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="TextureRect" parent="." unique_id=105550078]
+layout_mode = 0
+offset_right = 1280.0
+offset_bottom = 720.0
+texture = ExtResource("1_j7t8f")
+expand_mode = 1
+
+[node name="LeftPanel" type="TextureRect" parent="." unique_id=880740401]
+layout_mode = 0
+offset_right = 512.0
+offset_bottom = 720.0
+texture = ExtResource("1_4yx2o")
+
+[node name="ScoreBlock" type="Control" parent="LeftPanel" unique_id=1972663607]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="ScoreTitle" type="Label" parent="LeftPanel/ScoreBlock" unique_id=80551175]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="ScoreValue" type="Label" parent="LeftPanel/ScoreBlock" unique_id=745393]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="RightArea" type="Control" parent="." unique_id=594691778]
+anchors_preset = 0
+offset_left = 512.0
+offset_right = 1280.0
+offset_bottom = 720.0
+
+[node name="DaysCenter" type="CenterContainer" parent="RightArea" unique_id=1822275322]
+layout_mode = 0
+offset_top = 100.0
+offset_right = 768.0
+offset_bottom = 200.0
+
+[node name="Days" type="HBoxContainer" parent="RightArea/DaysCenter" unique_id=1514389946]
+layout_mode = 2
+theme_override_constants/separation = 35
+
+[node name="Day1Button" type="Button" parent="RightArea/DaysCenter/Days" unique_id=730085471]
+custom_minimum_size = Vector2(89, 89)
+layout_mode = 2
+
+[node name="Day2Button" type="Button" parent="RightArea/DaysCenter/Days" unique_id=2057612351]
+custom_minimum_size = Vector2(89, 89)
+layout_mode = 2
+
+[node name="Day3Button" type="Button" parent="RightArea/DaysCenter/Days" unique_id=1186982324]
+custom_minimum_size = Vector2(89, 89)
+layout_mode = 2
+
+[node name="Day4Button" type="Button" parent="RightArea/DaysCenter/Days" unique_id=1162691183]
+custom_minimum_size = Vector2(89, 89)
+layout_mode = 2
+
+[node name="Day5Button" type="Button" parent="RightArea/DaysCenter/Days" unique_id=239454192]
+custom_minimum_size = Vector2(89, 89)
+layout_mode = 2
+
+[node name="TopButtons" type="HBoxContainer" parent="RightArea" unique_id=806211127]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -181.0
+offset_bottom = 89.0
+grow_horizontal = 0
+theme_override_constants/separation = 10
+
+[node name="HelpButton" type="TextureButton" parent="RightArea/TopButtons" unique_id=147986530]
+custom_minimum_size = Vector2(45, 45)
+layout_mode = 2
+texture_normal = ExtResource("3_o1erq")
+
+[node name="BackButton" type="TextureButton" parent="RightArea/TopButtons" unique_id=668207190]
+custom_minimum_size = Vector2(45, 45)
+layout_mode = 2
+texture_normal = ExtResource("4_1hsn0")
+
+[node name="NextButton" type="TextureButton" parent="RightArea" unique_id=1869968357]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="ContinueCenter" type="CenterContainer" parent="RightArea" unique_id=2142423794]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="ContinueButton" type="TextureButton" parent="RightArea/ContinueCenter" unique_id=341074451]
+layout_mode = 2
