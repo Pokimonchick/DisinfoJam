@@ -11,9 +11,13 @@ config_version=5
 [application]
 
 config/name="DisinfoJam"
-run/main_scene="uid://xd5ofxh2mi8c"
+run/main_scene="uid://cpos3re558gxv"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
+
+[autoload]
+
+GameState="*res://Scripts/game_state.gd"
 
 [display]
 
@@ -21,6 +25,10 @@ window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[gui]
+
+theme/custom_font="res://Assets/Fonts/Neucha/Neucha.ttf"
 
 [physics]
 

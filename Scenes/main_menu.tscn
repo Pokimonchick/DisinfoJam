@@ -1,31 +1,89 @@
 [gd_scene format=3 uid="uid://cpos3re558gxv"]
 
-[ext_resource type="Script" uid="uid://cby8euuj4vj0e" path="res://Scripts/main_menu.gd" id="1_1ehe0"]
-[ext_resource type="Texture2D" uid="uid://cttaky6yqsv0a" path="res://Assets/Backgrounds/IMG_0986 3.png" id="1_28flt"]
-[ext_resource type="Texture2D" uid="uid://dpuogj6knrr1a" path="res://Assets/UI/Ellipse 366.png" id="3_1ehe0"]
+[ext_resource type="Script" uid="uid://cby8euuj4vj0e" path="res://Scripts/main_menu.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://cttaky6yqsv0a" path="res://Assets/Backgrounds/IMG_0986 3.png" id="2_background"]
+[ext_resource type="Texture2D" uid="uid://itno1k0bmn5v" path="res://Assets/UI/Ellipse 365.png" id="3_ellipse_1"]
+[ext_resource type="Texture2D" uid="uid://dpuogj6knrr1a" path="res://Assets/UI/Ellipse 366.png" id="4_ellipse_2"]
+[ext_resource type="Texture2D" uid="uid://ckm3ecfwiaq67" path="res://Assets/UI/Ellipse 367.png" id="5_ellipse_3"]
+[ext_resource type="Texture2D" uid="uid://c2dfbjg0udaw1" path="res://Assets/UI/Ellipse 368.png" id="6_ellipse_4"]
+[ext_resource type="FontFile" uid="uid://ogpey1i1dds8" path="res://Assets/Fonts/Neucha/Neucha.ttf" id="7_font"]
 
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_n45e2"]
-texture = ExtResource("3_1ehe0")
-
-[node name="MainMenu" type="Control" unique_id=1561892393]
+[node name="MainMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_1ehe0")
+script = ExtResource("1_script")
 
-[node name="TextureRect" type="TextureRect" parent="." unique_id=2097044425]
+[node name="Background" type="TextureRect" parent="."]
 layout_mode = 1
-offset_right = 1280.0
-offset_bottom = 720.0
-texture = ExtResource("1_28flt")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_background")
 expand_mode = 1
 
-[node name="StartButton" type="Button" parent="." unique_id=1211854757]
+[node name="StartButton" type="TextureButton" parent="."]
 layout_mode = 0
-offset_right = 820.0
-offset_bottom = 172.0
-theme_override_styles/normal_mirrored = SubResource("StyleBoxTexture_n45e2")
-text = "START"
+offset_left = 111.5
+offset_top = 117.0
+offset_right = 517.5
+offset_bottom = 199.0
+mouse_default_cursor_shape = 2
+texture_normal = ExtResource("3_ellipse_1")
+texture_pressed = ExtResource("3_ellipse_1")
+texture_hover = ExtResource("3_ellipse_1")
+texture_focused = ExtResource("3_ellipse_1")
+ignore_texture_size = true
+stretch_mode = 0
+tooltip_text = "Начать игру"
+
+[node name="Text" type="Label" parent="StartButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("7_font")
+theme_override_font_sizes/font_size = 34
+text = "Start game"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MenuPlaceholder2" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 111.5
+offset_top = 228.0
+offset_right = 517.5
+offset_bottom = 310.0
+mouse_filter = 2
+texture = ExtResource("4_ellipse_2")
+expand_mode = 1
+
+[node name="MenuPlaceholder3" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 111.5
+offset_top = 339.0
+offset_right = 517.5
+offset_bottom = 421.0
+mouse_filter = 2
+texture = ExtResource("5_ellipse_3")
+expand_mode = 1
+
+[node name="MenuPlaceholder4" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 111.5
+offset_top = 450.0
+offset_right = 517.5
+offset_bottom = 532.0
+mouse_filter = 2
+texture = ExtResource("6_ellipse_4")
+expand_mode = 1

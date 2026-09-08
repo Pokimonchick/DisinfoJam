@@ -18,20 +18,26 @@ const DAY1_DATA = preload("res://Data/day1_data.gd")
 @export var normal_background: Texture2D
 @export var publish_background: Texture2D
 
-@onready var DialogueText = $Interface/DialogueText
+@onready var dialogue_background = $Interface/DialogueBackground
+@onready var dialogue_text = $Interface/DialogueText
+@onready var speaker_ui = $Interface/SpeakerUI
 @onready var read_more_button = $Interface/ReadChoiceUI/ReadMoreButton
 @onready var publish_button = $Interface/ReadChoiceUI/PublishButton
 @onready var read_choice_ui = $Interface/ReadChoiceUI
+@onready var dim_overlay = $Interface/DimOverlay
 @onready var publish_choice_ui = $Interface/PublishChoiceUI
 @onready var approve_button = $Interface/PublishChoiceUI/ApproveButton
 @onready var disapprove_button = $Interface/PublishChoiceUI/DisapproveButton
 @onready var hero_ui = $Interface/HeroUI
 @onready var hero_dialogue_text = $Interface/HeroUI/HeroDialogueText
+@onready var result_ui = $Interface/ResultUI
+@onready var result_explanation = $Interface/ResultUI/Explanation
+@onready var result_score = $Interface/ResultUI/ScoreBackground/Score
+@onready var result_continue_button = $Interface/ResultUI/ContinueButton
 
 var phase: Phase = Phase.SUMMARY
 var dialogue_index: int = 0
 var current_lines: Array[String] = []
-var society_points: int = 100
 var pending_score_change: int = 0
 
 func _ready() -> void:
@@ -39,14 +45,17 @@ func _ready() -> void:
 
 	current_lines = DAY1_DATA.SUMMARY_LINES
 	read_choice_ui.hide()
+	dim_overlay.hide()
 	publish_choice_ui.hide()
 	hero_ui.hide()
+	result_ui.hide()
 
 	read_more_button.pressed.connect(_on_read_more_pressed)
 	publish_button.pressed.connect(_on_publish_pressed)
 
 	approve_button.pressed.connect(_on_approve_pressed)
 	disapprove_button.pressed.connect(_on_disapprove_pressed)
+	result_continue_button.pressed.connect(_on_result_continue_pressed)
 
 	show_line()
 
@@ -55,7 +64,11 @@ func show_line() -> void:
 	if phase == Phase.HERO_MONOLOGUE:
 		hero_dialogue_text.text = current_lines[dialogue_index]
 	else:
-		DialogueText.text = current_lines[dialogue_index]
+		dialogue_text.text = current_lines[dialogue_index]
+		speaker_ui.visible = not (
+			phase == Phase.EXTRA_READING
+			and dialogue_index >= DAY1_DATA.EXTRA_NARRATION_START
+		)
 
 
 func _on_read_more_pressed() -> void:
@@ -64,6 +77,7 @@ func _on_read_more_pressed() -> void:
 	current_lines = DAY1_DATA.EXTRA_LINES
 
 	read_choice_ui.hide()
+	speaker_ui.show()
 
 	show_line()
 
@@ -75,7 +89,10 @@ func enter_publish_choice() -> void:
 	background.texture = publish_background
 
 	read_choice_ui.hide()
-	DialogueText.hide()
+	dialogue_background.hide()
+	dialogue_text.hide()
+	speaker_ui.hide()
+	dim_overlay.show()
 	publish_choice_ui.show()
 
 
@@ -88,8 +105,11 @@ func start_hero_monologue(lines: Array[String]) -> void:
 
 	background.texture = normal_background
 
+	dim_overlay.hide()
 	publish_choice_ui.hide()
-	DialogueText.hide()
+	dialogue_background.show()
+	dialogue_text.hide()
+	speaker_ui.hide()
 	hero_ui.show()
 
 	current_lines = lines
@@ -109,16 +129,32 @@ func _on_disapprove_pressed() -> void:
 
 func enter_result() -> void:
 	phase = Phase.RESULT
-	society_points += pending_score_change
+	GameState.complete_day_1(pending_score_change)
 
+	background.texture = publish_background
+	dialogue_background.hide()
 	hero_ui.hide()
-	DialogueText.show()
+	dialogue_text.hide()
+	speaker_ui.hide()
+	dim_overlay.show()
+	publish_choice_ui.hide()
 
 	var sign := ""
 	if pending_score_change > 0:
 		sign = "+"
 
-	DialogueText.text = sign + str(pending_score_change) + " очков общества"
+	if pending_score_change == DAY1_DATA.APPROVE_SCORE:
+		result_explanation.text = DAY1_DATA.APPROVE_RESULT
+	else:
+		result_explanation.text = DAY1_DATA.DISAPPROVE_RESULT
+
+	result_score.text = sign + str(pending_score_change) + " очков общества"
+	result_ui.show()
+	result_continue_button.grab_focus()
+
+
+func _on_result_continue_pressed() -> void:
+	get_tree().change_scene_to_file("res://Scenes/day_select.tscn")
 
 
 func _input(event: InputEvent) -> void:
