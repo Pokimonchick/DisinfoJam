@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="DisinfoJam"
-run/main_scene="uid://xd5ofxh2mi8c"
+run/main_scene="uid://cpos3re558gxv"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
