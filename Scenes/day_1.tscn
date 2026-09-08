@@ -1,20 +1,17 @@
 [gd_scene format=3 uid="uid://06ppe5hv3qcg"]
 
-[ext_resource type="Texture2D" path="res://Assets/Backgrounds/IMG_1002.png" id="1_go16o"]
+[ext_resource type="Texture2D" uid="uid://cax5fx318xcv1" path="res://Assets/Backgrounds/IMG_1002.png" id="1_go16o"]
 [ext_resource type="Script" uid="uid://kvhgxqhd8dvm" path="res://Scripts/day_1.gd" id="1_sp5x8"]
 [ext_resource type="Texture2D" uid="uid://501e112soj1h" path="res://Assets/UI/Dialogue background .png" id="2_6m38d"]
-[ext_resource type="Texture2D" path="res://Assets/Backgrounds/IMG_1002_blurred.png" id="3_atvsn"]
+[ext_resource type="Texture2D" uid="uid://b6fqwxwb77rnw" path="res://Assets/Backgrounds/IMG_1002_blurred.png" id="3_atvsn"]
 [ext_resource type="FontFile" uid="uid://ogpey1i1dds8" path="res://Assets/Fonts/Neucha/Neucha.ttf" id="3_o0t7m"]
 [ext_resource type="Texture2D" uid="uid://doyj0u72vjvdk" path="res://Assets/UI/Vector 95.png" id="5_6c12p"]
 [ext_resource type="Texture2D" uid="uid://k0epjdeuwo1s" path="res://Assets/Characters/Mask group (22).png" id="5_f7e72"]
 [ext_resource type="Texture2D" uid="uid://ccbxobsxxgxa6" path="res://Assets/UI/Rectangle 1877.png" id="6_result_banner"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Ellipse 369.png" id="7_continue_background"]
+[ext_resource type="Texture2D" uid="uid://cqaswwew8pcj0" path="res://Assets/UI/Untitled (13)/Ellipse 369.png" id="7_continue_background"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_normal"]
 bg_color = Color(0, 0, 0, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
-bg_color = Color(0.12, 0.12, 0.12, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_pressed"]
 bg_color = Color(0.04, 0.04, 0.04, 1)
@@ -23,6 +20,9 @@ border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(1, 1, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
+bg_color = Color(0.12, 0.12, 0.12, 1)
 
 [node name="Day1" type="Control" unique_id=1911389540]
 layout_mode = 3
@@ -74,7 +74,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="SpeakerUI" type="Control" parent="Interface"]
+[node name="SpeakerUI" type="Control" parent="Interface" unique_id=2090297989]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -89,7 +89,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="SpeakerName" type="Label" parent="Interface/SpeakerUI"]
+[node name="SpeakerName" type="Label" parent="Interface/SpeakerUI" unique_id=757084155]
 layout_mode = 0
 offset_right = 298.0
 offset_bottom = 25.0
@@ -99,7 +99,7 @@ theme_override_font_sizes/font_size = 20
 text = "Никола Коко"
 horizontal_alignment = 1
 
-[node name="NameUnderline" type="TextureRect" parent="Interface/SpeakerUI"]
+[node name="NameUnderline" type="TextureRect" parent="Interface/SpeakerUI" unique_id=890558542]
 layout_mode = 0
 offset_top = 27.0
 offset_right = 298.0
@@ -122,12 +122,12 @@ custom_minimum_size = Vector2(330, 36)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("3_o0t7m")
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_button_pressed")
 text = "Читать дальше"
 
@@ -136,16 +136,16 @@ custom_minimum_size = Vector2(330, 36)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("3_o0t7m")
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_button_pressed")
 text = "Перейти к публикации "
 
-[node name="DimOverlay" type="ColorRect" parent="Interface"]
+[node name="DimOverlay" type="ColorRect" parent="Interface" unique_id=616098573]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -176,13 +176,13 @@ custom_minimum_size = Vector2(500, 65)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("3_o0t7m")
 theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_button_pressed")
 text = "Approve"
 
@@ -191,13 +191,13 @@ custom_minimum_size = Vector2(500, 65)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("3_o0t7m")
 theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_button_pressed")
 text = "Disapprove"
 
@@ -271,7 +271,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="ResultUI" type="Control" parent="Interface"]
+[node name="ResultUI" type="Control" parent="Interface" unique_id=1342388735]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -279,7 +279,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Explanation" type="Label" parent="Interface/ResultUI"]
+[node name="Explanation" type="Label" parent="Interface/ResultUI" unique_id=371541655]
 layout_mode = 0
 offset_left = 210.0
 offset_top = 125.0
@@ -293,7 +293,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="ScoreBackground" type="TextureRect" parent="Interface/ResultUI"]
+[node name="ScoreBackground" type="TextureRect" parent="Interface/ResultUI" unique_id=1066583471]
 layout_mode = 0
 offset_top = 335.0
 offset_right = 346.0
@@ -302,7 +302,7 @@ mouse_filter = 2
 texture = ExtResource("6_result_banner")
 expand_mode = 1
 
-[node name="Score" type="Label" parent="Interface/ResultUI/ScoreBackground"]
+[node name="Score" type="Label" parent="Interface/ResultUI/ScoreBackground" unique_id=1176586466]
 layout_mode = 0
 offset_left = 48.0
 offset_top = 15.0
@@ -314,12 +314,13 @@ theme_override_font_sizes/font_size = 18
 text = "+0 очков общества"
 vertical_alignment = 1
 
-[node name="ContinueButton" type="TextureButton" parent="Interface/ResultUI"]
+[node name="ContinueButton" type="TextureButton" parent="Interface/ResultUI" unique_id=266884821]
 layout_mode = 0
 offset_left = 437.0
 offset_top = 568.0
 offset_right = 843.0
 offset_bottom = 650.0
+tooltip_text = "Вернуться к выбору дня"
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("7_continue_background")
 texture_pressed = ExtResource("7_continue_background")
@@ -327,16 +328,14 @@ texture_hover = ExtResource("7_continue_background")
 texture_focused = ExtResource("7_continue_background")
 ignore_texture_size = true
 stretch_mode = 0
-tooltip_text = "Вернуться к выбору дня"
 
-[node name="Text" type="Label" parent="Interface/ResultUI/ContinueButton"]
+[node name="Text" type="Label" parent="Interface/ResultUI/ContinueButton" unique_id=671816334]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("3_o0t7m")
 theme_override_font_sizes/font_size = 34

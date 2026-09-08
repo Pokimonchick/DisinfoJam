@@ -1,26 +1,25 @@
 [gd_scene format=3 uid="uid://buhpskecs1iqg"]
 
-[ext_resource type="Script" path="res://Scripts/day_select.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://cpkk4xodh2h0b" path="res://Scripts/day_select.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://bq2gma71sdro5" path="res://Assets/UI/Untitled (13)/IMG_0986 5.png" id="2_background"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Rectangle 1873.png" id="3_left_panel"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Rectangle 1875.png" id="4_score_background"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Rectangle 1867.png" id="7_day_1"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Rectangle 1868.png" id="8_day_2"]
+[ext_resource type="Texture2D" uid="uid://bc7jmjw2a5f40" path="res://Assets/UI/Untitled (13)/Rectangle 1873.png" id="3_left_panel"]
+[ext_resource type="Texture2D" uid="uid://c3of1c81sib7" path="res://Assets/UI/Untitled (13)/Rectangle 1875.png" id="4_score_background"]
+[ext_resource type="Texture2D" uid="uid://c0xcdcjud2fos" path="res://Assets/UI/Untitled (13)/Rectangle 1867.png" id="7_day_1"]
 [ext_resource type="Texture2D" uid="uid://7v2g2r8w5gd8" path="res://Assets/UI/Untitled (13)/Rectangle 1869.png" id="9_day_3"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Rectangle 1870.png" id="10_day_4"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Rectangle 1871.png" id="11_day_5"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Ellipse 369.png" id="17_continue_background"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Ellipse 370.png" id="19_next_background"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Arrow 1.png" id="20_next_icon"]
+[ext_resource type="Texture2D" uid="uid://cqfwuw0h4cs15" path="res://Assets/UI/Untitled (13)/Rectangle 1870.png" id="10_day_4"]
+[ext_resource type="Texture2D" uid="uid://c1he7tbwkmnji" path="res://Assets/UI/Untitled (13)/Rectangle 1871.png" id="11_day_5"]
+[ext_resource type="Texture2D" uid="uid://cqaswwew8pcj0" path="res://Assets/UI/Untitled (13)/Ellipse 369.png" id="17_continue_background"]
+[ext_resource type="Texture2D" uid="uid://c8tk71kbghndp" path="res://Assets/UI/Untitled (13)/Ellipse 370.png" id="19_next_background"]
+[ext_resource type="Texture2D" uid="uid://dhare3xefa6xi" path="res://Assets/UI/Untitled (13)/Arrow 1.png" id="20_next_icon"]
 [ext_resource type="Texture2D" uid="uid://fdq6gtvd6uyh" path="res://Assets/UI/Untitled (13)/Ellipse 371.png" id="21_help_background"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/_.png" id="22_help_icon"]
+[ext_resource type="Texture2D" uid="uid://dh5xjl2yg5uxx" path="res://Assets/UI/Untitled (13)/_.png" id="22_help_icon"]
 [ext_resource type="Texture2D" uid="uid://b5xbarqysx6i4" path="res://Assets/UI/Untitled (13)/Rectangle 1876.png" id="23_back_background"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Vector.png" id="24_back_icon"]
+[ext_resource type="Texture2D" uid="uid://ci64e4e5n1qkn" path="res://Assets/UI/Untitled (13)/Vector.png" id="24_back_icon"]
 [ext_resource type="FontFile" uid="uid://ogpey1i1dds8" path="res://Assets/Fonts/Neucha/Neucha.ttf" id="25_font"]
 [ext_resource type="Texture2D" uid="uid://mcf111q2jplv" path="res://Assets/UI/Ellipse 380.png" id="26_completed_background"]
 [ext_resource type="Texture2D" uid="uid://cshaxvbiq3hae" path="res://Assets/UI/Vector.png" id="27_completed_icon"]
 
-[node name="DaySelect" type="Control"]
+[node name="DaySelect" type="Control" unique_id=1199504806]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -29,7 +28,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 
-[node name="Background" type="TextureRect" parent="."]
+[node name="Background" type="TextureRect" parent="." unique_id=1319898793]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -40,7 +39,7 @@ mouse_filter = 2
 texture = ExtResource("2_background")
 expand_mode = 1
 
-[node name="LeftPanel" type="TextureRect" parent="."]
+[node name="LeftPanel" type="TextureRect" parent="." unique_id=1653470310]
 layout_mode = 0
 offset_right = 590.0
 offset_bottom = 720.0
@@ -48,7 +47,7 @@ mouse_filter = 2
 texture = ExtResource("3_left_panel")
 expand_mode = 1
 
-[node name="ScoreBackground" type="TextureRect" parent="LeftPanel"]
+[node name="ScoreBackground" type="TextureRect" parent="LeftPanel" unique_id=483875167]
 layout_mode = 0
 offset_top = 54.5
 offset_right = 395.5
@@ -57,38 +56,36 @@ mouse_filter = 2
 texture = ExtResource("4_score_background")
 expand_mode = 1
 
-[node name="ScoreTitle" type="Label" parent="LeftPanel/ScoreBackground"]
+[node name="ScoreTitle" type="Label" parent="LeftPanel/ScoreBackground" unique_id=1738987078]
 layout_mode = 0
 offset_left = 51.5
 offset_top = 14.0
 offset_right = 368.5
 offset_bottom = 41.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("25_font")
 theme_override_font_sizes/font_size = 17
 text = "Очки общественного признания:"
 vertical_alignment = 1
 
-[node name="ScoreValue" type="Label" parent="LeftPanel/ScoreBackground"]
+[node name="ScoreValue" type="Label" parent="LeftPanel/ScoreBackground" unique_id=27751271]
 layout_mode = 0
 offset_left = 51.5
 offset_top = 42.0
 offset_right = 151.5
 offset_bottom = 64.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(0, 0.266667, 0.666667, 1)
 theme_override_fonts/font = ExtResource("25_font")
 theme_override_font_sizes/font_size = 18
 text = "0"
 
-[node name="RightArea" type="Control" parent="."]
-layout_mode = 0
+[node name="RightArea" type="Control" parent="." unique_id=325321520]
+anchors_preset = 0
 offset_left = 590.0
 offset_right = 1280.0
 offset_bottom = 720.0
 
-[node name="Days" type="Control" parent="RightArea"]
+[node name="Days" type="Control" parent="RightArea" unique_id=884657203]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -96,12 +93,13 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Day1Button" type="TextureButton" parent="RightArea/Days"]
+[node name="Day1Button" type="TextureButton" parent="RightArea/Days" unique_id=1653220878]
 layout_mode = 0
 offset_left = 68.5
 offset_top = 114.5
 offset_right = 158.0
 offset_bottom = 204.0
+tooltip_text = "День I"
 mouse_default_cursor_shape = 2
 toggle_mode = true
 texture_normal = ExtResource("7_day_1")
@@ -110,16 +108,14 @@ texture_hover = ExtResource("7_day_1")
 texture_focused = ExtResource("7_day_1")
 ignore_texture_size = true
 stretch_mode = 0
-tooltip_text = "День I"
 
-[node name="Number" type="Label" parent="RightArea/Days/Day1Button"]
+[node name="Number" type="Label" parent="RightArea/Days/Day1Button" unique_id=1303251264]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("25_font")
 theme_override_font_sizes/font_size = 42
@@ -127,16 +123,16 @@ text = "I"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="CompletedMarker" type="Control" parent="RightArea/Days/Day1Button"]
+[node name="CompletedMarker" type="Control" parent="RightArea/Days/Day1Button" unique_id=1974030886]
 visible = false
-layout_mode = 0
+anchors_preset = 0
 offset_left = 61.75
 offset_top = 63.75
 offset_right = 93.25
 offset_bottom = 95.25
 mouse_filter = 2
 
-[node name="Background" type="TextureRect" parent="RightArea/Days/Day1Button/CompletedMarker"]
+[node name="Background" type="TextureRect" parent="RightArea/Days/Day1Button/CompletedMarker" unique_id=96166418]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -147,7 +143,7 @@ mouse_filter = 2
 texture = ExtResource("26_completed_background")
 expand_mode = 1
 
-[node name="Check" type="TextureRect" parent="RightArea/Days/Day1Button/CompletedMarker"]
+[node name="Check" type="TextureRect" parent="RightArea/Days/Day1Button/CompletedMarker" unique_id=1267158749]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -164,26 +160,29 @@ mouse_filter = 2
 texture = ExtResource("27_completed_icon")
 expand_mode = 1
 
-[node name="Day2Button" type="TextureButton" parent="RightArea/Days"]
+[node name="Day2Button" type="TextureButton" parent="RightArea/Days" unique_id=1428009403]
 layout_mode = 0
-offset_left = 189.5
+offset_left = 189.0
 offset_top = 114.5
 offset_right = 278.5
 offset_bottom = 204.0
-disabled = true
-texture_disabled = ExtResource("8_day_2")
+tooltip_text = "День I"
+mouse_default_cursor_shape = 2
+toggle_mode = true
+texture_normal = ExtResource("9_day_3")
+texture_pressed = ExtResource("7_day_1")
+texture_hover = ExtResource("9_day_3")
+texture_focused = ExtResource("9_day_3")
 ignore_texture_size = true
 stretch_mode = 0
-tooltip_text = "День II пока недоступен"
 
-[node name="Number" type="Label" parent="RightArea/Days/Day2Button"]
+[node name="Number" type="Label" parent="RightArea/Days/Day2Button" unique_id=773861730]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("25_font")
 theme_override_font_sizes/font_size = 42
@@ -191,19 +190,16 @@ text = "II"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Day3Button" type="TextureButton" parent="RightArea/Days"]
-layout_mode = 0
-offset_left = 310.5
-offset_top = 114.5
-offset_right = 399.5
-offset_bottom = 204.0
-disabled = true
-texture_disabled = ExtResource("9_day_3")
-ignore_texture_size = true
-stretch_mode = 0
-tooltip_text = "День III пока недоступен"
+[node name="CompletedMarker" type="Control" parent="RightArea/Days/Day2Button" unique_id=1758393178]
+visible = false
+anchors_preset = 0
+offset_left = 61.75
+offset_top = 63.75
+offset_right = 93.25
+offset_bottom = 95.25
+mouse_filter = 2
 
-[node name="Number" type="Label" parent="RightArea/Days/Day3Button"]
+[node name="Background" type="TextureRect" parent="RightArea/Days/Day2Button/CompletedMarker" unique_id=515082478]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -211,6 +207,45 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+texture = ExtResource("26_completed_background")
+expand_mode = 1
+
+[node name="Check" type="TextureRect" parent="RightArea/Days/Day2Button/CompletedMarker" unique_id=633287061]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -8.25
+offset_top = -6.5
+offset_right = 8.25
+offset_bottom = 6.5
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("27_completed_icon")
+expand_mode = 1
+
+[node name="Day3Button" type="TextureButton" parent="RightArea/Days" unique_id=72446583]
+layout_mode = 0
+offset_left = 310.5
+offset_top = 114.5
+offset_right = 399.5
+offset_bottom = 204.0
+tooltip_text = "День III пока недоступен"
+disabled = true
+texture_disabled = ExtResource("9_day_3")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Number" type="Label" parent="RightArea/Days/Day3Button" unique_id=625170366]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("25_font")
 theme_override_font_sizes/font_size = 42
@@ -218,26 +253,25 @@ text = "III"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Day4Button" type="TextureButton" parent="RightArea/Days"]
+[node name="Day4Button" type="TextureButton" parent="RightArea/Days" unique_id=1792967394]
 layout_mode = 0
 offset_left = 431.5
 offset_top = 114.5
 offset_right = 520.5
 offset_bottom = 204.0
+tooltip_text = "День IV пока недоступен"
 disabled = true
 texture_disabled = ExtResource("10_day_4")
 ignore_texture_size = true
 stretch_mode = 0
-tooltip_text = "День IV пока недоступен"
 
-[node name="Number" type="Label" parent="RightArea/Days/Day4Button"]
+[node name="Number" type="Label" parent="RightArea/Days/Day4Button" unique_id=26378466]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("25_font")
 theme_override_font_sizes/font_size = 42
@@ -245,26 +279,25 @@ text = "IV"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Day5Button" type="TextureButton" parent="RightArea/Days"]
+[node name="Day5Button" type="TextureButton" parent="RightArea/Days" unique_id=1215432237]
 layout_mode = 0
 offset_left = 552.0
 offset_top = 114.5
 offset_right = 641.5
 offset_bottom = 204.0
+tooltip_text = "День V пока недоступен"
 disabled = true
 texture_disabled = ExtResource("11_day_5")
 ignore_texture_size = true
 stretch_mode = 0
-tooltip_text = "День V пока недоступен"
 
-[node name="Number" type="Label" parent="RightArea/Days/Day5Button"]
+[node name="Number" type="Label" parent="RightArea/Days/Day5Button" unique_id=264904790]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("25_font")
 theme_override_font_sizes/font_size = 42
@@ -272,21 +305,21 @@ text = "V"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="NextButton" type="TextureButton" parent="RightArea"]
+[node name="NextButton" type="TextureButton" parent="RightArea" unique_id=512456761]
 layout_mode = 0
 offset_left = 614.0
 offset_top = 344.5
 offset_right = 660.0
 offset_bottom = 390.5
-mouse_default_cursor_shape = 2
+tooltip_text = "Другие страницы уровней пока недоступны"
 focus_mode = 0
+mouse_default_cursor_shape = 2
 disabled = true
 texture_disabled = ExtResource("19_next_background")
 ignore_texture_size = true
 stretch_mode = 0
-tooltip_text = "Другие страницы уровней пока недоступны"
 
-[node name="Icon" type="TextureRect" parent="RightArea/NextButton"]
+[node name="Icon" type="TextureRect" parent="RightArea/NextButton" unique_id=1014194413]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -303,30 +336,29 @@ mouse_filter = 2
 texture = ExtResource("20_next_icon")
 expand_mode = 1
 
-[node name="ContinueButton" type="TextureButton" parent="RightArea"]
+[node name="ContinueButton" type="TextureButton" parent="RightArea" unique_id=245645490]
 layout_mode = 0
 offset_left = 145.0
 offset_top = 589.0
 offset_right = 551.0
 offset_bottom = 671.0
+tooltip_text = "Начать День I"
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("17_continue_background")
 texture_pressed = ExtResource("17_continue_background")
 texture_hover = ExtResource("17_continue_background")
-texture_focused = ExtResource("17_continue_background")
 texture_disabled = ExtResource("17_continue_background")
+texture_focused = ExtResource("17_continue_background")
 ignore_texture_size = true
 stretch_mode = 0
-tooltip_text = "Начать День I"
 
-[node name="Text" type="Label" parent="RightArea/ContinueButton"]
+[node name="Text" type="Label" parent="RightArea/ContinueButton" unique_id=812962245]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("25_font")
 theme_override_font_sizes/font_size = 34
@@ -334,7 +366,7 @@ text = "Continue"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="TopButtons" type="Control" parent="RightArea"]
+[node name="TopButtons" type="Control" parent="RightArea" unique_id=944818344]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -343,20 +375,20 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="HelpButton" type="TextureButton" parent="RightArea/TopButtons"]
+[node name="HelpButton" type="TextureButton" parent="RightArea/TopButtons" unique_id=666964622]
 layout_mode = 0
 offset_left = 531.5
 offset_top = 27.5
 offset_right = 572.5
 offset_bottom = 68.5
-mouse_default_cursor_shape = 2
+tooltip_text = "Справка появится позже"
 focus_mode = 0
+mouse_default_cursor_shape = 2
 texture_normal = ExtResource("21_help_background")
 ignore_texture_size = true
 stretch_mode = 0
-tooltip_text = "Справка появится позже"
 
-[node name="Icon" type="TextureRect" parent="RightArea/TopButtons/HelpButton"]
+[node name="Icon" type="TextureRect" parent="RightArea/TopButtons/HelpButton" unique_id=1024428943]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -373,12 +405,13 @@ mouse_filter = 2
 texture = ExtResource("22_help_icon")
 expand_mode = 1
 
-[node name="BackButton" type="TextureButton" parent="RightArea/TopButtons"]
+[node name="BackButton" type="TextureButton" parent="RightArea/TopButtons" unique_id=1439918639]
 layout_mode = 0
 offset_left = 597.0
 offset_top = 25.5
 offset_right = 641.5
 offset_bottom = 70.0
+tooltip_text = "Назад в меню"
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("23_back_background")
 texture_pressed = ExtResource("23_back_background")
@@ -386,9 +419,8 @@ texture_hover = ExtResource("23_back_background")
 texture_focused = ExtResource("23_back_background")
 ignore_texture_size = true
 stretch_mode = 0
-tooltip_text = "Назад в меню"
 
-[node name="Icon" type="TextureRect" parent="RightArea/TopButtons/BackButton"]
+[node name="Icon" type="TextureRect" parent="RightArea/TopButtons/BackButton" unique_id=959295737]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5

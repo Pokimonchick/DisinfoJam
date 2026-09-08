@@ -1,0 +1,344 @@
+[gd_scene format=3 uid="uid://yyk5q6tusvde"]
+
+[ext_resource type="Script" uid="uid://52jayhed1nfe" path="res://Scripts/day_2.gd" id="1_1pdq3"]
+[ext_resource type="Texture2D" uid="uid://cax5fx318xcv1" path="res://Assets/Backgrounds/IMG_1002.png" id="2_5ylkr"]
+[ext_resource type="Texture2D" uid="uid://b6fqwxwb77rnw" path="res://Assets/Backgrounds/IMG_1002_blurred.png" id="3_8uqai"]
+[ext_resource type="Texture2D" uid="uid://501e112soj1h" path="res://Assets/UI/Dialogue background .png" id="4_0fiih"]
+[ext_resource type="FontFile" uid="uid://ogpey1i1dds8" path="res://Assets/Fonts/Neucha/Neucha.ttf" id="5_yb3qi"]
+[ext_resource type="Texture2D" uid="uid://doyj0u72vjvdk" path="res://Assets/UI/Vector 95.png" id="6_mp4b4"]
+[ext_resource type="Texture2D" uid="uid://k0epjdeuwo1s" path="res://Assets/Characters/Mask group (22).png" id="7_sg3vb"]
+[ext_resource type="Texture2D" uid="uid://ccbxobsxxgxa6" path="res://Assets/UI/Rectangle 1877.png" id="8_filqv"]
+[ext_resource type="Texture2D" uid="uid://cqaswwew8pcj0" path="res://Assets/UI/Untitled (13)/Ellipse 369.png" id="9_88pe7"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_normal"]
+bg_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_pressed"]
+bg_color = Color(0.04, 0.04, 0.04, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
+bg_color = Color(0.12, 0.12, 0.12, 1)
+
+[node name="Day2" type="Control" unique_id=1911389540]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_1pdq3")
+normal_background = ExtResource("2_5ylkr")
+publish_background = ExtResource("3_8uqai")
+
+[node name="Background" type="TextureRect" parent="." unique_id=994394167]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_5ylkr")
+expand_mode = 1
+
+[node name="Interface" type="Control" parent="." unique_id=858258514]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DialogueBackground" type="TextureRect" parent="Interface" unique_id=1310625107]
+layout_mode = 0
+offset_right = 1280.0
+offset_bottom = 720.0
+mouse_filter = 2
+texture = ExtResource("4_0fiih")
+expand_mode = 1
+
+[node name="DialogueText" type="Label" parent="Interface" unique_id=505712185]
+layout_mode = 0
+offset_left = 150.0
+offset_top = 600.0
+offset_right = 1130.0
+offset_bottom = 680.0
+theme_override_fonts/font = ExtResource("5_yb3qi")
+theme_override_font_sizes/font_size = 20
+text = "Помните, что даже мирно дремлющая рядом кошка может услышать больше, чем вам кажется."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="SpeakerUI" type="Control" parent="Interface" unique_id=2090297989]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -149.0
+offset_top = 210.0
+offset_right = 149.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="SpeakerName" type="Label" parent="Interface/SpeakerUI" unique_id=757084155]
+layout_mode = 0
+offset_right = 298.0
+offset_bottom = 25.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("5_yb3qi")
+theme_override_font_sizes/font_size = 20
+text = "Никола Коко"
+horizontal_alignment = 1
+
+[node name="NameUnderline" type="TextureRect" parent="Interface/SpeakerUI" unique_id=890558542]
+layout_mode = 0
+offset_top = 27.0
+offset_right = 298.0
+offset_bottom = 29.0
+mouse_filter = 2
+texture = ExtResource("6_mp4b4")
+expand_mode = 1
+
+[node name="ReadChoiceUI" type="VBoxContainer" parent="Interface" unique_id=1999160110]
+custom_minimum_size = Vector2(330, 0)
+layout_mode = 0
+offset_left = 900.0
+offset_top = 450.0
+offset_right = 1230.0
+offset_bottom = 522.0
+theme_override_constants/separation = 10
+
+[node name="ReadMoreButton" type="Button" parent="Interface/ReadChoiceUI" unique_id=1075914631]
+custom_minimum_size = Vector2(330, 36)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("5_yb3qi")
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_button_pressed")
+text = "Читать дальше"
+
+[node name="PublishButton" type="Button" parent="Interface/ReadChoiceUI" unique_id=1975406575]
+custom_minimum_size = Vector2(330, 36)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("5_yb3qi")
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_button_pressed")
+text = "Перейти к публикации "
+
+[node name="DimOverlay" type="ColorRect" parent="Interface" unique_id=616098573]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.3)
+
+[node name="PublishChoiceUI" type="VBoxContainer" parent="Interface" unique_id=1057096673]
+custom_minimum_size = Vector2(330, 0)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -80.0
+offset_right = 250.0
+offset_bottom = 80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 30
+
+[node name="ApproveButton" type="Button" parent="Interface/PublishChoiceUI" unique_id=1559266142]
+custom_minimum_size = Vector2(500, 65)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("5_yb3qi")
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_button_pressed")
+text = "Approve"
+
+[node name="DisapproveButton" type="Button" parent="Interface/PublishChoiceUI" unique_id=1923665152]
+custom_minimum_size = Vector2(500, 65)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("5_yb3qi")
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_button_pressed")
+text = "Disapprove"
+
+[node name="HeroUI" type="Control" parent="Interface" unique_id=1459609621]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Portrait" type="TextureRect" parent="Interface/HeroUI" unique_id=1414579656]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 80.0
+offset_top = -340.0
+offset_right = 382.0
+offset_bottom = -38.0
+grow_vertical = 0
+texture = ExtResource("7_sg3vb")
+expand_mode = 1
+
+[node name="NameBlock" type="Control" parent="Interface/HeroUI" unique_id=1853994919]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -149.0
+offset_top = 210.0
+offset_right = 149.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SpeakerName" type="Label" parent="Interface/HeroUI/NameBlock" unique_id=389341191]
+layout_mode = 0
+offset_right = 298.0
+offset_bottom = 25.0
+theme_override_fonts/font = ExtResource("5_yb3qi")
+theme_override_font_sizes/font_size = 20
+text = "Никола Коко "
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="NameUnderline" type="TextureRect" parent="Interface/HeroUI/NameBlock" unique_id=1717019007]
+custom_minimum_size = Vector2(298, 2)
+layout_mode = 1
+offset_top = 27.0
+offset_right = 298.0
+offset_bottom = 29.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("6_mp4b4")
+expand_mode = 1
+
+[node name="HeroDialogueText" type="Label" parent="Interface/HeroUI" unique_id=1723679656]
+layout_mode = 0
+offset_left = 323.0
+offset_top = 600.0
+offset_right = 1130.0
+offset_bottom = 680.0
+theme_override_fonts/font = ExtResource("5_yb3qi")
+theme_override_font_sizes/font_size = 20
+text = "
+"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="ResultUI" type="Control" parent="Interface" unique_id=1342388735]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Explanation" type="Label" parent="Interface/ResultUI" unique_id=371541655]
+layout_mode = 0
+offset_left = 210.0
+offset_top = 125.0
+offset_right = 1070.0
+offset_bottom = 255.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("5_yb3qi")
+theme_override_font_sizes/font_size = 23
+text = "Результат решения"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="ScoreBackground" type="TextureRect" parent="Interface/ResultUI" unique_id=1066583471]
+layout_mode = 0
+offset_top = 335.0
+offset_right = 346.0
+offset_bottom = 395.0
+mouse_filter = 2
+texture = ExtResource("8_filqv")
+expand_mode = 1
+
+[node name="Score" type="Label" parent="Interface/ResultUI/ScoreBackground" unique_id=1176586466]
+layout_mode = 0
+offset_left = 48.0
+offset_top = 15.0
+offset_right = 300.0
+offset_bottom = 45.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("5_yb3qi")
+theme_override_font_sizes/font_size = 18
+text = "+0 очков общества"
+vertical_alignment = 1
+
+[node name="ContinueButton" type="TextureButton" parent="Interface/ResultUI" unique_id=266884821]
+layout_mode = 0
+offset_left = 437.0
+offset_top = 568.0
+offset_right = 843.0
+offset_bottom = 650.0
+tooltip_text = "Вернуться к выбору дня"
+mouse_default_cursor_shape = 2
+texture_normal = ExtResource("9_88pe7")
+texture_pressed = ExtResource("9_88pe7")
+texture_hover = ExtResource("9_88pe7")
+texture_focused = ExtResource("9_88pe7")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Text" type="Label" parent="Interface/ResultUI/ContinueButton" unique_id=671816334]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("5_yb3qi")
+theme_override_font_sizes/font_size = 34
+text = "Continue"
+horizontal_alignment = 1
+vertical_alignment = 1
