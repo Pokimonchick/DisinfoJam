@@ -1,15 +1,14 @@
 [gd_scene format=3 uid="uid://06ppe5hv3qcg"]
 
-[ext_resource type="Texture2D" uid="uid://yd14uw2g6jdo" path="res://Assets/Backgrounds/IMG_0986.PNG" id="1_go16o"]
+[ext_resource type="Texture2D" path="res://Assets/Backgrounds/IMG_1002.png" id="1_go16o"]
 [ext_resource type="Script" uid="uid://kvhgxqhd8dvm" path="res://Scripts/day_1.gd" id="1_sp5x8"]
 [ext_resource type="Texture2D" uid="uid://501e112soj1h" path="res://Assets/UI/Dialogue background .png" id="2_6m38d"]
-[ext_resource type="Texture2D" uid="uid://c013g7kyfjen1" path="res://Assets/Backgrounds/Group 693.png" id="3_atvsn"]
+[ext_resource type="Texture2D" path="res://Assets/Backgrounds/IMG_1002_blurred.png" id="3_atvsn"]
 [ext_resource type="FontFile" uid="uid://ogpey1i1dds8" path="res://Assets/Fonts/Neucha/Neucha.ttf" id="3_o0t7m"]
 [ext_resource type="Texture2D" uid="uid://doyj0u72vjvdk" path="res://Assets/UI/Vector 95.png" id="5_6c12p"]
 [ext_resource type="Texture2D" uid="uid://k0epjdeuwo1s" path="res://Assets/Characters/Mask group (22).png" id="5_f7e72"]
 [ext_resource type="Texture2D" uid="uid://ccbxobsxxgxa6" path="res://Assets/UI/Rectangle 1877.png" id="6_result_banner"]
 [ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Ellipse 369.png" id="7_continue_background"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Continue.png" id="8_continue_text"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_normal"]
 bg_color = Color(0, 0, 0, 1)
@@ -330,19 +329,17 @@ ignore_texture_size = true
 stretch_mode = 0
 tooltip_text = "Вернуться к выбору дня"
 
-[node name="Text" type="TextureRect" parent="Interface/ResultUI/ContinueButton"]
+[node name="Text" type="Label" parent="Interface/ResultUI/ContinueButton"]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -78.75
-offset_top = -13.5
-offset_right = 78.75
-offset_bottom = 13.5
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-texture = ExtResource("8_continue_text")
-expand_mode = 1
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("3_o0t7m")
+theme_override_font_sizes/font_size = 34
+text = "Continue"
+horizontal_alignment = 1
+vertical_alignment = 1
