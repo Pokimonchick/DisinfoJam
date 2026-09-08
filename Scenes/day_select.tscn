@@ -4,26 +4,19 @@
 [ext_resource type="Texture2D" uid="uid://bq2gma71sdro5" path="res://Assets/UI/Untitled (13)/IMG_0986 5.png" id="2_background"]
 [ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Rectangle 1873.png" id="3_left_panel"]
 [ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Rectangle 1875.png" id="4_score_background"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Очки общественного признания_.png" id="5_score_title"]
 [ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Rectangle 1867.png" id="7_day_1"]
 [ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Rectangle 1868.png" id="8_day_2"]
 [ext_resource type="Texture2D" uid="uid://7v2g2r8w5gd8" path="res://Assets/UI/Untitled (13)/Rectangle 1869.png" id="9_day_3"]
 [ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Rectangle 1870.png" id="10_day_4"]
 [ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Rectangle 1871.png" id="11_day_5"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/I.png" id="12_i"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/II.png" id="13_ii"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/III.png" id="14_iii"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/IV.png" id="15_iv"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/V.png" id="16_v"]
 [ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Ellipse 369.png" id="17_continue_background"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Continue.png" id="18_continue_text"]
 [ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Ellipse 370.png" id="19_next_background"]
 [ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Arrow 1.png" id="20_next_icon"]
 [ext_resource type="Texture2D" uid="uid://fdq6gtvd6uyh" path="res://Assets/UI/Untitled (13)/Ellipse 371.png" id="21_help_background"]
 [ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/_.png" id="22_help_icon"]
 [ext_resource type="Texture2D" uid="uid://b5xbarqysx6i4" path="res://Assets/UI/Untitled (13)/Rectangle 1876.png" id="23_back_background"]
 [ext_resource type="Texture2D" path="res://Assets/UI/Untitled (13)/Vector.png" id="24_back_icon"]
-[ext_resource type="FontFile" uid="uid://c48u6ymtqmjxh" path="res://Assets/Fonts/Genshin-Impact-Font/zh-cn.ttf" id="25_font"]
+[ext_resource type="FontFile" uid="uid://ogpey1i1dds8" path="res://Assets/Fonts/Neucha/Neucha.ttf" id="25_font"]
 [ext_resource type="Texture2D" uid="uid://mcf111q2jplv" path="res://Assets/UI/Ellipse 380.png" id="26_completed_background"]
 [ext_resource type="Texture2D" uid="uid://cshaxvbiq3hae" path="res://Assets/UI/Vector.png" id="27_completed_icon"]
 
@@ -64,15 +57,18 @@ mouse_filter = 2
 texture = ExtResource("4_score_background")
 expand_mode = 1
 
-[node name="ScoreTitle" type="TextureRect" parent="LeftPanel/ScoreBackground"]
+[node name="ScoreTitle" type="Label" parent="LeftPanel/ScoreBackground"]
 layout_mode = 0
 offset_left = 51.5
-offset_top = 19.5
+offset_top = 14.0
 offset_right = 368.5
-offset_bottom = 38.5
+offset_bottom = 41.0
 mouse_filter = 2
-texture = ExtResource("5_score_title")
-expand_mode = 1
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("25_font")
+theme_override_font_sizes/font_size = 17
+text = "Очки общественного признания:"
+vertical_alignment = 1
 
 [node name="ScoreValue" type="Label" parent="LeftPanel/ScoreBackground"]
 layout_mode = 0
@@ -83,7 +79,7 @@ offset_bottom = 64.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(0, 0.266667, 0.666667, 1)
 theme_override_fonts/font = ExtResource("25_font")
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 18
 text = "0"
 
 [node name="RightArea" type="Control" parent="."]
@@ -116,22 +112,20 @@ ignore_texture_size = true
 stretch_mode = 0
 tooltip_text = "День I"
 
-[node name="Number" type="TextureRect" parent="RightArea/Days/Day1Button"]
+[node name="Number" type="Label" parent="RightArea/Days/Day1Button"]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -8.5
-offset_top = -18.25
-offset_right = 8.5
-offset_bottom = 18.25
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-texture = ExtResource("12_i")
-expand_mode = 1
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("25_font")
+theme_override_font_sizes/font_size = 42
+text = "I"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="CompletedMarker" type="Control" parent="RightArea/Days/Day1Button"]
 visible = false
@@ -182,22 +176,20 @@ ignore_texture_size = true
 stretch_mode = 0
 tooltip_text = "День II пока недоступен"
 
-[node name="Number" type="TextureRect" parent="RightArea/Days/Day2Button"]
+[node name="Number" type="Label" parent="RightArea/Days/Day2Button"]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -17.5
-offset_top = -18.25
-offset_right = 17.5
-offset_bottom = 18.25
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-texture = ExtResource("13_ii")
-expand_mode = 1
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("25_font")
+theme_override_font_sizes/font_size = 42
+text = "II"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Day3Button" type="TextureButton" parent="RightArea/Days"]
 layout_mode = 0
@@ -211,22 +203,20 @@ ignore_texture_size = true
 stretch_mode = 0
 tooltip_text = "День III пока недоступен"
 
-[node name="Number" type="TextureRect" parent="RightArea/Days/Day3Button"]
+[node name="Number" type="Label" parent="RightArea/Days/Day3Button"]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -26.75
-offset_top = -18.25
-offset_right = 26.75
-offset_bottom = 18.25
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-texture = ExtResource("14_iii")
-expand_mode = 1
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("25_font")
+theme_override_font_sizes/font_size = 42
+text = "III"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Day4Button" type="TextureButton" parent="RightArea/Days"]
 layout_mode = 0
@@ -240,22 +230,20 @@ ignore_texture_size = true
 stretch_mode = 0
 tooltip_text = "День IV пока недоступен"
 
-[node name="Number" type="TextureRect" parent="RightArea/Days/Day4Button"]
+[node name="Number" type="Label" parent="RightArea/Days/Day4Button"]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -20.75
-offset_top = -19.0
-offset_right = 20.75
-offset_bottom = 19.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-texture = ExtResource("15_iv")
-expand_mode = 1
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("25_font")
+theme_override_font_sizes/font_size = 42
+text = "IV"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Day5Button" type="TextureButton" parent="RightArea/Days"]
 layout_mode = 0
@@ -269,22 +257,20 @@ ignore_texture_size = true
 stretch_mode = 0
 tooltip_text = "День V пока недоступен"
 
-[node name="Number" type="TextureRect" parent="RightArea/Days/Day5Button"]
+[node name="Number" type="Label" parent="RightArea/Days/Day5Button"]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -11.75
-offset_top = -19.0
-offset_right = 11.75
-offset_bottom = 19.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-texture = ExtResource("16_v")
-expand_mode = 1
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("25_font")
+theme_override_font_sizes/font_size = 42
+text = "V"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="NextButton" type="TextureButton" parent="RightArea"]
 layout_mode = 0
@@ -293,13 +279,12 @@ offset_top = 344.5
 offset_right = 660.0
 offset_bottom = 390.5
 mouse_default_cursor_shape = 2
-texture_normal = ExtResource("19_next_background")
-texture_pressed = ExtResource("19_next_background")
-texture_hover = ExtResource("19_next_background")
-texture_focused = ExtResource("19_next_background")
+focus_mode = 0
+disabled = true
+texture_disabled = ExtResource("19_next_background")
 ignore_texture_size = true
 stretch_mode = 0
-tooltip_text = "Начать День I"
+tooltip_text = "Другие страницы уровней пока недоступны"
 
 [node name="Icon" type="TextureRect" parent="RightArea/NextButton"]
 layout_mode = 1
@@ -329,26 +314,25 @@ texture_normal = ExtResource("17_continue_background")
 texture_pressed = ExtResource("17_continue_background")
 texture_hover = ExtResource("17_continue_background")
 texture_focused = ExtResource("17_continue_background")
+texture_disabled = ExtResource("17_continue_background")
 ignore_texture_size = true
 stretch_mode = 0
 tooltip_text = "Начать День I"
 
-[node name="Text" type="TextureRect" parent="RightArea/ContinueButton"]
+[node name="Text" type="Label" parent="RightArea/ContinueButton"]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -78.75
-offset_top = -13.5
-offset_right = 78.75
-offset_bottom = 13.5
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-texture = ExtResource("18_continue_text")
-expand_mode = 1
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("25_font")
+theme_override_font_sizes/font_size = 34
+text = "Continue"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="TopButtons" type="Control" parent="RightArea"]
 layout_mode = 1

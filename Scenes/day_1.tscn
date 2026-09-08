@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://kvhgxqhd8dvm" path="res://Scripts/day_1.gd" id="1_sp5x8"]
 [ext_resource type="Texture2D" uid="uid://501e112soj1h" path="res://Assets/UI/Dialogue background .png" id="2_6m38d"]
 [ext_resource type="Texture2D" uid="uid://c013g7kyfjen1" path="res://Assets/Backgrounds/Group 693.png" id="3_atvsn"]
-[ext_resource type="FontFile" uid="uid://c48u6ymtqmjxh" path="res://Assets/Fonts/Genshin-Impact-Font/zh-cn.ttf" id="3_o0t7m"]
+[ext_resource type="FontFile" uid="uid://ogpey1i1dds8" path="res://Assets/Fonts/Neucha/Neucha.ttf" id="3_o0t7m"]
 [ext_resource type="Texture2D" uid="uid://doyj0u72vjvdk" path="res://Assets/UI/Vector 95.png" id="5_6c12p"]
 [ext_resource type="Texture2D" uid="uid://k0epjdeuwo1s" path="res://Assets/Characters/Mask group (22).png" id="5_f7e72"]
 [ext_resource type="Texture2D" uid="uid://ccbxobsxxgxa6" path="res://Assets/UI/Rectangle 1877.png" id="6_result_banner"]

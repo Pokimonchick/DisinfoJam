@@ -6,7 +6,6 @@ const UNLOCKED_DAY_TEXTURE = preload("res://Assets/UI/Untitled (13)/Rectangle 18
 @onready var day_1_button: TextureButton = $RightArea/Days/Day1Button
 @onready var day_2_button: TextureButton = $RightArea/Days/Day2Button
 @onready var continue_button: TextureButton = $RightArea/ContinueButton
-@onready var next_button: TextureButton = $RightArea/NextButton
 @onready var back_button: TextureButton = $RightArea/TopButtons/BackButton
 @onready var score_value: Label = $LeftPanel/ScoreBackground/ScoreValue
 @onready var completed_marker: Control = $RightArea/Days/Day1Button/CompletedMarker
@@ -14,8 +13,7 @@ const UNLOCKED_DAY_TEXTURE = preload("res://Assets/UI/Untitled (13)/Rectangle 18
 
 func _ready() -> void:
 	day_1_button.pressed.connect(_on_day_1_pressed)
-	continue_button.pressed.connect(_open_day_1)
-	next_button.pressed.connect(_open_day_1)
+	continue_button.pressed.connect(_on_continue_pressed)
 	back_button.pressed.connect(_on_back_pressed)
 
 	day_1_button.button_pressed = true
@@ -25,16 +23,23 @@ func _ready() -> void:
 	if GameState.day_1_completed:
 		day_2_button.texture_disabled = UNLOCKED_DAY_TEXTURE
 		day_2_button.tooltip_text = "День II ещё не реализован"
-
-	continue_button.grab_focus()
+		continue_button.disabled = true
+		continue_button.tooltip_text = "День II ещё не реализован"
+		back_button.grab_focus()
+	else:
+		continue_button.grab_focus()
 
 
 func _on_day_1_pressed() -> void:
 	day_1_button.button_pressed = true
-	continue_button.grab_focus()
+	if not GameState.day_1_completed:
+		continue_button.grab_focus()
 
 
-func _open_day_1() -> void:
+func _on_continue_pressed() -> void:
+	if GameState.day_1_completed:
+		return
+
 	get_tree().change_scene_to_file("res://Scenes/day_1.tscn")
 
 
