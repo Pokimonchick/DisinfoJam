@@ -18,6 +18,15 @@ func _fresh() -> NewsroomSession:
 	model.reset(42)
 	return model
 
+func _capture(name: String) -> void:
+	if not "--screenshots" in OS.get_cmdline_user_args():
+		return
+	await create_timer(0.3).timeout
+	await RenderingServer.frame_post_draw
+	DirAccess.make_dir_recursive_absolute("res://Build/QA")
+	var capture := root.get_texture().get_image()
+	_check(capture.save_png("res://Build/QA/%s.png" % name) == OK, "Save visual check: " + name)
+
 func _run() -> void:
 	_test_catalog()
 	_test_day_cycle()
@@ -156,29 +165,36 @@ func _test_scenes() -> void:
 	var game := packed.instantiate()
 	root.add_child(game)
 	await process_frame
+	await _capture("01_menu")
 	game.get_node("%NewGame").pressed.emit()
 	_check(game.view == game.View.INTRO, "New game opens the prologue")
+	await _capture("02_prologue")
 	game.get_node("%NarrativePrimary").pressed.emit()
 	_check(game.view == game.View.TUTORIAL, "Prologue leads to the boss tutorial")
+	await _capture("03_tutorial")
 	for i in range(4):
 		game.get_node("%NarrativePrimary").pressed.emit()
 	await create_timer(0.3).timeout
 	_check(game.view == game.View.WORK, "The complete tutorial starts work")
 	var work := game.get_node("%Work")
 	var popup := work.get_node("MessagePanel")
-	_check(popup.visible and work.popup_kind == work.Popup.SOURCE, "Each new source opens automatically")
+	_check(popup.visible and work.popup_kind == work.DialogKind.SOURCE, "Each new source opens automatically")
+	await _capture("04_source")
 	popup.primary_pressed.emit()
 	_check(not popup.visible, "Source can immediately be folded away")
+	await _capture("05_headlines")
 	work.get_node("%ReadSource").pressed.emit()
 	_check(popup.visible, "Desk note reopens the same source")
 	popup.primary_pressed.emit()
 	work.get_node("%Headline1").pressed.emit()
-	_check(work.popup_kind == work.Popup.CONFIRM, "A headline requires explicit confirmation")
+	_check(work.popup_kind == work.DialogKind.CONFIRM, "A headline requires explicit confirmation")
+	await _capture("06_confirmation")
 	popup.secondary_pressed.emit()
 	_check(game.session.total_published == 0, "Cancelling confirmation does not publish")
 	work.get_node("%Headline1").pressed.emit()
 	popup.primary_pressed.emit()
-	_check(work.popup_kind == work.Popup.RESULT and game.session.total_published == 1, "Confirmation displays actual consequences")
+	_check(work.popup_kind == work.DialogKind.RESULT and game.session.total_published == 1, "Confirmation displays actual consequences")
+	await _capture("07_result")
 	game.get_node("%PauseButton").pressed.emit()
 	var time_before: float = game.session.time_left
 	await create_timer(0.08).timeout
@@ -189,6 +205,7 @@ func _test_scenes() -> void:
 	_check(game.view == game.View.HOME, "Timer automatically switches the visible scene to home")
 	await create_timer(0.25).timeout
 	var home := game.get_node("%Home")
+	await _capture("08_home")
 	home.get_node("%Meal").pressed.emit()
 	home.get_node("%Coffee").pressed.emit()
 	var health_before: float = game.session.health
@@ -206,6 +223,7 @@ func _test_scenes() -> void:
 			NewsroomSession.Ending.DEBT: game.session.money = -100
 		game.session.tick_work(0.01)
 		_check(game.view == game.View.ENDING and not game.get_node("%NarrativeTitle").text.is_empty(), "Ending screen loads: %d" % ending)
+		await _capture("ending_%d" % ending)
 	game.get_node("%NarrativePrimary").pressed.emit()
 	_check(game.view == game.View.WORK and game.session.day == 1, "Retry button starts a fresh playable run")
 	game.get_node("%PauseButton").pressed.emit()

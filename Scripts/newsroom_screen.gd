@@ -1,10 +1,10 @@
 extends Control
 
-enum Popup { NONE, SOURCE, CONFIRM, RESULT }
+enum DialogKind { NONE, SOURCE, CONFIRM, RESULT }
 
 var session: NewsroomSession
 var selected_index: int = -1
-var popup_kind: Popup = Popup.NONE
+var popup_kind: DialogKind = DialogKind.NONE
 @onready var cards: Array[Button] = [%Headline1, %Headline2, %Headline3]
 @onready var popup: MessagePanel = $MessagePanel
 
@@ -34,7 +34,7 @@ func show_article() -> void:
 func show_source() -> void:
 	if session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement:
 		return
-	popup_kind = Popup.SOURCE
+	popup_kind = DialogKind.SOURCE
 	var article := session.current_article()
 	popup.present("ИСТОЧНИК · ТАЙМЕР ИДЁТ", article.source_title, article.source_text, "Свернуть на стол")
 
@@ -42,28 +42,28 @@ func _select_headline(index: int) -> void:
 	if session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement:
 		return
 	selected_index = index
-	popup_kind = Popup.CONFIRM
+	popup_kind = DialogKind.CONFIRM
 	popup.present("ПЕРЕД ОТПРАВКОЙ В ПЕЧАТЬ", session.option_at(index).text, "Именно этот заголовок увидят читатели. Числовые последствия станут известны после публикации.\n\nВы ещё можете вернуться к вариантам или перечитать источник.", "Напечатать", "Вернуться к вариантам")
 
 func _on_primary() -> void:
 	if session.phase != NewsroomSession.Phase.WORK:
 		return
 	match popup_kind:
-		Popup.SOURCE:
+		DialogKind.SOURCE:
 			popup.hide()
-			popup_kind = Popup.NONE
+			popup_kind = DialogKind.NONE
 			cards[0].grab_focus()
-		Popup.CONFIRM:
+		DialogKind.CONFIRM:
 			session.publish_headline(selected_index)
-		Popup.RESULT:
+		DialogKind.RESULT:
 			session.acknowledge_publication()
 
 func _on_secondary() -> void:
 	popup.hide()
-	popup_kind = Popup.NONE
+	popup_kind = DialogKind.NONE
 	cards[maxi(selected_index, 0)].grab_focus()
 
 func _show_result(result: Dictionary) -> void:
-	popup_kind = Popup.RESULT
+	popup_kind = DialogKind.RESULT
 	var changes := "[color=#e8bd68]Деньги: %+d $[/color]\nРепутация компании: %+d\nЛояльность государству: %+d\nВыносливость: −%.1f\n\n%s" % [result.money, result.reputation, result.loyalty, session.balance.publication_health_cost, result.explanation]
 	popup.present("НАПЕЧАТАНО · ТАЙМЕР ИДЁТ", result.headline, changes, "Следующий материал")

@@ -7,7 +7,7 @@ func bind(model: NewsroomSession) -> void:
 	session.changed.connect(refresh)
 	session.phase_changed.connect(refresh)
 	for bar: ProgressBar in [%Health, %Reputation, %Loyalty]:
-		bar.add_theme_stylebox("fill", preload("res://Scripts/mvp_theme.gd").box(Color.WHITE, 5, 0))
+		bar.add_theme_stylebox_override("fill", preload("res://Scripts/mvp_theme.gd").box(Color.WHITE, 5, 0))
 	refresh()
 
 func refresh() -> void:
