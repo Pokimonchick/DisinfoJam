@@ -1,0 +1,35 @@
+[gd_scene format=3]
+
+[node name="HeadlineCard" type="Button"]
+custom_minimum_size = Vector2(0, 270)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 2
+
+[node name="Content" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = -24.0
+mouse_filter = 2
+theme_override_constants/separation = 18
+
+[node name="Headline" type="Label" parent="Content"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.09, 0.17, 0.19, 1)
+theme_override_font_sizes/font_size = 24
+text = "Заголовок будущей статьи"
+autowrap_mode = 3
+
+[node name="Hint" type="Label" parent="Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.25, 0.33, 0.34, 1)
+theme_override_font_sizes/font_size = 16
+text = "ВЫБРАТЬ ЗАГОЛОВОК  →"

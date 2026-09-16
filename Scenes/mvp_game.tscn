@@ -1,0 +1,203 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://Scripts/mvp_game.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/newsroom_hud.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://Scenes/newsroom_screen.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://Scenes/home_screen.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://Scenes/message_panel.tscn" id="5"]
+[ext_resource type="Script" path="res://Scripts/placeholder_visual.gd" id="6"]
+
+[node name="MVPGame" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.065, 0.125, 0.145, 1)
+
+[node name="Padding" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 22
+
+[node name="Layout" type="VBoxContainer" parent="Padding"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Header" type="HBoxContainer" parent="Padding/Layout"]
+custom_minimum_size = Vector2(0, 45)
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Brand" type="Label" parent="Padding/Layout/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.74, 0.41, 1)
+theme_override_font_sizes/font_size = 23
+text = "DISINFO / ДО ПЕЧАТИ"
+
+[node name="Location" type="Label" parent="Padding/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 15
+horizontal_alignment = 2
+
+[node name="PauseButton" type="Button" parent="Padding/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Пауза · Esc"
+mouse_default_cursor_shape = 2
+
+[node name="HUD" parent="Padding/Layout" instance=ExtResource("2")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Stage" type="Control" parent="Padding/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Menu" type="CenterContainer" parent="Padding/Layout/Stage"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Card" type="HBoxContainer" parent="Padding/Layout/Stage/Menu"]
+layout_mode = 2
+theme_override_constants/separation = 50
+
+[node name="Visual" type="Control" parent="Padding/Layout/Stage/Menu/Card"]
+custom_minimum_size = Vector2(280, 320)
+layout_mode = 2
+script = ExtResource("6")
+
+[node name="Text" type="VBoxContainer" parent="Padding/Layout/Stage/Menu/Card"]
+custom_minimum_size = Vector2(610, 0)
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Kicker" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.74, 0.41, 1)
+theme_override_font_sizes/font_size = 16
+text = "РЕДАКТОРСКАЯ СМЕНА · MVP"
+
+[node name="Title" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 64
+text = "ДО ПЕЧАТИ"
+
+[node name="Description" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Три заголовка. Три минуты.\nРепутация, государство и собственная жизнь.\nЗа каждое слово кто-нибудь заплатит."
+
+[node name="NewGame" type="Button" parent="Padding/Layout/Stage/Menu/Card/Text"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+text = "НАЧАТЬ НОВУЮ ИСТОРИЮ"
+mouse_default_cursor_shape = 2
+
+[node name="Quit" type="Button" parent="Padding/Layout/Stage/Menu/Card/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Выйти"
+mouse_default_cursor_shape = 2
+
+[node name="Hint" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Мышь — выбор  ·  Esc — пауза\n24 материала в общей очереди. Игра продолжается до одной из четырёх концовок."
+autowrap_mode = 3
+
+[node name="Narrative" type="PanelContainer" parent="Padding/Layout/Stage"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Layout" type="HBoxContainer" parent="Padding/Layout/Stage/Narrative"]
+layout_mode = 2
+theme_override_constants/separation = 36
+
+[node name="NarrativeVisual" type="Control" parent="Padding/Layout/Stage/Narrative/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(255, 0)
+layout_mode = 2
+script = ExtResource("6")
+
+[node name="Text" type="VBoxContainer" parent="Padding/Layout/Stage/Narrative/Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 18
+
+[node name="NarrativeTag" type="Label" parent="Padding/Layout/Stage/Narrative/Layout/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.74, 0.41, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="NarrativeTitle" type="Label" parent="Padding/Layout/Stage/Narrative/Layout/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+autowrap_mode = 3
+
+[node name="NarrativeBody" type="RichTextLabel" parent="Padding/Layout/Stage/Narrative/Layout/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/normal_font_size = 22
+
+[node name="Actions" type="HBoxContainer" parent="Padding/Layout/Stage/Narrative/Layout/Text"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="NarrativePrimary" type="Button" parent="Padding/Layout/Stage/Narrative/Layout/Text/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 55)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 2
+
+[node name="NarrativeSecondary" type="Button" parent="Padding/Layout/Stage/Narrative/Layout/Text/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 18
+
+[node name="Work" parent="Padding/Layout/Stage" instance=ExtResource("3")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="Home" parent="Padding/Layout/Stage" instance=ExtResource("4")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="PausePanel" parent="." instance=ExtResource("5")]
+layout_mode = 1
+
+[node name="Fade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.065, 0.125, 0.145, 1)

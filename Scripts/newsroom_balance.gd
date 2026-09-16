@@ -1,0 +1,25 @@
+class_name NewsroomBalance
+extends Resource
+
+@export_group("Смена")
+@export_range(5.0, 600.0) var shift_seconds: float = 180.0
+@export_range(0.0, 180.0) var coffee_bonus_seconds: float = 60.0
+@export_range(0.0, 1.0) var health_drain_per_second: float = 0.10
+@export_range(0.0, 10.0) var publication_health_cost: float = 1.5
+
+@export_group("Начальные значения")
+@export var starting_health: float = 80.0
+@export var starting_reputation: float = 65.0
+@export var starting_loyalty: float = 65.0
+@export var starting_money: int = 35
+@export var maximum_stat: float = 100.0
+
+@export_group("Вечер")
+@export var rent: int = 45
+@export var debt_limit: int = -100
+@export var meal_price: int = 25
+@export var meal_health: float = 35.0
+@export var snack_price: int = 12
+@export var snack_health: float = 15.0
+@export var coffee_price: int = 15
+@export var coffee_health_cost: float = 8.0

@@ -1,6 +1,8 @@
 extends Node
 
 
+var session := NewsroomSession.new()
+
 var society_points: int = 0
 var day_1_completed: bool = false
 

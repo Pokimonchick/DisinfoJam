@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="NewsroomBalance" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/newsroom_balance.gd" id="1_balance"]
+
+[resource]
+script = ExtResource("1_balance")
+shift_seconds = 180.0
+coffee_bonus_seconds = 60.0
+health_drain_per_second = 0.1
+publication_health_cost = 1.5
+starting_health = 80.0
+starting_reputation = 65.0
+starting_loyalty = 65.0
+starting_money = 35
+maximum_stat = 100.0
+rent = 45
+debt_limit = -100
+meal_price = 25
+meal_health = 35.0
+snack_price = 12
+snack_health = 15.0
+coffee_price = 15
+coffee_health_cost = 8.0
