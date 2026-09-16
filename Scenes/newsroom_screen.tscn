@@ -1,8 +1,11 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=8 format=3]
 
-[ext_resource type="Script" path="res://Scripts/newsroom_screen.gd" id="1"]
-[ext_resource type="PackedScene" path="res://Scenes/headline_card.tscn" id="2"]
-[ext_resource type="PackedScene" path="res://Scenes/message_panel.tscn" id="3"]
+[ext_resource type="Script" path="res://Scripts/newsroom_screen.gd" id="1_screen"]
+[ext_resource type="Script" path="res://Scripts/desk_surface.gd" id="2_surface"]
+[ext_resource type="Script" path="res://Scripts/desk_prop.gd" id="3_prop"]
+[ext_resource type="PackedScene" path="res://Scenes/headline_card.tscn" id="4_card"]
+[ext_resource type="Script" path="res://Scripts/headline_sheet.gd" id="5_sheet"]
+[ext_resource type="PackedScene" path="res://Scenes/message_panel.tscn" id="6_message"]
 
 [node name="Newsroom" type="Control"]
 layout_mode = 3
@@ -11,65 +14,141 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1")
+script = ExtResource("1_screen")
 
-[node name="Desk" type="VBoxContainer" parent="."]
+[node name="Surface" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/separation = 18
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_surface")
 
-[node name="ArticleNumber" type="Label" parent="Desk"]
+[node name="ArticleNumber" type="Label" parent="."]
 unique_name_in_owner = true
-layout_mode = 2
+layout_mode = 0
+offset_left = 48.0
+offset_top = 91.0
+offset_right = 322.0
+offset_bottom = 121.0
 theme_override_colors/font_color = Color(0.91, 0.74, 0.41, 1)
 theme_override_font_sizes/font_size = 16
 
-[node name="Heading" type="Label" parent="Desk"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 32
-text = "Каким будет следующий заголовок?"
-
-[node name="Cards" type="HBoxContainer" parent="Desk"]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 18
-
-[node name="Headline1" parent="Desk/Cards" instance=ExtResource("2")]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="Headline2" parent="Desk/Cards" instance=ExtResource("2")]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="Headline3" parent="Desk/Cards" instance=ExtResource("2")]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="SourceRow" type="HBoxContainer" parent="Desk"]
-layout_mode = 2
-theme_override_constants/separation = 20
-
-[node name="ReadSource" type="Button" parent="Desk/SourceRow"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(230, 64)
-layout_mode = 2
-mouse_default_cursor_shape = 2
-text = "ЗАПИСКА НА СТОЛЕ\nПеречитать источник"
-theme_override_font_sizes/font_size = 18
-
-[node name="SourceName" type="Label" parent="Desk/SourceRow"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-autowrap_mode = 3
-
-[node name="Hint" type="Label" parent="Desk"]
-layout_mode = 2
+[node name="Instruction" type="Label" parent="."]
+layout_mode = 0
+offset_left = 45.0
+offset_top = 514.0
+offset_right = 770.0
+offset_bottom = 555.0
+theme_override_colors/font_color = Color(0.94, 0.89, 0.78, 1)
 theme_override_font_sizes/font_size = 16
-text = "Выберите заголовок, затем подтвердите публикацию. Последствия появятся после печати."
+text = "Сначала прочитайте записку. Затем выберите один лист из папки."
 
-[node name="MessagePanel" parent="." instance=ExtResource("3")]
+[node name="SourceNote" type="Control" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(270, 340)
+layout_mode = 0
+offset_left = 55.0
+offset_top = 130.0
+offset_right = 325.0
+offset_bottom = 470.0
+rotation = -0.045
+script = ExtResource("3_prop")
+kind = 0
+title = "Новый источник"
+details = "Записка ждёт вашего внимания."
+tooltip_text = "Прочитать источник"
+
+[node name="Folder" type="Control" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(620, 330)
+layout_mode = 0
+offset_left = 340.0
+offset_top = 140.0
+offset_right = 960.0
+offset_bottom = 470.0
+rotation = 0.012
+mouse_filter = 2
+script = ExtResource("3_prop")
+kind = 1
+interactive = false
+title = "ПАПКА «ВЫПУСК»"
+details = "Выберите один из трёх подготовленных заголовков."
+
+[node name="Headline1" parent="." instance=ExtResource("4_card")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 247)
+layout_mode = 0
+offset_left = 367.0
+offset_top = 176.0
+offset_right = 607.0
+offset_bottom = 423.0
+rotation = -0.058
+z_index = 3
+script = ExtResource("5_sheet")
+
+[node name="Headline2" parent="." instance=ExtResource("4_card")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 247)
+layout_mode = 0
+offset_left = 548.0
+offset_top = 158.0
+offset_right = 788.0
+offset_bottom = 405.0
+rotation = 0.012
+z_index = 4
+script = ExtResource("5_sheet")
+
+[node name="Headline3" parent="." instance=ExtResource("4_card")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 247)
+layout_mode = 0
+offset_left = 733.0
+offset_top = 184.0
+offset_right = 973.0
+offset_bottom = 431.0
+rotation = 0.065
+z_index = 5
+script = ExtResource("5_sheet")
+
+[node name="Coffee" type="Control" parent="."]
+custom_minimum_size = Vector2(140, 140)
+layout_mode = 0
+offset_left = 1022.0
+offset_top = 225.0
+offset_right = 1162.0
+offset_bottom = 365.0
+rotation = -0.06
+script = ExtResource("3_prop")
+kind = 2
+title = "КОФЕ"
+details = "После смены можно купить чашку на завтра."
+tooltip_text = "Кофе покупается дома после смены"
+
+[node name="CoffeeHint" type="Label" parent="."]
+layout_mode = 0
+offset_left = 1000.0
+offset_top = 372.0
+offset_right = 1196.0
+offset_bottom = 418.0
+theme_override_colors/font_color = Color(0.94, 0.89, 0.78, 1)
+theme_override_font_sizes/font_size = 15
+text = "Кофе — дома,\nпосле смены"
+horizontal_alignment = 1
+
+[node name="FinishShift" type="Button" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(238, 58)
+layout_mode = 0
+offset_left = 940.0
+offset_top = 487.0
+offset_right = 1178.0
+offset_bottom = 545.0
+mouse_default_cursor_shape = 2
+text = "СДАТЬ ВЫПУСК\nЗакончить смену"
+theme_override_font_sizes/font_size = 16
+
+[node name="MessagePanel" parent="." instance=ExtResource("6_message")]
 layout_mode = 1

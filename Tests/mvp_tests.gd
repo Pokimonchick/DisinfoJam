@@ -15,6 +15,10 @@ func _check(condition: bool, message: String) -> void:
 func _fresh() -> NewsroomSession:
 	var model := NewsroomSession.new()
 	model.balance = model.balance.duplicate() as NewsroomBalance
+	# Tests use the production defaults even when a developer temporarily
+	# shortens mvp_balance.tres to inspect the game more quickly.
+	model.balance.shift_seconds = 180.0
+	model.balance.coffee_bonus_seconds = 60.0
 	model.reset(42)
 	return model
 
@@ -165,6 +169,9 @@ func _test_scenes() -> void:
 	var game := packed.instantiate()
 	root.add_child(game)
 	await process_frame
+	game.session.balance = game.session.balance.duplicate() as NewsroomBalance
+	game.session.balance.shift_seconds = 180.0
+	game.session.balance.coffee_bonus_seconds = 60.0
 	await _capture("01_menu")
 	game.get_node("%NewGame").pressed.emit()
 	_check(game.view == game.View.INTRO, "New game opens the prologue")
@@ -183,7 +190,7 @@ func _test_scenes() -> void:
 	popup.primary_pressed.emit()
 	_check(not popup.visible, "Source can immediately be folded away")
 	await _capture("05_headlines")
-	work.get_node("%ReadSource").pressed.emit()
+	work.get_node("%SourceNote").activated.emit()
 	_check(popup.visible, "Desk note reopens the same source")
 	popup.primary_pressed.emit()
 	work.get_node("%Headline1").pressed.emit()

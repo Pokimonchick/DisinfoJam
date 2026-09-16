@@ -7,13 +7,17 @@ var selected_index: int = -1
 var popup_kind: DialogKind = DialogKind.NONE
 @onready var cards: Array[Button] = [%Headline1, %Headline2, %Headline3]
 @onready var popup: MessagePanel = $MessagePanel
+@onready var source_note: Control = %SourceNote
 
 func _ready() -> void:
 	for i in cards.size():
 		cards[i].pressed.connect(_select_headline.bind(i))
-	%ReadSource.pressed.connect(show_source)
+	source_note.connect("activated", show_source)
+	%FinishShift.pressed.connect(_finish_shift)
 	popup.primary_pressed.connect(_on_primary)
 	popup.secondary_pressed.connect(_on_secondary)
+	if popup_kind != DialogKind.NONE:
+		_set_headline_cards_visible(false)
 
 func bind(model: NewsroomSession) -> void:
 	session = model
@@ -26,7 +30,11 @@ func show_article() -> void:
 	selected_index = -1
 	popup.hide()
 	%ArticleNumber.text = "МАТЕРИАЛ %02d  /  КРУГ %d" % [session.article_cursor % session.articles.size() + 1, session.article_cursor / session.articles.size() + 1]
-	%SourceName.text = session.current_article().source_title
+	source_note.call("set_content",
+		session.current_article().source_title,
+		"Источник для материала %02d.\nНаведите, чтобы подсветить. Нажмите, чтобы прочитать." % (session.article_cursor % session.articles.size() + 1),
+		"Прочитать источник: " + session.current_article().source_title
+	)
 	for i in cards.size():
 		cards[i].get_node("Content/Headline").text = session.option_at(i).text
 	show_source()
@@ -35,14 +43,21 @@ func show_source() -> void:
 	if session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement:
 		return
 	popup_kind = DialogKind.SOURCE
+	_set_headline_cards_visible(false)
 	var article := session.current_article()
 	popup.present("ИСТОЧНИК · ТАЙМЕР ИДЁТ", article.source_title, article.source_text, "Свернуть на стол")
+
+func _finish_shift() -> void:
+	if session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement:
+		return
+	session.finish_shift()
 
 func _select_headline(index: int) -> void:
 	if session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement:
 		return
 	selected_index = index
 	popup_kind = DialogKind.CONFIRM
+	_set_headline_cards_visible(false)
 	popup.present("ПЕРЕД ОТПРАВКОЙ В ПЕЧАТЬ", session.option_at(index).text, "Именно этот заголовок увидят читатели. Числовые последствия станут известны после публикации.\n\nВы ещё можете вернуться к вариантам или перечитать источник.", "Напечатать", "Вернуться к вариантам")
 
 func _on_primary() -> void:
@@ -52,6 +67,7 @@ func _on_primary() -> void:
 		DialogKind.SOURCE:
 			popup.hide()
 			popup_kind = DialogKind.NONE
+			_set_headline_cards_visible(true)
 			cards[0].grab_focus()
 		DialogKind.CONFIRM:
 			session.publish_headline(selected_index)
@@ -61,9 +77,15 @@ func _on_primary() -> void:
 func _on_secondary() -> void:
 	popup.hide()
 	popup_kind = DialogKind.NONE
+	_set_headline_cards_visible(true)
 	cards[maxi(selected_index, 0)].grab_focus()
 
 func _show_result(result: Dictionary) -> void:
 	popup_kind = DialogKind.RESULT
+	_set_headline_cards_visible(false)
 	var changes := "[color=#e8bd68]Деньги: %+d $[/color]\nРепутация компании: %+d\nЛояльность государству: %+d\nВыносливость: −%.1f\n\n%s" % [result.money, result.reputation, result.loyalty, session.balance.publication_health_cost, result.explanation]
 	popup.present("НАПЕЧАТАНО · ТАЙМЕР ИДЁТ", result.headline, changes, "Следующий материал")
+
+func _set_headline_cards_visible(value: bool) -> void:
+	for card in cards:
+		card.visible = value
