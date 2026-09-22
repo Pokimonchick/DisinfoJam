@@ -31,6 +31,24 @@ func _capture(name: String) -> void:
 	var capture := root.get_texture().get_image()
 	_check(capture.save_png("res://Build/QA/%s.png" % name) == OK, "Save visual check: " + name)
 
+func _point_at(control: Control) -> void:
+	var motion := InputEventMouseMotion.new()
+	motion.position = control.get_global_rect().get_center()
+	motion.global_position = motion.position
+	root.push_input(motion, true)
+	await process_frame
+
+func _click_at(control: Control) -> void:
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.position = control.get_global_rect().get_center()
+	click.global_position = click.position
+	click.pressed = true
+	root.push_input(click, true)
+	click = click.duplicate()
+	click.pressed = false
+	root.push_input(click, true)
+
 func _run() -> void:
 	_test_catalog()
 	_test_day_cycle()
@@ -262,6 +280,7 @@ func _test_scenes() -> void:
 	_check(game.view == game.View.WORK, "The complete tutorial starts work")
 	var work := game.get_node("%Work")
 	var popup := work.get_node("MessagePanel")
+	_check(not work.get_node("%Coffee").visible, "First shift has no free cup on the desk")
 	_check(popup.visible and work.popup_kind == work.DialogKind.SOURCE, "Each new source opens automatically")
 	await _capture("04_source")
 	popup.primary_pressed.emit()
@@ -290,13 +309,58 @@ func _test_scenes() -> void:
 	await create_timer(0.25).timeout
 	var home := game.get_node("%Home")
 	await _capture("08_home")
-	home.get_node("%Meal").pressed.emit()
-	home.get_node("%Coffee").pressed.emit()
+	var before_purchase: int = game.session.money
+	await _point_at(home.get_node("%Meal"))
+	_check(home.room.hovered == "fridge" and game.session.money == before_purchase, "Hover opens the refrigerator without charging")
+	await _capture("09_fridge_empty")
+	_click_at(home.get_node("%Meal"))
+	_check(game.session.food_stocked and home.room.food_stocked, "Clicking fridge buys visible food")
+	_check(game.session.money == before_purchase - game.session.balance.meal_price, "Fridge click charges exactly one meal")
+	await _capture("10_fridge_stocked")
+	await _point_at(home.get_node("%Coffee"))
+	_click_at(home.get_node("%Coffee"))
+	_check(game.session.coffee_ready and home.get_node("%Coffee").disabled, "Kitchen cup can be purchased once")
+	var cash_after_cup: int = game.session.money
+	_click_at(home.get_node("%Coffee"))
+	_check(game.session.money == cash_after_cup, "Disabled kitchen cup cannot charge twice")
 	var health_before: float = game.session.health
 	home.get_node("%Bed").pressed.emit()
-	_check(game.session.day == 2 and game.session.shift_length == 240.0, "Home buttons feed, buy coffee and start the next day")
+	_check(home.room.sleeping and game.session.day == 1, "Bed first shows the sleeping heroine")
+	await _capture("11_sleep")
+	game.get_node("%PauseButton").pressed.emit()
+	await create_timer(0.9).timeout
+	_check(game.session.day == 1, "Pause stops the transition during sleep")
+	game.get_node("PausePanel").primary_pressed.emit()
+	home.tick_home(1.0)
+	_check(game.session.day == 2 and game.session.shift_length == 180.0, "Bed starts a normal shift with a carried cup")
 	_check(game.session.health == health_before, "Bed UI does not heal")
 	await create_timer(0.25).timeout
+	var cup: Control = work.get_node("%Coffee")
+	_check(cup.visible and cup.interactive, "Purchased cup appears on the desk")
+	cup.activated.emit()
+	_check(game.session.coffee_ready, "Source overlay prevents drinking through the modal")
+	popup.primary_pressed.emit()
+	await _capture("12_coffee_ready")
+	await _point_at(cup)
+	time_before = game.session.time_left
+	_click_at(cup)
+	_check(is_equal_approx(game.session.time_left, time_before + 60.0), "A real desk cup click adds exactly 60 seconds")
+	_check(cup.kind == 3 and not cup.interactive and game.session.coffee_used_today, "Used cup becomes a noninteractive coffee ring")
+	_check(game.session.health <= health_before - 8.0, "Drinking applies the stamina penalty")
+	await _capture("13_coffee_stain")
+	# Two consecutive sensations through the real confirmation flow.
+	for i in range(2):
+		var choice := -1
+		for j in range(3):
+			if game.session.option_at(j).editorial_type == 1:
+				choice = j
+				break
+		work.cards[choice].pressed.emit()
+		popup.primary_pressed.emit()
+		popup.primary_pressed.emit()
+		popup.primary_pressed.emit()
+	_check(game.session.combo_count == 2 and "×1.25" in work.get_node("%Combo").text, "Left-hand combo panel follows actual publications")
+	await _capture("14_combo")
 	for ending in [NewsroomSession.Ending.EXHAUSTION, NewsroomSession.Ending.OFFICE_FIRE, NewsroomSession.Ending.ARREST, NewsroomSession.Ending.DEBT]:
 		game.session.reset(42)
 		game.session.start_shift()
