@@ -32,11 +32,13 @@ func _refresh_desk() -> void:
 	if session == null:
 		return
 	var cup: Control = %Coffee
-	cup.visible = session.coffee_ready or session.coffee_used_today
+	# The stained sheet is permanent desk dressing. A purchased cup is drawn
+	# over it until the player drinks it.
+	cup.visible = true
 	cup.set_interactive(session.coffee_ready and session.phase == NewsroomSession.Phase.WORK)
 	cup.kind = 2 if session.coffee_ready else 3
 	cup.set_content("", "", "Выпить: +%d сек., −%d выносливости" % [int(session.balance.coffee_bonus_seconds), int(session.balance.coffee_health_cost)])
-	%CoffeeHint.text = "ВЫПИТЬ КОФЕ\n+%d сек. / −%d сил" % [int(session.balance.coffee_bonus_seconds), int(session.balance.coffee_health_cost)] if session.coffee_ready else ("Остался только след" if session.coffee_used_today else "Кофе можно\nкупить дома")
+	%CoffeeHint.text = "ВЫПИТЬ КОФЕ\n+%d сек. / −%d сил" % [int(session.balance.coffee_bonus_seconds), int(session.balance.coffee_health_cost)] if session.coffee_ready else ""
 	if session.combo_count == 0:
 		%Combo.text = "КОМБО\nНачните серию\nзаголовков одного типа.\nМаксимум ×%.2f" % session.balance.combo_max_multiplier
 	else:
