@@ -124,7 +124,7 @@ mouse_default_cursor_shape = 2
 [node name="Hint" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Мышь — выбор  ·  Esc — пауза\n24 материала в общей очереди. Игра продолжается до одной из четырёх концовок."
+text = "Мышь — выбор  ·  Esc — пауза\n32 материала в общей очереди. Игра продолжается до одной из четырёх концовок."
 autowrap_mode = 3
 
 [node name="Narrative" type="PanelContainer" parent="Padding/Layout/Stage"]

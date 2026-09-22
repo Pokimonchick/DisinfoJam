@@ -30,4 +30,4 @@ func _draw() -> void:
 		draw_polyline(grain, Color("704a35", 0.55), 3.0, true)
 	var desk_light := Rect2(size.x * 0.31, 70.0, size.x * 0.42, size.y - 118.0)
 	draw_rect(desk_light, Color("c9975a", 0.08), true)
-	draw_string(ThemeDB.fallback_font, Vector2(42.0, 76.0), "РАБОЧИЙ СТОЛ · ВЫПУСК ДОЛЖЕН ВЫЙТИ ДО ЗВОНКА", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("e8bd68", 0.85))
+	draw_string(ThemeDB.fallback_font, Vector2(282.0, 76.0), "РАБОЧИЙ СТОЛ · ВЫПУСК ДОЛЖЕН ВЫЙТИ ДО ЗВОНКА", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("e8bd68", 0.85))

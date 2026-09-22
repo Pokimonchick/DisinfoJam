@@ -59,27 +59,33 @@ anchor_right = 0.98
 anchor_bottom = 0.85
 mouse_default_cursor_shape = 2
 
-[node name="Captions" type="HBoxContainer" parent="Layout"]
+[node name="Captions" type="Control" parent="Layout"]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-theme_override_constants/separation = 12
 
 [node name="BedCaption" type="Label" parent="Layout/Captions"]
 unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
+layout_mode = 1
+anchor_left = 0.035
+anchor_right = 0.35
+anchor_bottom = 1.0
 theme_override_font_sizes/font_size = 18
 
 [node name="CoffeeCaption" type="Label" parent="Layout/Captions"]
 unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
+layout_mode = 1
+anchor_left = 0.535
+anchor_right = 0.785
+anchor_bottom = 1.0
 theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
 
 [node name="MealCaption" type="Label" parent="Layout/Captions"]
 unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
+layout_mode = 1
+anchor_left = 0.79
+anchor_right = 0.995
+anchor_bottom = 1.0
 theme_override_font_sizes/font_size = 18
 horizontal_alignment = 2
 
