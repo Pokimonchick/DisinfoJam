@@ -35,6 +35,8 @@ func _run() -> void:
 	_test_catalog()
 	_test_day_cycle()
 	_test_publication_queue()
+	_test_coffee_inventory()
+	_test_combos()
 	_test_endings()
 	await _test_scenes()
 	if failures.is_empty():
@@ -45,7 +47,8 @@ func _run() -> void:
 
 func _test_catalog() -> void:
 	var s := _fresh()
-	_check(s.articles.size() == 24, "The shared pool has 24 stories")
+	_check(s.articles.size() == 32, "The shared pool includes eight community stories")
+	_check(s.articles[2].id == "cats_rumor" and s.articles[9].id == "bloom_letter", "Community stories retain sequence after the introduction")
 	var ids: Dictionary = {}
 	var dangerous := 0
 	for article in s.articles:
@@ -55,11 +58,12 @@ func _test_catalog() -> void:
 		var has_harsh_choice := false
 		for option in article.headlines:
 			_check(not option.text.is_empty() and not option.explanation.is_empty(), "Headline and explanation exist")
+			_check(option.editorial_type in [0, 1, 2], "Headline has a valid editorial combo type")
 			has_harsh_choice = has_harsh_choice or option.reputation <= -30 or option.loyalty <= -30
 		if has_harsh_choice:
 			dangerous += 1
 		_check(article.high_risk == has_harsh_choice, "Risk marker agrees with actual content")
-	_check(dangerous == 8, "One third of stories have a very costly choice")
+	_check(dangerous == 8, "The eight original high-risk stories remain in the pool")
 
 func _test_day_cycle() -> void:
 	var s := _fresh()
@@ -74,14 +78,19 @@ func _test_day_cycle() -> void:
 	s.finish_shift()
 	_check(s.money == -10, "Repeated finish cannot charge rent twice")
 	_check(s.buy_food(true) and s.health == 97.0 and s.money == -35, "Dinner restores health and costs money")
-	_check(s.buy_coffee() and s.health == 89.0 and s.money == -50, "Coffee charges money and health immediately")
+	_check(s.buy_coffee() and s.health == 97.0 and s.money == -50, "Buying coffee costs money, not health")
 	_check(not s.buy_coffee() and s.money == -50, "Coffee cannot stack or charge twice")
 	var before_sleep := s.health
 	s.start_shift()
-	_check(s.day == 2 and s.time_left == 240.0, "Coffee adds exactly one minute to the next shift")
+	_check(s.day == 2 and s.time_left == 180.0 and s.coffee_ready, "Coffee arrives as inventory without extending the shift")
 	_check(s.health == before_sleep, "Mandatory sleep does not restore health")
 	_check(s.current_article().id == article_id and s.option_order == order, "Unpublished article and options survive overnight")
 	_check(not s.buy_food(true) and not s.buy_coffee(), "Shopping is restricted to the evening")
+	s.tick_work(20.0)
+	var health_before_cup := s.health
+	_check(s.drink_coffee() and s.time_left == 220.0 and s.shift_length == 240.0, "Drinking adds one minute to remaining time")
+	_check(s.health == health_before_cup - 8.0 and not s.coffee_ready and s.coffee_used_today, "Drinking spends health and leaves a stain")
+	_check(not s.drink_coffee() and s.time_left == 220.0, "Repeated coffee click cannot stack the bonus")
 	s.tick_work(240.0)
 	s.start_shift()
 	_check(s.time_left == 180.0, "Coffee bonus expires after one shift")
@@ -110,12 +119,12 @@ func _test_publication_queue() -> void:
 	s.start_shift()
 	var seen: Dictionary = {}
 	var orders: Dictionary = {}
-	for i in range(24):
+	for i in range(s.articles.size()):
 		seen[s.current_article().id] = true
 		orders[str(s.option_order)] = true
 		s.publish_headline(0)
 		s.acknowledge_publication()
-	_check(seen.size() == 24 and s.current_article().id == "black_cat", "All stories appear before the pool cycles")
+	_check(seen.size() == 32 and s.current_article().id == "black_cat", "All stories appear before the pool cycles")
 	_check(orders.size() > 1, "Headline positions vary between stories")
 
 func _test_endings() -> void:
@@ -151,7 +160,10 @@ func _test_endings() -> void:
 	s.finish_shift()
 	s.health = 8
 	s.buy_coffee()
-	_check(s.ending == NewsroomSession.Ending.EXHAUSTION, "Coffee can cause exhaustion immediately")
+	_check(s.phase == NewsroomSession.Phase.HOME, "Coffee purchase does not cause exhaustion")
+	s.start_shift()
+	s.drink_coffee()
+	_check(s.ending == NewsroomSession.Ending.EXHAUSTION, "Drinking coffee can cause exhaustion")
 	s = _fresh()
 	s.start_shift()
 	s.finish_shift()
@@ -160,6 +172,71 @@ func _test_endings() -> void:
 	_check(s.ending == NewsroomSession.Ending.DEBT, "A purchase can cross the debt boundary")
 	s.reset()
 	_check(s.phase == NewsroomSession.Phase.IDLE and s.ending == NewsroomSession.Ending.NONE and s.article_cursor == 0 and s.journal.is_empty(), "Restart clears the entire run")
+
+func _test_coffee_inventory() -> void:
+	var s := _fresh()
+	s.money = 500
+	_check(not s.drink_coffee(), "Coffee cannot be used before a shift")
+	s.start_shift()
+	_check(not s.drink_coffee(), "No free coffee on the first shift")
+	s.finish_shift()
+	s.buy_coffee()
+	_check(not s.drink_coffee(), "Coffee cannot be consumed at home")
+	s.start_shift()
+	s.finish_shift()
+	_check(s.coffee_ready and not s.buy_coffee(), "An unused cup survives a shift and blocks another purchase")
+	s.start_shift()
+	s.time_left = 0.01
+	_check(s.drink_coffee() and is_equal_approx(s.time_left, 60.01), "Coffee works just before the deadline")
+	s.tick_work(70.0)
+	_check(not s.drink_coffee(), "Coffee cannot revive an expired shift")
+	_check(s.buy_coffee(), "A consumed cup can be replaced next evening")
+	s.start_shift()
+	_check(not s.coffee_used_today and s.coffee_ready, "A new shift clears the stain, not the purchased cup")
+	s.reset(42)
+	_check(not s.coffee_ready and not s.coffee_used_today and not s.food_stocked, "Restart clears cup and food state")
+
+func _test_combos() -> void:
+	var s := _fresh()
+	s.balance.maximum_stat = 10000
+	s.reputation = 5000
+	s.loyalty = 5000
+	# Controlled articles let expected deltas be independent of content changes
+	# and verify that the shuffled display position is not the combo key.
+	s.articles = [NewsArticle.from_row({
+		"id": "combo_fixture", "source": "Fixture", "text": "Known effects.",
+		"options": [
+			["Facts", 20, 8, -4, "Known effects", 0],
+			["Sensation", 40, -12, -8, "Known effects", 1],
+			["Support", 24, -4, 8, "Known effects", 2]
+		]
+	})]
+	s.start_shift()
+	var start_money := s.money
+	var start_health := s.health
+	for expected in [1.0, 1.25, 1.5, 1.75, 2.0, 2.0]:
+		var display_index := s.option_order.find(1)
+		var reputation_before := s.reputation
+		_check(s.publish_headline(display_index), "Combo publication succeeds")
+		_check(s.last_result.multiplier == expected, "Combo reaches and respects its cap")
+		_check(s.last_result.money == roundi(40 * expected) and s.last_result.reputation == roundi(-12 * expected), "Combo multiplies both income and penalties")
+		_check(s.reputation == reputation_before + s.last_result.reputation, "Feedback matches applied combo effects")
+		var count_before := s.combo_count
+		_check(not s.publish_headline(display_index) and s.combo_count == count_before, "Double publication cannot grow the combo")
+		s.acknowledge_publication()
+	_check(s.money == start_money + 380, "Combo income is counted exactly once")
+	_check(s.health == start_health - 6 * s.balance.publication_health_cost, "Combo does not multiply stamina costs")
+	s.publish_headline(s.option_order.find(0))
+	_check(s.combo_count == 1 and s.combo_type == 0 and s.last_result.multiplier == 1.0, "Changing editorial type resets the series")
+	s.acknowledge_publication()
+	_check(not s.publish_headline(-1) and s.combo_count == 1, "Invalid choice cannot change combo")
+	s.finish_shift()
+	s.start_shift()
+	_check(s.combo_count == 0 and s.combo_type == -1, "New shift resets combo")
+	s.balance.combo_max_multiplier = 3.0
+	_check(s.combo_multiplier(20) == 3.0, "A designer can raise the cap to three")
+	s.reset()
+	_check(s.combo_count == 0 and s.combo_type == -1, "New run resets combo")
 
 func _test_scenes() -> void:
 	var packed := load("res://Scenes/mvp_game.tscn") as PackedScene
