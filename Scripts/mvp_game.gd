@@ -47,6 +47,8 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if view == View.WORK and not paused and not transitioning:
 		session.tick_work(delta)
+	elif view == View.HOME and not paused and not transitioning:
+		home.tick_home(delta)
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and view != View.MENU:

@@ -13,6 +13,11 @@ static func from_row(row: Dictionary) -> NewsArticle:
 	article.source_title = row.source
 	article.source_text = row.text
 	article.high_risk = row.get("high_risk", false)
-	for option_row: Array in row.options:
-		article.headlines.append(HeadlineOption.from_row(option_row))
+	for i in row.options.size():
+		var option := HeadlineOption.from_row(row.options[i])
+		# The original catalog is authored as facts / sensation / state support.
+		# New stories specify the type explicitly in the sixth column.
+		if row.options[i].size() <= 5:
+			option.editorial_type = i
+		article.headlines.append(option)
 	return article

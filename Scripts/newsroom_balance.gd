@@ -7,6 +7,10 @@ extends Resource
 @export_range(0.0, 1.0) var health_drain_per_second: float = 0.10
 @export_range(0.0, 10.0) var publication_health_cost: float = 1.5
 
+@export_group("Комбо")
+@export_range(0.05, 1.0) var combo_step: float = 0.25
+@export_range(1.0, 3.0) var combo_max_multiplier: float = 2.0
+
 @export_group("Начальные значения")
 @export var starting_health: float = 80.0
 @export var starting_reputation: float = 65.0

@@ -3,7 +3,7 @@ extends Control
 
 signal activated
 
-enum Kind { NOTE, FOLDER, COFFEE }
+enum Kind { NOTE, FOLDER, COFFEE, COFFEE_STAIN }
 
 @export var kind: Kind = Kind.NOTE:
 	set(value):
@@ -20,6 +20,13 @@ var _base_position := Vector2.ZERO
 var _base_scale := Vector2.ONE
 var _base_rotation := 0.0
 var _is_hovered := false
+
+func set_interactive(value: bool) -> void:
+	if not value:
+		_set_hovered(false)
+	interactive = value
+	mouse_filter = Control.MOUSE_FILTER_STOP if value else Control.MOUSE_FILTER_IGNORE
+	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if value else Control.CURSOR_ARROW
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP if interactive else Control.MOUSE_FILTER_IGNORE
@@ -74,6 +81,8 @@ func _apply_content() -> void:
 		return
 	_title_label.text = title
 	_details_label.text = details
+	_title_label.visible = kind in [Kind.NOTE, Kind.FOLDER]
+	_details_label.visible = _title_label.visible
 	queue_redraw()
 
 func _set_hovered(value: bool) -> void:
@@ -94,7 +103,7 @@ func _set_hovered(value: bool) -> void:
 	queue_redraw()
 
 func _on_gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+	if interactive and event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		activated.emit()
 		accept_event()
 
@@ -106,6 +115,10 @@ func _draw() -> void:
 			_draw_folder()
 		Kind.COFFEE:
 			_draw_coffee()
+		Kind.COFFEE_STAIN:
+			_draw_coffee_paper()
+			draw_arc(size / 2.0, minf(size.x, size.y) * 0.29, 0.2, TAU - 0.15, 40, Color("946139", 0.55), 4.0)
+			draw_arc(size / 2.0 + Vector2(2, 1), minf(size.x, size.y) * 0.25, 0.0, TAU, 40, Color("946139", 0.2), 2.0)
 
 func _draw_note() -> void:
 	draw_set_transform(Vector2(7.0, 9.0), 0.0)
@@ -128,6 +141,7 @@ func _draw_folder() -> void:
 		draw_rect(Rect2(1.5, 1.5, size.x - 4.0, size.y - 4.0), Color("e8bd68"), false, 4.0)
 
 func _draw_coffee() -> void:
+	_draw_coffee_paper()
 	var center := size / 2.0
 	_draw_shadow_ellipse(center + Vector2(8.0, 12.0), Vector2(size.x * 0.31, size.y * 0.15), Color("1b1513", 0.42))
 	draw_circle(center, minf(size.x, size.y) * 0.29, Color("d8d0bd"))
@@ -135,6 +149,11 @@ func _draw_coffee() -> void:
 	draw_arc(center + Vector2(size.x * 0.26, 0.0), minf(size.x, size.y) * 0.17, -PI * 0.65, PI * 0.65, 20, Color("d8d0bd"), 9.0)
 	if _is_hovered:
 		draw_arc(center, minf(size.x, size.y) * 0.37, 0.0, TAU, 24, Color("e8bd68"), 3.0)
+
+func _draw_coffee_paper() -> void:
+	draw_rect(Rect2(5, 8, size.x - 10, size.y - 12), Color("f2e7c8"))
+	for y in [size.y * 0.25, size.y * 0.5, size.y * 0.75]:
+		draw_line(Vector2(15, y), Vector2(size.x - 15, y), Color("ae9f81", 0.4), 1.0)
 
 func _draw_shadow_ellipse(center: Vector2, radius: Vector2, color: Color) -> void:
 	var points := PackedVector2Array()

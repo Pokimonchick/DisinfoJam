@@ -13,6 +13,7 @@ func _ready() -> void:
 	for i in cards.size():
 		cards[i].pressed.connect(_select_headline.bind(i))
 	source_note.connect("activated", show_source)
+	%Coffee.connect("activated", _drink_coffee)
 	%FinishShift.pressed.connect(_finish_shift)
 	popup.primary_pressed.connect(_on_primary)
 	popup.secondary_pressed.connect(_on_secondary)
@@ -23,6 +24,28 @@ func bind(model: NewsroomSession) -> void:
 	session = model
 	session.article_changed.connect(show_article)
 	session.published.connect(_show_result)
+	session.changed.connect(_refresh_desk)
+	session.phase_changed.connect(_refresh_desk)
+	_refresh_desk()
+
+func _refresh_desk() -> void:
+	if session == null:
+		return
+	var cup: Control = %Coffee
+	cup.visible = session.coffee_ready or session.coffee_used_today
+	cup.set_interactive(session.coffee_ready and session.phase == NewsroomSession.Phase.WORK)
+	cup.kind = 2 if session.coffee_ready else 3
+	cup.set_content("", "", "Выпить: +%d сек., −%d выносливости" % [int(session.balance.coffee_bonus_seconds), int(session.balance.coffee_health_cost)])
+	%CoffeeHint.text = "ВЫПИТЬ КОФЕ\n+%d сек. / −%d сил" % [int(session.balance.coffee_bonus_seconds), int(session.balance.coffee_health_cost)] if session.coffee_ready else ("Остался только след" if session.coffee_used_today else "Кофе можно\nкупить дома")
+	if session.combo_count == 0:
+		%Combo.text = "КОМБО\nНачните серию\nзаголовков одного типа.\nМаксимум ×%.2f" % session.balance.combo_max_multiplier
+	else:
+		%Combo.text = "%s\n%d подряд  ·  ×%.2f\nСледующий такой: ×%.2f\nУсиливаются и штрафы!" % [HeadlineOption.TYPE_NAMES[session.combo_type], session.combo_count, session.combo_multiplier(), session.combo_multiplier(session.combo_count + 1)]
+
+func _drink_coffee() -> void:
+	if popup.visible:
+		return
+	session.drink_coffee()
 
 func show_article() -> void:
 	if session.phase != NewsroomSession.Phase.WORK:
@@ -83,7 +106,7 @@ func _on_secondary() -> void:
 func _show_result(result: Dictionary) -> void:
 	popup_kind = DialogKind.RESULT
 	_set_headline_cards_visible(false)
-	var changes := "[color=#e8bd68]Деньги: %+d $[/color]\nРепутация компании: %+d\nЛояльность государству: %+d\nВыносливость: −%.1f\n\n%s" % [result.money, result.reputation, result.loyalty, session.balance.publication_health_cost, result.explanation]
+	var changes := "[color=#e8bd68]%s · серия %d · ×%.2f[/color]\nДеньги: %+d $ · Репутация: %+d · Государство: %+d\nВыносливость: −%.1f\n\n%s" % [HeadlineOption.TYPE_NAMES[result.combo_type], result.combo_count, result.multiplier, result.money, result.reputation, result.loyalty, session.balance.publication_health_cost, result.explanation]
 	popup.present("НАПЕЧАТАНО · ТАЙМЕР ИДЁТ", result.headline, changes, "Следующий материал")
 
 func _set_headline_cards_visible(value: bool) -> void:
