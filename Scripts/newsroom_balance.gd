@@ -3,9 +3,16 @@ extends Resource
 
 @export_group("Смена")
 @export_range(5.0, 600.0) var shift_seconds: float = 180.0
+@export_range(1, 100, 1) var publication_limit: int = 10
 @export_range(0.0, 180.0) var coffee_bonus_seconds: float = 60.0
 @export_range(0.0, 1.0) var health_drain_per_second: float = 0.10
 @export_range(0.0, 10.0) var publication_health_cost: float = 1.5
+
+@export_group("Эффект усталости")
+## Доля максимальной выносливости, ниже которой появляется эффект.
+@export_range(0.01, 1.0, 0.01) var fatigue_threshold: float = 0.30
+## 0 отключает визуальные помехи, не меняя расход выносливости.
+@export_range(0.0, 1.0, 0.05) var fatigue_strength: float = 0.75
 
 @export_group("Комбо")
 @export_range(0.05, 1.0) var combo_step: float = 0.25

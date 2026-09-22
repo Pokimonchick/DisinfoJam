@@ -118,7 +118,7 @@ func option_at(display_index: int) -> HeadlineOption:
 
 
 func publish_headline(display_index: int) -> bool:
-	if phase != Phase.WORK or awaiting_acknowledgement or time_left <= 0.0:
+	if phase != Phase.WORK or awaiting_acknowledgement or time_left <= 0.0 or publication_limit_reached():
 		return false
 	var option := option_at(display_index)
 	if option == null:
@@ -161,7 +161,14 @@ func acknowledge_publication() -> void:
 	if phase != Phase.WORK or not awaiting_acknowledgement:
 		return
 	awaiting_acknowledgement = false
+	if publication_limit_reached():
+		finish_shift()
+		return
 	article_changed.emit()
+
+
+func publication_limit_reached() -> bool:
+	return published_today >= maxi(1, balance.publication_limit)
 
 
 func finish_shift() -> void:
@@ -202,7 +209,7 @@ func buy_coffee() -> bool:
 
 
 func drink_coffee() -> bool:
-	if phase != Phase.WORK or not coffee_ready or coffee_used_today or time_left <= 0.0:
+	if phase != Phase.WORK or not coffee_ready or coffee_used_today or time_left <= 0.0 or publication_limit_reached():
 		return false
 	coffee_ready = false
 	coffee_used_today = true

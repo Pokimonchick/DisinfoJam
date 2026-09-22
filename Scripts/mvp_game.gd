@@ -22,10 +22,13 @@ var lesson: int = 0
 var paused: bool = false
 var transitioning: bool = false
 var _fade_tween: Tween
+var _fatigue_amount: float = 0.0
+var _fatigue_time: float = 0.0
 
 @onready var work: Control = %Work
 @onready var home: Control = %Home
 @onready var pause_panel: MessagePanel = $PausePanel
+@onready var fatigue_overlay: ColorRect = $FatigueOverlay
 
 func _ready() -> void:
 	theme = preload("res://Scripts/mvp_theme.gd").create()
@@ -49,6 +52,25 @@ func _process(delta: float) -> void:
 		session.tick_work(delta)
 	elif view == View.HOME and not paused and not transitioning:
 		home.tick_home(delta)
+	_update_fatigue(delta)
+
+func _update_fatigue(delta: float) -> void:
+	if view != View.WORK:
+		_fatigue_amount = 0.0
+		_fatigue_time = 0.0
+		fatigue_overlay.hide()
+		return
+	if paused or transitioning:
+		fatigue_overlay.hide()
+		return
+	var threshold := maxf(0.001, session.balance.maximum_stat * session.balance.fatigue_threshold)
+	var target := clampf(1.0 - session.health / threshold, 0.0, 1.0) * session.balance.fatigue_strength
+	_fatigue_amount = move_toward(_fatigue_amount, target, delta * 0.8)
+	_fatigue_time += delta
+	fatigue_overlay.visible = _fatigue_amount > 0.001
+	var effect := fatigue_overlay.material as ShaderMaterial
+	effect.set_shader_parameter("intensity", _fatigue_amount)
+	effect.set_shader_parameter("effect_time", _fatigue_time)
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and view != View.MENU:
@@ -89,7 +111,10 @@ func _narrative_secondary() -> void:
 
 func _show_lesson() -> void:
 	_show_view(View.TUTORIAL)
-	_set_narrative("ИНСТРУКТАЖ БОССА · %d / %d" % [lesson + 1, LESSONS.size()], LESSONS[lesson].title, LESSONS[lesson].text, 1, "Начать смену" if lesson == LESSONS.size() - 1 else "Дальше", "Пропустить инструктаж")
+	var body: String = LESSONS[lesson].text
+	if lesson == 2:
+		body += "\n\nВ одном выпуске помещается до %d публикаций. Когда места больше нет, сдай выпуск и отправляйся домой. Остальные материалы останутся в очереди." % session.balance.publication_limit
+	_set_narrative("ИНСТРУКТАЖ БОССА · %d / %d" % [lesson + 1, LESSONS.size()], LESSONS[lesson].title, body, 1, "Начать смену" if lesson == LESSONS.size() - 1 else "Дальше", "Пропустить инструктаж")
 
 func _on_phase_changed() -> void:
 	match session.phase:

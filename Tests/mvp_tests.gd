@@ -19,6 +19,7 @@ func _fresh() -> NewsroomSession:
 	# shortens mvp_balance.tres to inspect the game more quickly.
 	model.balance.shift_seconds = 180.0
 	model.balance.coffee_bonus_seconds = 60.0
+	model.balance.publication_limit = 10
 	model.reset(42)
 	return model
 
@@ -53,6 +54,7 @@ func _run() -> void:
 	_test_catalog()
 	_test_day_cycle()
 	_test_publication_queue()
+	_test_publication_limit()
 	_test_coffee_inventory()
 	_test_combos()
 	_test_endings()
@@ -142,8 +144,50 @@ func _test_publication_queue() -> void:
 		orders[str(s.option_order)] = true
 		s.publish_headline(0)
 		s.acknowledge_publication()
+		if s.phase == NewsroomSession.Phase.HOME:
+			s.start_shift()
 	_check(seen.size() == 32 and s.current_article().id == "black_cat", "All stories appear before the pool cycles")
 	_check(orders.size() > 1, "Headline positions vary between stories")
+
+func _test_publication_limit() -> void:
+	for limit in [1, 3, 10]:
+		var s := _fresh()
+		s.balance.publication_limit = limit
+		s.balance.maximum_stat = 10000
+		s.reputation = 10000
+		s.loyalty = 10000
+		s.start_shift()
+		for i in range(limit):
+			_check(s.publish_headline(0), "Publication within configured capacity succeeds")
+			if i < limit - 1:
+				s.acknowledge_publication()
+		_check(s.publication_limit_reached() and s.awaiting_acknowledgement, "Last publication keeps its feedback at the cap")
+		var before := [s.money, s.health, s.reputation, s.loyalty, s.article_cursor, s.total_published, s.combo_count, s.time_left]
+		s.coffee_ready = true
+		_check(not s.drink_coffee() and s.coffee_ready, "Full issue cannot consume a carried cup")
+		# Test the model guard independently of the double-click guard.
+		s.awaiting_acknowledgement = false
+		_check(not s.publish_headline(0), "Model rejects publication beyond capacity")
+		_check(before == [s.money, s.health, s.reputation, s.loyalty, s.article_cursor, s.total_published, s.combo_count, s.time_left], "Rejected publication and coffee have no side effects")
+		s.awaiting_acknowledgement = true
+		var next_article := s.current_article().id
+		s.acknowledge_publication()
+		_check(s.phase == NewsroomSession.Phase.HOME and s.last_shift.count == limit, "Acknowledging a full issue goes home")
+		_check(s.money == before[0] - s.balance.rent, "Full issue charges rent once")
+		s.acknowledge_publication()
+		s.finish_shift()
+		_check(s.completed_shifts == 1 and s.money == before[0] - s.balance.rent, "Repeated completion does not charge again")
+		s.start_shift()
+		_check(s.published_today == 0 and not s.publication_limit_reached() and s.current_article().id == next_article, "New day resets capacity and preserves the next story")
+		_check(s.publish_headline(0), "New day permits publishing again")
+	# Timer expiry can still close the final feedback without double charging.
+	var timed := _fresh()
+	timed.balance.publication_limit = 1
+	timed.start_shift()
+	timed.publish_headline(0)
+	timed.tick_work(180.0)
+	timed.acknowledge_publication()
+	_check(timed.phase == NewsroomSession.Phase.HOME and timed.completed_shifts == 1 and timed.article_cursor == 1, "Timeout on a full issue completes exactly once")
 
 func _test_endings() -> void:
 	var s := _fresh()
@@ -267,6 +311,9 @@ func _test_scenes() -> void:
 	game.session.balance = game.session.balance.duplicate() as NewsroomBalance
 	game.session.balance.shift_seconds = 180.0
 	game.session.balance.coffee_bonus_seconds = 60.0
+	game.session.balance.publication_limit = 10
+	game.session.balance.fatigue_threshold = 0.30
+	game.session.balance.fatigue_strength = 0.75
 	await _capture("01_menu")
 	game.get_node("%NewGame").pressed.emit()
 	_check(game.view == game.View.INTRO, "New game opens the prologue")
@@ -288,6 +335,29 @@ func _test_scenes() -> void:
 	popup.primary_pressed.emit()
 	_check(not popup.visible, "Source can immediately be folded away")
 	await _capture("05_headlines")
+	var overlay: ColorRect = game.get_node("FatigueOverlay")
+	game._update_fatigue(1.0)
+	_check(not overlay.visible and overlay.mouse_filter == Control.MOUSE_FILTER_IGNORE, "Healthy work has no fatigue overlay; effect cannot consume clicks")
+	var health_before_fatigue: float = game.session.health
+	game.session.health = 20.0
+	game._update_fatigue(2.0)
+	var mild: float = overlay.material.get_shader_parameter("intensity")
+	game.session.health = 6.0
+	game.session.changed.emit()
+	game._update_fatigue(2.0)
+	_check(overlay.visible and overlay.material.get_shader_parameter("intensity") > mild, "Fatigue grows as stamina falls below threshold")
+	await _capture("05b_fatigue")
+	game.get_node("%PauseButton").pressed.emit()
+	game._update_fatigue(1.0)
+	_check(not overlay.visible, "Pause is free of fatigue distortion")
+	game.get_node("PausePanel").primary_pressed.emit()
+	game.session.balance.fatigue_strength = 0.0
+	game._update_fatigue(2.0)
+	_check(not overlay.visible, "Zero strength disables fatigue")
+	game.session.balance.fatigue_strength = 0.75
+	game.session.health = health_before_fatigue
+	game.session.changed.emit()
+	game._update_fatigue(2.0)
 	work.get_node("%SourceNote").activated.emit()
 	_check(popup.visible, "Desk note reopens the same source")
 	popup.primary_pressed.emit()
@@ -363,6 +433,29 @@ func _test_scenes() -> void:
 		popup.primary_pressed.emit()
 	_check(game.session.combo_count == 2 and "×1.25" in work.get_node("%Combo").text, "Left-hand combo panel follows actual publications")
 	await _capture("14_combo")
+	game.session.reset(42)
+	game.session.start_shift()
+	game.session.reputation = 10000
+	game.session.loyalty = 10000
+	game.session.balance.maximum_stat = 10000
+	for i in range(10):
+		popup.primary_pressed.emit() # Fold source.
+		work.cards[0].pressed.emit()
+		popup.primary_pressed.emit() # Confirm publication.
+		if i < 9:
+			popup.primary_pressed.emit() # Next source.
+	_check("10 / 10" in work.get_node("%ArticleNumber").text, "Desk counter reaches the configured capacity")
+	_check("В текущем выпуске газеты недостаточно места для новых публикаций" in popup.body_label.text, "Full issue explains why publishing has stopped")
+	_check(popup.primary_button.text == "Сдать выпуск и пойти домой", "Final feedback offers to complete the shift")
+	game.session.balance.maximum_stat = 100
+	game.session.reputation = 65
+	game.session.loyalty = 65
+	game.session.changed.emit()
+	await _capture("15_full_issue")
+	popup.primary_pressed.emit()
+	_check(game.view == game.View.HOME and game.session.article_cursor == 10, "Full issue button goes home without consuming the next story")
+	game._update_fatigue(1.0)
+	_check(not overlay.visible, "Home has no work fatigue shader")
 	for ending in [NewsroomSession.Ending.EXHAUSTION, NewsroomSession.Ending.OFFICE_FIRE, NewsroomSession.Ending.ARREST, NewsroomSession.Ending.DEBT]:
 		game.session.reset(42)
 		game.session.start_shift()

@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://Scripts/mvp_game.gd" id="1"]
 [ext_resource type="PackedScene" path="res://Scenes/newsroom_hud.tscn" id="2"]
@@ -6,6 +6,11 @@
 [ext_resource type="PackedScene" path="res://Scenes/home_screen.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://Scenes/message_panel.tscn" id="5"]
 [ext_resource type="Script" path="res://Scripts/placeholder_visual.gd" id="6"]
+[ext_resource type="Shader" path="res://Shaders/fatigue.gdshader" id="7_fatigue"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fatigue"]
+resource_local_to_scene = true
+shader = ExtResource("7_fatigue")
 
 [node name="MVPGame" type="Control"]
 layout_mode = 3
@@ -191,6 +196,18 @@ layout_mode = 1
 [node name="Home" parent="Padding/Layout/Stage" instance=ExtResource("4")]
 unique_name_in_owner = true
 layout_mode = 1
+
+[node name="FatigueOverlay" type="ColorRect" parent="."]
+visible = false
+z_index = 90
+material = SubResource("ShaderMaterial_fatigue")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="PausePanel" parent="." instance=ExtResource("5")]
 layout_mode = 1
