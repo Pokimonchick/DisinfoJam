@@ -5,9 +5,10 @@ signal changed
 signal phase_changed
 signal article_changed
 signal published(result: Dictionary)
+signal save_requested
 
 enum Phase { IDLE, WORK, HOME, ENDED }
-enum Ending { NONE, EXHAUSTION, OFFICE_FIRE, ARREST, DEBT }
+enum Ending { NONE, EXHAUSTION, OFFICE_FIRE, ARREST, DEBT, VICTORY, GOAL_MISSED }
 
 var balance: NewsroomBalance = preload("res://Data/mvp_balance.tres")
 var articles: Array[NewsArticle] = []
@@ -35,6 +36,14 @@ var completed_shifts: int = 0
 var journal: Array[Dictionary] = []
 var last_shift: Dictionary = {}
 var last_result: Dictionary = {}
+var player_name: String = "Редактор"
+var player_id: String = ""
+var run_id: String = ""
+var mode: String = "campaign"
+var campaign_days: int = 5
+var campaign_money: int = 200
+var campaign_completed: bool = false
+var endless_unlocked: bool = false
 var _rng := RandomNumberGenerator.new()
 
 
@@ -44,6 +53,11 @@ func reset(seed_value: int = -1) -> void:
 	else:
 		_rng.seed = seed_value
 	articles = preload("res://Data/article_catalog.gd").create_articles()
+	mode = "campaign"
+	campaign_days = balance.campaign_days
+	campaign_money = balance.campaign_money
+	campaign_completed = false
+	endless_unlocked = false
 	phase = Phase.IDLE
 	ending = Ending.NONE
 	health = balance.starting_health
@@ -90,6 +104,7 @@ func start_shift() -> void:
 	changed.emit()
 	phase_changed.emit()
 	article_changed.emit()
+	save_requested.emit()
 
 
 func tick_work(delta: float) -> void:
@@ -154,6 +169,7 @@ func publish_headline(display_index: int) -> bool:
 	changed.emit()
 	if not _check_ending():
 		published.emit(last_result)
+	save_requested.emit()
 	return true
 
 
@@ -165,6 +181,7 @@ func acknowledge_publication() -> void:
 		finish_shift()
 		return
 	article_changed.emit()
+	save_requested.emit()
 
 
 func publication_limit_reached() -> bool:
@@ -183,8 +200,17 @@ func finish_shift() -> void:
 	changed.emit()
 	if _check_ending():
 		return
+	if mode == "campaign" and completed_shifts >= campaign_days:
+		campaign_completed = money >= campaign_money
+		endless_unlocked = campaign_completed
+		ending = Ending.VICTORY if campaign_completed else Ending.GOAL_MISSED
+		phase = Phase.ENDED
+		phase_changed.emit()
+		save_requested.emit()
+		return
 	phase = Phase.HOME
 	phase_changed.emit()
+	save_requested.emit()
 
 
 func buy_food(full_meal: bool) -> bool:
@@ -195,6 +221,7 @@ func buy_food(full_meal: bool) -> bool:
 	health = minf(balance.maximum_stat, health + (balance.meal_health if full_meal else balance.snack_health))
 	changed.emit()
 	_check_ending()
+	save_requested.emit()
 	return true
 
 
@@ -205,6 +232,7 @@ func buy_coffee() -> bool:
 	money -= balance.coffee_price
 	changed.emit()
 	_check_ending()
+	save_requested.emit()
 	return true
 
 
@@ -218,6 +246,7 @@ func drink_coffee() -> bool:
 	health = maxf(0.0, health - balance.coffee_health_cost)
 	changed.emit()
 	_check_ending()
+	save_requested.emit()
 	return true
 
 
@@ -243,6 +272,7 @@ func _check_ending() -> bool:
 	phase = Phase.ENDED
 	awaiting_acknowledgement = false
 	phase_changed.emit()
+	save_requested.emit()
 	return true
 
 

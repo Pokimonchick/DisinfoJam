@@ -61,6 +61,11 @@ size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 15
 horizontal_alignment = 2
 
+[node name="CampaignGoal" type="Label" parent="Padding/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+
 [node name="PauseButton" type="Button" parent="Padding/Layout/Header" unique_id=1412060397]
 unique_name_in_owner = true
 layout_mode = 2
@@ -97,7 +102,7 @@ script = ExtResource("6")
 [node name="Text" type="VBoxContainer" parent="Padding/Layout/Stage/Menu/Card" unique_id=163955573]
 custom_minimum_size = Vector2(610, 0)
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 12
 
 [node name="Kicker" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=1587473370]
 layout_mode = 2
@@ -111,11 +116,25 @@ theme_override_font_sizes/font_size = 64
 text = "ДО ПЕЧАТИ"
 
 [node name="Description" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=1236143359]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Три заголовка. Три минуты.
 Репутация, государство и собственная жизнь.
 За каждое слово кто-нибудь заплатит."
+
+[node name="ContinueGame" type="Button" parent="Padding/Layout/Stage/Menu/Card/Text"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "ПРОДОЛЖИТЬ"
+
+[node name="SaveSummary" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+autowrap_mode = 3
 
 [node name="NewGame" type="Button" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=1856127047]
 unique_name_in_owner = true
@@ -134,8 +153,59 @@ text = "Выйти"
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "Мышь — выбор  ·  Esc — пауза
-32 материала в общей очереди. Игра продолжается до одной из четырёх концовок."
+Прогресс сохраняется автоматически."
 autowrap_mode = 3
+
+[node name="ProfileSetup" type="CenterContainer" parent="Padding/Layout/Stage"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Padding/Layout/Stage/ProfileSetup"]
+custom_minimum_size = Vector2(610, 0)
+layout_mode = 2
+
+[node name="Form" type="VBoxContainer" parent="Padding/Layout/Stage/ProfileSetup/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Title" type="Label" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Как тебя записать?"
+
+[node name="Label" type="Label" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
+layout_mode = 2
+text = "Имя игрока останется в этом прохождении."
+
+[node name="PlayerName" type="LineEdit" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+max_length = 24
+placeholder_text = "Имя игрока"
+
+[node name="NewRunWarning" type="Label" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+autowrap_mode = 3
+
+[node name="StartStory" type="Button" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+text = "Начать историю"
+
+[node name="CancelStory" type="Button" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Назад"
 
 [node name="Narrative" type="PanelContainer" parent="Padding/Layout/Stage" unique_id=1176842582]
 unique_name_in_owner = true
@@ -230,3 +300,30 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.065, 0.125, 0.145, 1)
+
+[node name="SaveNotice" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+z_index = 105
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = -40.0
+offset_right = -28.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.67, 0.5, 1)
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
+
+[node name="QuitWithoutSave" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "Не удалось сохранить"
+dialog_text = "Прогресс после последнего сохранения будет потерян. Выйти без сохранения?"
+ok_button_text = "Выйти без сохранения"
+cancel_button_text = "Остаться в игре"

@@ -302,6 +302,9 @@ func _test_combos() -> void:
 	_check(s.combo_count == 0 and s.combo_type == -1, "New run resets combo")
 
 func _test_scenes() -> void:
+	# Never overwrite a real player's campaign while running UI tests.
+	var test_save_path := "user://mvp_test_%d/campaign.json" % Time.get_ticks_usec()
+	root.get_node("GameState").save_store = SaveRepository.new(test_save_path)
 	var packed := load("res://Scenes/mvp_game.tscn") as PackedScene
 	_check(packed != null, "The playable scene loads")
 	if packed == null:
@@ -310,6 +313,7 @@ func _test_scenes() -> void:
 	root.add_child(game)
 	await process_frame
 	game.session.balance = game.session.balance.duplicate() as NewsroomBalance
+	game.session.balance.starting_health = 80.0
 	game.session.balance.shift_seconds = 180.0
 	game.session.balance.coffee_bonus_seconds = 60.0
 	game.session.balance.publication_limit = 10
@@ -317,6 +321,9 @@ func _test_scenes() -> void:
 	game.session.balance.fatigue_strength = 0.75
 	await _capture("01_menu")
 	game.get_node("%NewGame").pressed.emit()
+	_check(game.view == game.View.PROFILE, "New story opens the player name form")
+	game.get_node("%PlayerName").text = "Тест"
+	game.get_node("%StartStory").pressed.emit()
 	_check(game.view == game.View.INTRO, "New game opens the prologue")
 	await _capture("02_prologue")
 	game.get_node("%NarrativePrimary").pressed.emit()
@@ -445,7 +452,7 @@ func _test_scenes() -> void:
 		popup.primary_pressed.emit() # Confirm publication.
 		if i < 9:
 			popup.primary_pressed.emit() # Next source.
-	_check("10 / 10" in work.get_node("%ArticleNumber").text, "Desk counter reaches the configured capacity")
+	_check(game.session.published_today == game.session.balance.publication_limit, "Issue reaches the configured capacity")
 	_check("В текущем выпуске газеты недостаточно места для новых публикаций" in popup.body_label.text, "Full issue explains why publishing has stopped")
 	_check(popup.primary_button.text == "Сдать выпуск и пойти домой", "Final feedback offers to complete the shift")
 	game.session.balance.maximum_stat = 100
@@ -469,7 +476,10 @@ func _test_scenes() -> void:
 		_check(game.view == game.View.ENDING and not game.get_node("%NarrativeTitle").text.is_empty(), "Ending screen loads: %d" % ending)
 		await _capture("ending_%d" % ending)
 	game.get_node("%NarrativePrimary").pressed.emit()
-	_check(game.view == game.View.WORK and game.session.day == 1, "Retry button starts a fresh playable run")
+	_check(game.view == game.View.PROFILE, "Retry opens a new named story")
+	game.get_node("%StartStory").pressed.emit()
+	game.get_node("%NarrativeSecondary").pressed.emit()
+	_check(game.view == game.View.WORK and game.session.day == 1, "New named story can skip to work")
 	game.get_node("%PauseButton").pressed.emit()
 	game.get_node("PausePanel").secondary_pressed.emit()
 	time_before = game.session.time_left
@@ -477,3 +487,6 @@ func _test_scenes() -> void:
 	_check(game.view == game.View.MENU and game.session.time_left == time_before, "Abandoned run cannot tick behind the menu")
 	game.queue_free()
 	await process_frame
+	for suffix in ["", ".bak", ".tmp"]:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(test_save_path + suffix))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(test_save_path.get_base_dir()))

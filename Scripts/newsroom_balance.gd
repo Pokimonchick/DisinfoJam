@@ -1,6 +1,10 @@
 class_name NewsroomBalance
 extends Resource
 
+@export_group("Цель кампании")
+@export_range(1, 100, 1) var campaign_days: int = 5
+@export_range(0, 100000, 5) var campaign_money: int = 200
+
 @export_group("Смена")
 @export_range(5.0, 600.0) var shift_seconds: float = 180.0
 @export_range(1, 100, 1) var publication_limit: int = 10
