@@ -26,16 +26,6 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("2_surface")
 
-[node name="ArticleNumber" type="Label" parent="."]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 282.0
-offset_top = 91.0
-offset_right = 700.0
-offset_bottom = 121.0
-theme_override_colors/font_color = Color(0.91, 0.74, 0.41, 1)
-theme_override_font_sizes/font_size = 16
-
 [node name="Instruction" type="Label" parent="."]
 layout_mode = 0
 offset_left = 45.0

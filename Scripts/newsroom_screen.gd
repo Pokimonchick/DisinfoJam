@@ -31,7 +31,6 @@ func bind(model: NewsroomSession) -> void:
 func _refresh_desk() -> void:
 	if session == null:
 		return
-	%ArticleNumber.text = "ВЫПУСК %02d · ПУБЛИКАЦИИ %d / %d" % [session.day, session.published_today, session.balance.publication_limit]
 	var cup: Control = %Coffee
 	# The stained sheet is permanent desk dressing. A purchased cup is drawn
 	# over it until the player drinks it.
@@ -41,7 +40,7 @@ func _refresh_desk() -> void:
 	cup.set_content("", "", "Выпить: +%d сек., −%d выносливости" % [int(session.balance.coffee_bonus_seconds), int(session.balance.coffee_health_cost)])
 	%CoffeeHint.text = "ВЫПИТЬ КОФЕ\n+%d сек. / −%d сил" % [int(session.balance.coffee_bonus_seconds), int(session.balance.coffee_health_cost)] if session.coffee_ready else ""
 	if session.combo_count == 0:
-		%Combo.text = "КОМБО\nНачните серию\nзаголовков одного типа.\nМаксимум ×%.2f" % session.balance.combo_max_multiplier
+		%Combo.text = "КОМБО\nНачните серию\nзаголовков одного типа."
 	else:
 		%Combo.text = "%s\n%d подряд  ·  ×%.2f\nСледующий такой: ×%.2f\nУсиливаются и штрафы!" % [HeadlineOption.TYPE_NAMES[session.combo_type], session.combo_count, session.combo_multiplier(), session.combo_multiplier(session.combo_count + 1)]
 
@@ -83,7 +82,7 @@ func _select_headline(index: int) -> void:
 	selected_index = index
 	popup_kind = DialogKind.CONFIRM
 	_set_headline_cards_visible(false)
-	popup.present("ПЕРЕД ОТПРАВКОЙ В ПЕЧАТЬ", session.option_at(index).text, "Именно этот заголовок увидят читатели. Числовые последствия станут известны после публикации.\n\nВы ещё можете вернуться к вариантам или перечитать источник.", "Напечатать", "Вернуться к вариантам")
+	popup.present("ПЕРЕД ОТПРАВКОЙ В ПЕЧАТЬ", session.option_at(index).text, "", "Напечатать", "Вернуться к вариантам")
 
 func _on_primary() -> void:
 	if session.phase != NewsroomSession.Phase.WORK:

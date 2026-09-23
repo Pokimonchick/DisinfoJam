@@ -18,7 +18,9 @@ func present(tag: String, title: String, body: String, primary: String, secondar
 	tag_label.text = tag
 	title_label.text = title
 	body_label.text = body
-	body_label.scroll_to_line(0)
+	body_label.visible = not body.is_empty()
+	if body_label.visible:
+		body_label.scroll_to_line(0)
 	primary_button.text = primary
 	secondary_button.text = secondary
 	secondary_button.visible = not secondary.is_empty()
