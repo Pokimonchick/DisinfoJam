@@ -147,7 +147,7 @@ func _show_view(next: View) -> void:
 	home.visible = view == View.HOME
 	%HUD.visible = view in [View.WORK, View.HOME, View.ENDING]
 	%PauseButton.visible = view in [View.WORK, View.HOME]
-	%Location.text = {View.MENU: "НЕЗАВИСИМАЯ РЕДАКЦИЯ", View.INTRO: "НОВАЯ РАБОТА", View.TUTORIAL: "ПЕРЕД ПЕРВОЙ СМЕНОЙ", View.WORK: "", View.HOME: "СЪЁМНАЯ КОМНАТА", View.ENDING: "ПОСЛЕДНИЙ ВЫПУСК"}[view]
+	%Location.text = {View.MENU: "НЕЗАВИСИМАЯ РЕДАКЦИЯ", View.INTRO: "НОВАЯ РАБОТА", View.TUTORIAL: "ПЕРЕД ПЕРВОЙ СМЕНОЙ", View.WORK: "РАБОЧИЙ СТОЛ", View.HOME: "СЪЁМНАЯ КОМНАТА", View.ENDING: "ПОСЛЕДНИЙ ВЫПУСК"}[view]
 	if _fade_tween:
 		_fade_tween.kill()
 	transitioning = true
