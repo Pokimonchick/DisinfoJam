@@ -5,9 +5,13 @@ enum DialogKind { NONE, SOURCE, CONFIRM, RESULT }
 var session: NewsroomSession
 var selected_index: int = -1
 var popup_kind: DialogKind = DialogKind.NONE
+var _shown_combo_count: int = -1
+var _shown_combo_type: int = -1
+var _combo_tween: Tween
 @onready var cards: Array[Button] = [%Headline1, %Headline2, %Headline3]
 @onready var popup: MessagePanel = $MessagePanel
 @onready var source_note: Control = %SourceNote
+@onready var combo_burst: Control = %ComboBurst
 
 func _ready() -> void:
 	for i in cards.size():
@@ -39,10 +43,31 @@ func _refresh_desk() -> void:
 	cup.kind = 2 if session.coffee_ready else 3
 	cup.set_content("", "", "Выпить: +%d сек., −%d выносливости" % [int(session.balance.coffee_bonus_seconds), int(session.balance.coffee_health_cost)])
 	%CoffeeHint.text = "ВЫПИТЬ КОФЕ\n+%d сек. / −%d сил" % [int(session.balance.coffee_bonus_seconds), int(session.balance.coffee_health_cost)] if session.coffee_ready else ""
-	if session.combo_count == 0:
-		%Combo.text = "КОМБО\nНачните серию\nзаголовков одного типа."
-	else:
-		%Combo.text = "%s\n%d подряд  ·  ×%.2f\nСледующий такой: ×%.2f\nУсиливаются и штрафы!" % [HeadlineOption.TYPE_NAMES[session.combo_type], session.combo_count, session.combo_multiplier(), session.combo_multiplier(session.combo_count + 1)]
+	_refresh_combo()
+
+func _refresh_combo() -> void:
+	if session.combo_count == _shown_combo_count and session.combo_type == _shown_combo_type:
+		return
+	_shown_combo_count = session.combo_count
+	_shown_combo_type = session.combo_type
+	if _combo_tween and _combo_tween.is_valid():
+		_combo_tween.kill()
+	if session.combo_count < 2:
+		if not combo_burst.visible:
+			return
+		_combo_tween = create_tween().set_parallel(true)
+		_combo_tween.tween_property(combo_burst, "modulate:a", 0.0, 0.18)
+		_combo_tween.tween_property(combo_burst, "scale", Vector2(0.85, 0.85), 0.18)
+		_combo_tween.chain().tween_callback(combo_burst.hide)
+		return
+	%Combo.text = "КОМБО ×%.2f" % session.combo_multiplier()
+	%ComboDetail.text = "%s · %d ПОДРЯД" % [HeadlineOption.TYPE_NAMES[session.combo_type], session.combo_count]
+	combo_burst.show()
+	combo_burst.modulate.a = 0.0
+	combo_burst.scale = Vector2(1.25, 1.25)
+	_combo_tween = create_tween().set_parallel(true)
+	_combo_tween.tween_property(combo_burst, "modulate:a", 1.0, 0.26)
+	_combo_tween.tween_property(combo_burst, "scale", Vector2.ONE, 0.26).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func _drink_coffee() -> void:
 	if popup.visible:

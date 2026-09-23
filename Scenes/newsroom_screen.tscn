@@ -141,20 +141,42 @@ mouse_default_cursor_shape = 2
 text = "СДАТЬ ВЫПУСК\nЗакончить смену"
 theme_override_font_sizes/font_size = 16
 
-[node name="ComboPanel" type="PanelContainer" parent="."]
+[node name="ComboBurst" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
 layout_mode = 0
 offset_left = 26.0
 offset_top = 43.0
-offset_right = 258.0
-offset_bottom = 179.0
+offset_right = 366.0
+offset_bottom = 143.0
+rotation = -0.04
 mouse_filter = 2
+z_index = 60
+pivot_offset = Vector2(0, 50)
 
-[node name="Combo" type="Label" parent="ComboPanel"]
+[node name="Combo" type="Label" parent="ComboBurst"]
 unique_name_in_owner = true
-layout_mode = 2
+layout_mode = 0
+offset_right = 340.0
+offset_bottom = 56.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(1, 0.82, 0.43, 1)
+theme_override_colors/font_outline_color = Color(0.13, 0.11, 0.12, 1)
+theme_override_constants/outline_size = 6
+
+[node name="ComboDetail" type="Label" parent="ComboBurst"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 18.0
+offset_top = 53.0
+offset_right = 340.0
+offset_bottom = 88.0
 mouse_filter = 2
 theme_override_font_sizes/font_size = 17
-theme_override_colors/font_color = Color(0.91, 0.74, 0.41, 1)
+theme_override_colors/font_color = Color(1, 0.93, 0.74, 1)
+theme_override_colors/font_outline_color = Color(0.13, 0.11, 0.12, 1)
+theme_override_constants/outline_size = 4
 
 [node name="MessagePanel" parent="." instance=ExtResource("6_message")]
 layout_mode = 1
