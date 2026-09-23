@@ -104,13 +104,13 @@ func _test_day_cycle() -> void:
 	var before_sleep := s.health
 	s.start_shift()
 	_check(s.day == 2 and s.time_left == 180.0 and s.coffee_ready, "Coffee arrives as inventory without extending the shift")
-	_check(s.health == before_sleep, "Mandatory sleep does not restore health")
+	_check(s.health == minf(s.balance.maximum_stat, before_sleep + s.balance.sleep_health), "Sleep restores stamina without exceeding the maximum")
 	_check(s.current_article().id == article_id and s.option_order == order, "Unpublished article and options survive overnight")
 	_check(not s.buy_food(true) and not s.buy_coffee(), "Shopping is restricted to the evening")
 	s.tick_work(20.0)
 	var health_before_cup := s.health
 	_check(s.drink_coffee() and s.time_left == 220.0 and s.shift_length == 240.0, "Drinking adds one minute to remaining time")
-	_check(s.health == health_before_cup - 8.0 and not s.coffee_ready and s.coffee_used_today, "Drinking spends health and leaves a stain")
+	_check(s.health == health_before_cup - 15.0 and not s.coffee_ready and s.coffee_used_today, "Drinking spends 15 stamina and leaves a stain")
 	_check(not s.drink_coffee() and s.time_left == 220.0, "Repeated coffee click cannot stack the bonus")
 	s.tick_work(240.0)
 	s.start_shift()
@@ -221,7 +221,7 @@ func _test_endings() -> void:
 	s = _fresh()
 	s.start_shift()
 	s.finish_shift()
-	s.health = 8
+	s.health = 4
 	s.buy_coffee()
 	_check(s.phase == NewsroomSession.Phase.HOME, "Coffee purchase does not cause exhaustion")
 	s.start_shift()
@@ -413,7 +413,8 @@ func _test_scenes() -> void:
 	game.get_node("PausePanel").primary_pressed.emit()
 	home.tick_home(1.0)
 	_check(game.session.day == 2 and game.session.shift_length == 180.0, "Bed starts a normal shift with a carried cup")
-	_check(game.session.health == health_before, "Bed UI does not heal")
+	_check(game.session.health == minf(game.session.balance.maximum_stat, health_before + game.session.balance.sleep_health), "Bed UI restores stamina after sleeping")
+	var health_after_sleep: float = game.session.health
 	await create_timer(0.25).timeout
 	var cup: Control = work.get_node("%Coffee")
 	_check(cup.visible and cup.interactive, "Purchased cup appears on the desk")
@@ -426,7 +427,7 @@ func _test_scenes() -> void:
 	_click_at(cup)
 	_check(is_equal_approx(game.session.time_left, time_before + 60.0), "A real desk cup click adds exactly 60 seconds")
 	_check(cup.kind == 3 and not cup.interactive and game.session.coffee_used_today, "Used cup becomes a noninteractive coffee ring")
-	_check(game.session.health <= health_before - 8.0, "Drinking applies the stamina penalty")
+	_check(game.session.health <= health_after_sleep - 15.0, "Drinking applies the 15 stamina penalty")
 	await _capture("13_coffee_stain")
 	# Two consecutive sensations through the real confirmation flow.
 	for i in range(2):

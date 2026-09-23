@@ -91,6 +91,8 @@ func start_shift() -> void:
 		return
 	if articles.is_empty() or _check_ending():
 		return
+	if phase == Phase.HOME:
+		health = minf(balance.maximum_stat, health + balance.sleep_health)
 	day += 1
 	shift_length = balance.shift_seconds
 	coffee_used_today = false

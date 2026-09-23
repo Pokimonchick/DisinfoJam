@@ -32,9 +32,10 @@ extends Resource
 @export_group("Вечер")
 @export var rent: int = 45
 @export var debt_limit: int = -100
+@export_range(0.0, 100.0, 1.0) var sleep_health: float = 10.0
 @export var meal_price: int = 25
 @export var meal_health: float = 35.0
 @export var snack_price: int = 12
 @export var snack_health: float = 15.0
 @export var coffee_price: int = 15
-@export var coffee_health_cost: float = 8.0
+@export var coffee_health_cost: float = 15.0

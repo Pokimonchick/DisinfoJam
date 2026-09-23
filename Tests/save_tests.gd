@@ -105,6 +105,14 @@ func _test_files() -> void:
 func _test_campaign() -> void:
 	var session := fresh()
 	session.start_shift()
+	session.health = 25.0
+	session.finish_shift()
+	session.start_shift()
+	check(session.health == 35.0, "Sleep recovery is applied once when the next shift begins")
+	var after_sleep := fresh()
+	check(NewsroomSaveData.restore(after_sleep, NewsroomSaveData.capture(session)) and after_sleep.health == 35.0, "Sleep recovery survives saving without being applied again")
+	session = fresh()
+	session.start_shift()
 	session.completed_shifts = 4
 	session.day = 5
 	session.money = session.campaign_money + session.balance.rent

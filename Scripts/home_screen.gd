@@ -34,7 +34,7 @@ func refresh() -> void:
 		return
 	var b := session.balance
 	%Summary.text = "ДОМА  /  СМЕНА %02d     Напечатано: %d  ·  Доход: %d $  ·  Аренда: −%d $" % [session.day, session.published_today, session.earned_today, b.rent]
-	%BedCaption.text = "КРОВАТЬ\nСон → смена %d" % (session.day + 1)
+	%BedCaption.text = "КРОВАТЬ · +%d сил\nСон → смена %d" % [int(b.sleep_health), session.day + 1]
 	%CoffeeCaption.text = "КОФЕ · %d $\nВзять с собой: +%d сек. на смене" % [b.coffee_price, int(b.coffee_bonus_seconds)]
 	if session.coffee_ready:
 		%CoffeeCaption.text = "КОФЕ УПАКОВАН\nЧашка ждёт на рабочем столе"
@@ -51,7 +51,7 @@ func refresh() -> void:
 	room.food_stocked = session.food_stocked
 	room.coffee_packed = session.coffee_ready
 	room.tired = session.health < 40
-	%DebtHint.text = "Покупки в долг разрешены до %d $. Сон завершает вечер и не восстанавливает силы.\nНепотраченный кофе остаётся с вами до следующей смены." % b.debt_limit
+	%DebtHint.text = "Покупки в долг разрешены до %d $. Сон восстанавливает до %d выносливости.\nНепотраченный кофе остаётся с вами до следующей смены." % [b.debt_limit, int(b.sleep_health)]
 	room.queue_redraw()
 
 func _hover(target: String) -> void:
@@ -71,7 +71,7 @@ func _sleep() -> void:
 	_sleep_left = 0.85
 	room.sleeping = true
 	room.hovered = ""
-	%Notice.text = "Тихой ночи. Завтра снова в редакцию…"
+	%Notice.text = "Тихой ночи. После сна восстановятся силы, а завтра снова в редакцию…"
 	refresh()
 
 # The controller advances sleep only while home is visible and unpaused.
