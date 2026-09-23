@@ -188,7 +188,3 @@ text = "НАГРАДЫ И ШТРАФЫ УСИЛЕНЫ"
 [node name="MessagePanel" parent="." unique_id=412104154 instance=ExtResource("6_message")]
 z_index = 50
 layout_mode = 1
-
-[node name="MessagePanel2" parent="." unique_id=1483054316 instance=ExtResource("6_message")]
-z_index = 50
-layout_mode = 1
