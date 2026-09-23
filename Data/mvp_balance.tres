@@ -4,6 +4,6 @@
 
 [resource]
 script = ExtResource("1_balance")
-shift_seconds = 9.049
+shift_seconds = 60.0
 fatigue_strength = 0.6
 starting_health = 30.0
