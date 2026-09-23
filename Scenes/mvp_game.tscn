@@ -152,7 +152,7 @@ text = "Выйти"
 [node name="Hint" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=578268836]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Мышь — выбор  ·  Esc — пауза
+text = "Мышь — выбор  ·  Esc — пауза  ·  F11 — экран
 Прогресс сохраняется автоматически."
 autowrap_mode = 3
 

@@ -106,6 +106,10 @@ func _update_fatigue(delta: float) -> void:
 	effect.set_shader_parameter("effect_time", _fatigue_time)
 
 func _unhandled_key_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F11:
+		get_window().mode = Window.MODE_MAXIMIZED if get_window().mode in [Window.MODE_FULLSCREEN, Window.MODE_EXCLUSIVE_FULLSCREEN] else Window.MODE_FULLSCREEN
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("ui_cancel") and view == View.PROFILE:
 		_show_menu()
 		get_viewport().set_input_as_handled()
