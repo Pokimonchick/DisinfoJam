@@ -41,9 +41,12 @@ func _point_at(control: Control) -> void:
 	await process_frame
 
 func _click_at(control: Control) -> void:
+	_click_point(control.get_global_rect().get_center())
+
+func _click_point(point: Vector2) -> void:
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
-	click.position = control.get_global_rect().get_center()
+	click.position = point
 	click.global_position = click.position
 	click.pressed = true
 	root.push_input(click, true)
@@ -334,7 +337,7 @@ func _test_scenes() -> void:
 	await create_timer(0.3).timeout
 	_check(game.view == game.View.WORK, "The complete tutorial starts work")
 	var work := game.get_node("%Work")
-	var popup := work.get_node("MessagePanel")
+	var popup := work.get_node("DeskFocus")
 	var finish_button: Button = work.get_node("%FinishShift")
 	var finish_rect: Rect2 = finish_button.get_global_rect()
 	var work_rect: Rect2 = (work as Control).get_global_rect()
@@ -342,10 +345,20 @@ func _test_scenes() -> void:
 	var permanent_stain: Control = work.get_node("%Coffee")
 	_check(permanent_stain.visible and permanent_stain.kind == 3 and not permanent_stain.interactive, "Stained paper is always on the desk without a free cup")
 	_check(work.get_node("%CoffeeHint").text.is_empty(), "Permanent coffee ring has no literal status caption")
-	_check(popup.visible and work.popup_kind == work.DialogKind.SOURCE, "Each new source opens automatically")
+	_check(not popup.active and work.get_node("%SourceNote").visible, "A new source waits on the desk")
+	work.get_node("%SourceNote").activated.emit()
+	_check(popup.active and not work.get_node("%SourceNote").visible, "Clicking the note enlarges it in place")
+	await create_timer(0.3).timeout
+	_check(root.get_visible_rect().encloses(popup.get_global_rect()), "Enlarged note and its close controls fit on screen")
 	await _capture("04_source")
-	popup.primary_pressed.emit()
-	_check(not popup.visible, "Source can immediately be folded away")
+	popup.get_node("%Close").pressed.emit()
+	_check(not popup.active, "The visible close button folds the note away")
+	await create_timer(0.23).timeout
+	_check(work.get_node("%SourceNote").visible, "The source note returns to its desk position")
+	work.get_node("%SourceNote").activated.emit()
+	_click_point(work.get_global_rect().position + Vector2(12, 12))
+	_check(not popup.active, "Clicking empty space closes the enlarged note")
+	await create_timer(0.23).timeout
 	await _capture("05_headlines")
 	var overlay: ColorRect = game.get_node("FatigueOverlay")
 	game._update_fatigue(1.0)
@@ -371,7 +384,7 @@ func _test_scenes() -> void:
 	game.session.changed.emit()
 	game._update_fatigue(2.0)
 	work.get_node("%SourceNote").activated.emit()
-	_check(popup.visible, "Desk note reopens the same source")
+	_check(popup.active, "Desk note reopens the same source")
 	popup.primary_pressed.emit()
 	work.get_node("%Headline1").pressed.emit()
 	_check(work.popup_kind == work.DialogKind.CONFIRM, "A headline requires explicit confirmation")
@@ -422,13 +435,13 @@ func _test_scenes() -> void:
 	await create_timer(0.25).timeout
 	var cup: Control = work.get_node("%Coffee")
 	_check(cup.visible and cup.interactive, "Purchased cup appears on the desk")
-	cup.activated.emit()
-	_check(game.session.coffee_ready, "Source overlay prevents drinking through the modal")
-	popup.primary_pressed.emit()
+	work.get_node("%SourceNote").activated.emit()
+	_check(popup.active, "The source can remain open while desk objects are used")
 	await _capture("12_coffee_ready")
 	await _point_at(cup)
 	time_before = game.session.time_left
 	_click_at(cup)
+	_check(not popup.active, "Clicking another desk object folds the note away")
 	_check(is_equal_approx(game.session.time_left, time_before + 60.0), "A real desk cup click adds exactly 60 seconds")
 	_check(cup.kind == 3 and not cup.interactive and game.session.coffee_used_today, "Used cup becomes a noninteractive coffee ring")
 	_check(game.session.health <= health_after_sleep - 15.0, "Drinking applies the 15 stamina penalty")
@@ -443,7 +456,7 @@ func _test_scenes() -> void:
 		work.cards[choice].pressed.emit()
 		popup.primary_pressed.emit()
 		popup.primary_pressed.emit()
-		popup.primary_pressed.emit()
+		await create_timer(0.23).timeout
 	_check(game.session.combo_count == 2 and "×1.25" in work.get_node("%Combo").text, "Left-hand combo panel follows actual publications")
 	await _capture("14_combo")
 	game.session.reset(42)
@@ -452,11 +465,11 @@ func _test_scenes() -> void:
 	game.session.loyalty = 10000
 	game.session.balance.maximum_stat = 10000
 	for i in range(10):
-		popup.primary_pressed.emit() # Fold source.
 		work.cards[0].pressed.emit()
 		popup.primary_pressed.emit() # Confirm publication.
 		if i < 9:
-			popup.primary_pressed.emit() # Next source.
+			popup.primary_pressed.emit() # Fold the result, then advance.
+			await create_timer(0.23).timeout
 	_check(game.session.published_today == game.session.balance.publication_limit, "Issue reaches the configured capacity")
 	_check("В текущем выпуске газеты недостаточно места для новых публикаций" in popup.body_label.text, "Full issue explains why publishing has stopped")
 	_check(popup.primary_button.text == "Сдать выпуск и пойти домой", "Final feedback offers to complete the shift")
@@ -466,6 +479,7 @@ func _test_scenes() -> void:
 	game.session.changed.emit()
 	await _capture("15_full_issue")
 	popup.primary_pressed.emit()
+	await create_timer(0.23).timeout
 	_check(game.view == game.View.HOME and game.session.article_cursor == 10, "Full issue button goes home without consuming the next story")
 	game._update_fatigue(1.0)
 	_check(not overlay.visible, "Home has no work fatigue shader")

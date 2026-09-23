@@ -1,0 +1,76 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scripts/desk_focus.gd" id="1_focus"]
+
+[node name="DeskFocus" type="PanelContainer"]
+visible = false
+z_index = 80
+offset_right = 780.0
+offset_bottom = 480.0
+mouse_filter = 0
+script = ExtResource("1_focus")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 24
+
+[node name="Content" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+
+[node name="Tag" type="Label" parent="Margin/Content/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.45, 0.29, 0.17, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="Close" type="Button" parent="Margin/Content/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(42, 42)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.35, 0.22, 0.16, 1)
+theme_override_font_sizes/font_size = 27
+text = "×"
+tooltip_text = "Закрыть лист"
+
+[node name="Title" type="Label" parent="Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.09, 0.17, 0.19, 1)
+theme_override_font_sizes/font_size = 28
+autowrap_mode = 3
+
+[node name="Body" type="RichTextLabel" parent="Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 0
+theme_override_colors/default_color = Color(0.09, 0.17, 0.19, 1)
+theme_override_font_sizes/normal_font_size = 21
+bbcode_enabled = true
+
+[node name="Actions" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Primary" type="Button" parent="Margin/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 2
+
+[node name="Secondary" type="Button" parent="Margin/Content/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_default_cursor_shape = 2

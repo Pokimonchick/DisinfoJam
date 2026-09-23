@@ -11,7 +11,7 @@ var _shown_combo_count: int = -1
 var _shown_combo_type: int = -1
 var _combo_tween: Tween
 @onready var cards: Array[Button] = [%Headline1, %Headline2, %Headline3]
-@onready var popup: MessagePanel = $MessagePanel
+@onready var popup: DeskFocus = $DeskFocus
 @onready var source_note: Control = %SourceNote
 @onready var combo_burst: Control = %ComboBurst
 
@@ -23,8 +23,14 @@ func _ready() -> void:
 	%FinishShift.pressed.connect(_finish_shift)
 	popup.primary_pressed.connect(_on_primary)
 	popup.secondary_pressed.connect(_on_secondary)
-	if popup_kind != DialogKind.NONE:
-		_set_headline_cards_visible(false)
+	popup.close_pressed.connect(_close_focus)
+
+func _input(event: InputEvent) -> void:
+	if not is_visible_in_tree() or not popup.active:
+		return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		if not popup.get_global_rect().has_point(event.position):
+			_close_focus()
 
 func bind(model: NewsroomSession) -> void:
 	session = model
@@ -72,31 +78,29 @@ func _refresh_combo() -> void:
 	_combo_tween.tween_property(combo_burst, "scale", Vector2.ONE, 0.26).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func _drink_coffee() -> void:
-	if popup.visible:
-		return
 	session.drink_coffee()
 
 func show_article() -> void:
 	if session.phase != NewsroomSession.Phase.WORK:
 		return
 	selected_index = -1
-	popup.hide()
+	popup.reset()
+	popup_kind = DialogKind.NONE
 	source_note.call("set_content",
 		session.current_article().source_title,
-		"Источник для материала %02d.\nНаведите, чтобы подсветить. Нажмите, чтобы прочитать." % (session.article_cursor % session.articles.size() + 1),
+		"Источник для материала %02d.\nНажмите, чтобы прочитать." % (session.article_cursor % session.articles.size() + 1),
 		"Прочитать источник: " + session.current_article().source_title
 	)
 	for i in cards.size():
 		cards[i].get_node("Content/Headline").text = session.option_at(i).text
-	show_source()
+	view_changed.emit()
 
 func show_source() -> void:
 	if session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached():
 		return
 	popup_kind = DialogKind.SOURCE
-	_set_headline_cards_visible(false)
 	var article := session.current_article()
-	popup.present("ИСТОЧНИК · ТАЙМЕР ИДЁТ", article.source_title, article.source_text, "Свернуть на стол")
+	popup.present(source_note, "ИСТОЧНИК · ТАЙМЕР ИДЁТ", article.source_title, article.source_text, "Закрыть", "", Vector2(780, 480))
 	view_changed.emit()
 
 func _finish_shift() -> void:
@@ -109,8 +113,7 @@ func _select_headline(index: int) -> void:
 		return
 	selected_index = index
 	popup_kind = DialogKind.CONFIRM
-	_set_headline_cards_visible(false)
-	popup.present("ПЕРЕД ОТПРАВКОЙ В ПЕЧАТЬ", session.option_at(index).text, "", "Напечатать", "Вернуться к вариантам")
+	popup.present(cards[index], "ПЕРЕД ОТПРАВКОЙ В ПЕЧАТЬ", session.option_at(index).text, "", "Напечатать", "Вернуться к вариантам", Vector2(740, 280))
 	view_changed.emit()
 
 func _on_primary() -> void:
@@ -118,31 +121,35 @@ func _on_primary() -> void:
 		return
 	match popup_kind:
 		DialogKind.SOURCE:
-			popup.hide()
-			popup_kind = DialogKind.NONE
-			_set_headline_cards_visible(true)
-			cards[0].grab_focus()
-			view_changed.emit()
+			_close_focus()
 		DialogKind.CONFIRM:
 			session.publish_headline(selected_index)
 		DialogKind.RESULT:
-			session.acknowledge_publication()
+			_close_focus()
 
 func _on_secondary() -> void:
-	popup.hide()
-	popup_kind = DialogKind.NONE
-	_set_headline_cards_visible(true)
-	cards[maxi(selected_index, 0)].grab_focus()
-	view_changed.emit()
+	_close_focus()
+
+func _close_focus() -> void:
+	if not popup.active:
+		return
+	if popup_kind == DialogKind.RESULT:
+		popup.close(func():
+			popup_kind = DialogKind.NONE
+			session.acknowledge_publication()
+		)
+	else:
+		popup_kind = DialogKind.NONE
+		popup.close()
+		view_changed.emit()
 
 func _show_result(result: Dictionary) -> void:
 	popup_kind = DialogKind.RESULT
-	_set_headline_cards_visible(false)
-	var changes := "[color=#e8bd68]%s · серия %d · ×%.2f[/color]\nДеньги: %+d $ · Репутация: %+d · Государство: %+d\nВыносливость: −%.1f\n\n%s" % [HeadlineOption.TYPE_NAMES[result.combo_type], result.combo_count, result.multiplier, result.money, result.reputation, result.loyalty, session.balance.publication_health_cost, result.explanation]
+	var changes := "[color=#78512c]%s · серия %d · ×%.2f[/color]\nДеньги: %+d $ · Репутация: %+d · Государство: %+d\nВыносливость: −%.1f\n\n%s" % [HeadlineOption.TYPE_NAMES[result.combo_type], result.combo_count, result.multiplier, result.money, result.reputation, result.loyalty, session.balance.publication_health_cost, result.explanation]
 	var full_issue := session.publication_limit_reached()
 	if full_issue:
-		changes += "\n\n[color=#e8bd68]В текущем выпуске газеты недостаточно места для новых публикаций.[/color]"
-	popup.present("ВЫПУСК ЗАПОЛНЕН" if full_issue else "НАПЕЧАТАНО · ТАЙМЕР ИДЁТ", result.headline, changes, "Сдать выпуск и пойти домой" if full_issue else "Следующий материал")
+		changes += "\n\n[color=#78512c]В текущем выпуске газеты недостаточно места для новых публикаций.[/color]"
+	popup.present(cards[maxi(selected_index, 0)], "ВЫПУСК ЗАПОЛНЕН" if full_issue else "НАПЕЧАТАНО · ТАЙМЕР ИДЁТ", result.headline, changes, "Сдать выпуск и пойти домой" if full_issue else "Следующий материал", "", Vector2(780, 500))
 	view_changed.emit()
 
 func capture_presentation() -> Dictionary:
@@ -150,18 +157,13 @@ func capture_presentation() -> Dictionary:
 
 func restore_presentation(data: Dictionary) -> void:
 	if session.awaiting_acknowledgement:
+		selected_index = clampi(int(data.get("selected_index", 0)), 0, cards.size() - 1)
 		_show_result(session.last_result)
 		return
 	show_article()
-	var dialog: String = str(data.get("dialog", "source"))
+	var dialog: String = str(data.get("dialog", "none"))
 	var selection: int = int(data.get("selected_index", -1))
-	if dialog == "confirm" and selection >= 0 and selection < cards.size():
+	if dialog == "source":
+		show_source()
+	elif dialog == "confirm" and selection >= 0 and selection < cards.size():
 		_select_headline(selection)
-	elif dialog == "none":
-		popup.hide()
-		popup_kind = DialogKind.NONE
-		_set_headline_cards_visible(true)
-
-func _set_headline_cards_visible(value: bool) -> void:
-	for card in cards:
-		card.visible = value

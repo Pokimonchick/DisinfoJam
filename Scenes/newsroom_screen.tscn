@@ -5,7 +5,7 @@
 [ext_resource type="Script" uid="uid://fecac4b0p57y" path="res://Scripts/desk_prop.gd" id="3_prop"]
 [ext_resource type="PackedScene" path="res://Scenes/headline_card.tscn" id="4_card"]
 [ext_resource type="Script" uid="uid://2d7f24dnyoe6" path="res://Scripts/headline_sheet.gd" id="5_sheet"]
-[ext_resource type="PackedScene" uid="uid://tmr0o4wmncm6" path="res://Scenes/message_panel.tscn" id="6_message"]
+[ext_resource type="PackedScene" path="res://Scenes/desk_focus.tscn" id="6_focus"]
 
 [node name="Newsroom" type="Control" unique_id=565104035]
 layout_mode = 3
@@ -192,6 +192,5 @@ theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 14
 text = "НАГРАДЫ И ШТРАФЫ УСИЛЕНЫ"
 
-[node name="MessagePanel" parent="." unique_id=412104154 instance=ExtResource("6_message")]
-z_index = 50
-layout_mode = 1
+[node name="DeskFocus" parent="." instance=ExtResource("6_focus")]
+layout_mode = 0
