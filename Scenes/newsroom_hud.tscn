@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://Scripts/newsroom_hud.gd" id="1"]
+[ext_resource type="Script" path="res://Scripts/timer_ring.gd" id="2_ring"]
 
 [node name="HUD" type="HBoxContainer"]
 custom_minimum_size = Vector2(0, 88)
@@ -87,16 +88,40 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 28
 
 [node name="TimeGroup" type="VBoxContainer" parent="."]
-custom_minimum_size = Vector2(110, 0)
+custom_minimum_size = Vector2(134, 134)
 layout_mode = 2
-theme_override_constants/separation = 10
 
-[node name="Day" type="Label" parent="TimeGroup"]
+[node name="TimerRing" type="Control" parent="TimeGroup"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(134, 134)
 layout_mode = 2
+mouse_filter = 2
+script = ExtResource("2_ring")
+
+[node name="Day" type="Label" parent="TimeGroup/TimerRing"]
+unique_name_in_owner = true
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -56.0
+offset_top = -34.0
+offset_right = 56.0
+offset_bottom = -9.0
 theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
 
-[node name="Clock" type="Label" parent="TimeGroup"]
+[node name="Clock" type="Label" parent="TimeGroup/TimerRing"]
 unique_name_in_owner = true
-layout_mode = 2
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -58.0
+offset_top = -6.0
+offset_right = 58.0
+offset_bottom = 28.0
 theme_override_font_sizes/font_size = 28
+horizontal_alignment = 1

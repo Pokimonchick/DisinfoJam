@@ -20,8 +20,11 @@ func refresh() -> void:
 	%Money.add_theme_color_override("font_color", Color("ed987e") if session.money < 0 else Color("e8bd68"))
 	%Day.text = "СМЕНА %02d" % session.day
 	var seconds := ceili(session.time_left)
-	%Clock.text = "%02d:%02d" % [seconds / 60, seconds % 60] if session.phase == NewsroomSession.Phase.WORK else ("ФИНАЛ" if session.phase == NewsroomSession.Phase.ENDED else "ВЕЧЕР")
-	%Clock.add_theme_color_override("font_color", Color("ed987e") if seconds <= 30 and session.phase == NewsroomSession.Phase.WORK else Color("eee4cc"))
+	var working := session.phase == NewsroomSession.Phase.WORK
+	%Clock.text = "%02d:%02d" % [seconds / 60, seconds % 60] if working else ("ФИНАЛ" if session.phase == NewsroomSession.Phase.ENDED else "ВЕЧЕР")
+	%Clock.add_theme_color_override("font_color", Color("e85b57") if working and session.time_left <= 10.0 else Color("eee4cc"))
+	%TimerRing.progress = session.time_left / session.shift_length if working and session.shift_length > 0.0 else 0.0
+	%TimerRing.urgent = working and session.time_left <= 10.0
 
 func _set_meter(bar: ProgressBar, label: Label, value: float, color: Color) -> void:
 	bar.max_value = session.balance.maximum_stat

@@ -18,6 +18,7 @@ func _fresh() -> NewsroomSession:
 	# Tests use the production defaults even when a developer temporarily
 	# shortens mvp_balance.tres to inspect the game more quickly.
 	model.balance.shift_seconds = 180.0
+	model.balance.starting_health = 80.0
 	model.balance.coffee_bonus_seconds = 60.0
 	model.balance.publication_limit = 10
 	model.reset(42)
