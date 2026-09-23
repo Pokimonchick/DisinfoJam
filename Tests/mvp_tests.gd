@@ -350,6 +350,8 @@ func _test_scenes() -> void:
 	_check(popup.active and not work.get_node("%SourceNote").visible, "Clicking the note enlarges it in place")
 	await create_timer(0.3).timeout
 	_check(root.get_visible_rect().encloses(popup.get_global_rect()), "Enlarged note and its close controls fit on screen")
+	var source: Control = work.get_node("%SourceNote")
+	_check(is_equal_approx(popup.size.x / popup.size.y, source.size.x / source.size.y) and is_equal_approx(popup.scale.x, popup.scale.y), "Enlarged source keeps the desk note's aspect ratio")
 	await _capture("04_source")
 	popup.get_node("%Close").pressed.emit()
 	_check(not popup.active, "The visible close button folds the note away")
@@ -388,6 +390,9 @@ func _test_scenes() -> void:
 	popup.primary_pressed.emit()
 	work.get_node("%Headline1").pressed.emit()
 	_check(work.popup_kind == work.DialogKind.CONFIRM, "A headline requires explicit confirmation")
+	await create_timer(0.3).timeout
+	var headline: Control = work.get_node("%Headline1")
+	_check(is_equal_approx(popup.size.x / popup.size.y, headline.size.x / headline.size.y) and is_equal_approx(popup.scale.x, popup.scale.y), "Enlarged headline keeps the desk sheet's aspect ratio")
 	await _capture("06_confirmation")
 	popup.secondary_pressed.emit()
 	_check(game.session.total_published == 0, "Cancelling confirmation does not publish")

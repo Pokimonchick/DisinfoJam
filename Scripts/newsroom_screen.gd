@@ -100,7 +100,7 @@ func show_source() -> void:
 		return
 	popup_kind = DialogKind.SOURCE
 	var article := session.current_article()
-	popup.present(source_note, "ИСТОЧНИК · ТАЙМЕР ИДЁТ", article.source_title, article.source_text, "Закрыть", "", Vector2(780, 480))
+	popup.present(source_note, "ИСТОЧНИК · ТАЙМЕР ИДЁТ", article.source_title, article.source_text, "Закрыть", "", Vector2(640, 650))
 	view_changed.emit()
 
 func _finish_shift() -> void:
@@ -113,7 +113,7 @@ func _select_headline(index: int) -> void:
 		return
 	selected_index = index
 	popup_kind = DialogKind.CONFIRM
-	popup.present(cards[index], "ПЕРЕД ОТПРАВКОЙ В ПЕЧАТЬ", session.option_at(index).text, "", "Напечатать", "Вернуться к вариантам", Vector2(740, 280))
+	popup.present(cards[index], "ПЕРЕД ОТПРАВКОЙ В ПЕЧАТЬ", session.option_at(index).text, "", "Напечатать", "Вернуться к вариантам", Vector2(640, 650))
 	view_changed.emit()
 
 func _on_primary() -> void:
@@ -149,7 +149,7 @@ func _show_result(result: Dictionary) -> void:
 	var full_issue := session.publication_limit_reached()
 	if full_issue:
 		changes += "\n\n[color=#78512c]В текущем выпуске газеты недостаточно места для новых публикаций.[/color]"
-	popup.present(cards[maxi(selected_index, 0)], "ВЫПУСК ЗАПОЛНЕН" if full_issue else "НАПЕЧАТАНО · ТАЙМЕР ИДЁТ", result.headline, changes, "Сдать выпуск и пойти домой" if full_issue else "Следующий материал", "", Vector2(780, 500))
+	popup.present(cards[maxi(selected_index, 0)], "ВЫПУСК ЗАПОЛНЕН" if full_issue else "НАПЕЧАТАНО · ТАЙМЕР ИДЁТ", result.headline, changes, "Сдать выпуск и пойти домой" if full_issue else "Следующий материал", "", Vector2(640, 650))
 	view_changed.emit()
 
 func capture_presentation() -> Dictionary:

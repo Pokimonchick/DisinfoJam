@@ -34,11 +34,11 @@ theme_override_font_sizes/font_size = 16
 
 [node name="Close" type="Button" parent="Margin/Content/Header"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(42, 42)
+custom_minimum_size = Vector2(36, 36)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.35, 0.22, 0.16, 1)
-theme_override_font_sizes/font_size = 27
+theme_override_font_sizes/font_size = 23
 text = "×"
 tooltip_text = "Закрыть лист"
 
@@ -65,7 +65,7 @@ theme_override_constants/separation = 12
 
 [node name="Primary" type="Button" parent="Margin/Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_default_cursor_shape = 2

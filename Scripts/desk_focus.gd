@@ -45,7 +45,9 @@ func present(origin: Control, tag: String, title: String, body: String, primary:
 	primary_button.text = primary
 	secondary_button.text = secondary
 	secondary_button.visible = not secondary.is_empty()
-	var target_size := Vector2(minf(preferred_size.x, get_parent().size.x - 32.0), minf(preferred_size.y, get_parent().size.y - 24.0))
+	var available_size: Vector2 = (get_parent() as Control).size - Vector2(32.0, 24.0)
+	var zoom: float = minf(minf(preferred_size.x / origin.size.x, preferred_size.y / origin.size.y), minf(available_size.x / origin.size.x, available_size.y / origin.size.y))
+	var target_size: Vector2 = origin.size * zoom
 	_origin.hide()
 	active = true
 	_opening = true
@@ -59,9 +61,9 @@ func present(origin: Control, tag: String, title: String, body: String, primary:
 		return
 	_opening = false
 	size = target_size
-	pivot_offset = Vector2.ZERO
-	position = origin.position
-	scale = Vector2(origin.size.x / target_size.x, origin.size.y / target_size.y)
+	pivot_offset = target_size / 2.0
+	position = origin.position + (origin.size - target_size) / 2.0
+	scale = Vector2.ONE * (origin.size.x / target_size.x) * origin.scale.x
 	rotation = origin.rotation
 	modulate.a = 1.0
 	$Margin.modulate.a = 0.0
@@ -88,8 +90,8 @@ func close(after_close: Callable = Callable()) -> void:
 	if _motion and _motion.is_valid():
 		_motion.kill()
 	_motion = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	_motion.tween_property(self, "position", _origin.position, ZOOM_TIME * 0.75)
-	_motion.tween_property(self, "scale", Vector2(_origin.size.x / size.x, _origin.size.y / size.y), ZOOM_TIME * 0.75)
+	_motion.tween_property(self, "position", _origin.position + (_origin.size - size) / 2.0, ZOOM_TIME * 0.75)
+	_motion.tween_property(self, "scale", Vector2.ONE * (_origin.size.x / size.x) * _origin.scale.x, ZOOM_TIME * 0.75)
 	_motion.tween_property(self, "rotation", _origin.rotation, ZOOM_TIME * 0.75)
 	_motion.tween_property($Margin, "modulate:a", 0.0, ZOOM_TIME * 0.5)
 	_motion.chain().tween_callback(func():
