@@ -3,6 +3,7 @@ extends Resource
 
 @export_group("Цель кампании")
 @export_range(1, 100, 1) var campaign_days: int = 5
+# Legacy save/resource field; the chapter ends after the required shifts.
 @export_range(0, 100000, 5) var campaign_money: int = 200
 
 @export_group("Смена")
