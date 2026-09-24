@@ -147,7 +147,7 @@ func publish_headline(display_index: int) -> bool:
 	last_result = {
 		"article_id": current_article().id,
 		"headline": option.text,
-		"money": roundi(option.money * multiplier),
+		"money": roundi(option.money * multiplier * balance.publication_income_multiplier),
 		"reputation": roundi(option.reputation * multiplier),
 		"loyalty": roundi(option.loyalty * multiplier),
 		"combo_type": combo_type,

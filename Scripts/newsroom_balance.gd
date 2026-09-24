@@ -13,6 +13,10 @@ extends Resource
 @export_range(0.0, 1.0) var health_drain_per_second: float = 0.10
 @export_range(0.0, 10.0) var publication_health_cost: float = 1.5
 
+@export_group("Доход")
+## Scales catalogue payouts, including saved articles; rounding happens after combo.
+@export_range(0.0, 2.0, 0.05) var publication_income_multiplier: float = 0.45
+
 @export_group("Эффект усталости")
 ## Доля максимальной выносливости, ниже которой появляется эффект.
 @export_range(0.01, 1.0, 0.01) var fatigue_threshold: float = 0.30

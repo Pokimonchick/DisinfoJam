@@ -126,7 +126,7 @@ func _test_publication_queue() -> void:
 	var chosen := s.option_at(0)
 	var before := s.money
 	_check(s.publish_headline(0), "A selected headline can be published")
-	_check(s.money == before + chosen.money and s.total_published == 1, "Publication rewards are applied once")
+	_check(s.money == before + roundi(chosen.money * s.balance.publication_income_multiplier) and s.total_published == 1, "Publication rewards are applied once")
 	_check(s.last_result.headline == chosen.text, "Feedback describes the actual shuffled choice")
 	_check(not s.publish_headline(0) and s.total_published == 1, "Double clicks cannot publish twice")
 	s.tick_work(180.0)
@@ -269,6 +269,7 @@ func _test_combos() -> void:
 	s.loyalty = 5000
 	# Controlled articles let expected deltas be independent of content changes
 	# and verify that the shuffled display position is not the combo key.
+	s.balance.publication_income_multiplier = 1.0
 	s.articles = [NewsArticle.from_row({
 		"id": "combo_fixture", "source": "Fixture", "text": "Known effects.",
 		"options": [
