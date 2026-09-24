@@ -123,6 +123,12 @@ static func restore(session: NewsroomSession, sections: Dictionary) -> bool:
 	session.player_id = sections.profile.id
 	session.player_name = sections.profile.name
 	session.endless_unlocked = sections.profile.get("endless_unlocked", false)
+	# Old versions required a cash target. A finished week now completes the
+	# chapter; resource-loss endings retain their original outcome.
+	if session.ending == NewsroomSession.Ending.GOAL_MISSED:
+		session.ending = NewsroomSession.Ending.VICTORY
+		session.campaign_completed = true
+		session.endless_unlocked = true
 	session.option_order.assign(run.option_order)
 	session.journal.assign(run.get("journal", []).duplicate(true))
 	session.last_result = run.get("last_result", {}).duplicate(true)

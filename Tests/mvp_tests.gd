@@ -330,6 +330,8 @@ func _test_scenes() -> void:
 	_check(game.view == game.View.INTRO, "New game opens the prologue")
 	await _capture("02_prologue")
 	game.get_node("%NarrativePrimary").pressed.emit()
+	_check(game.view == game.View.INTRO and "Я не говорю" in game.get_node("%NarrativeBody").text, "Introduction shows the heroine communicating in writing")
+	game.get_node("%NarrativePrimary").pressed.emit()
 	_check(game.view == game.View.TUTORIAL, "Prologue leads to the boss tutorial")
 	await _capture("03_tutorial")
 	for i in range(4):
@@ -436,6 +438,9 @@ func _test_scenes() -> void:
 	home.tick_home(1.0)
 	_check(game.session.day == 2 and game.session.shift_length == 180.0, "Bed starts a normal shift with a carried cup")
 	_check(game.session.health == minf(game.session.balance.maximum_stat, health_before + game.session.balance.sleep_health), "Bed UI restores stamina after sleeping")
+	_check(game.view == game.View.STORY, "The second morning opens a story before work")
+	game.get_node("%NarrativePrimary").pressed.emit()
+	game.get_node("%NarrativePrimary").pressed.emit()
 	var health_after_sleep: float = game.session.health
 	await create_timer(0.25).timeout
 	var cup: Control = work.get_node("%Coffee")

@@ -334,15 +334,30 @@ func _continue_run() -> void:
 	GameState.restore_save_sections(document.sections.get("extensions", {}))
 	var presentation: Dictionary = document.sections.get("presentation", {})
 	lesson = clampi(int(presentation.get("lesson", 0)), 0, LESSONS.size() - 1)
+	var story: Dictionary = presentation.get("story", {})
+	_seen_stories.assign(story.get("seen", []))
+	_story_id = story.get("id", "")
+	_story_page = int(story.get("page", 0))
+	# Existing saves may already be in the middle of a shift. Do not insert an
+	# unseen morning scene into that shift or reset its remaining time.
+	if not presentation.has("story"):
+		for day in [2, 4]:
+			if session.day >= day:
+				_seen_stories.append(CHAPTER.episode_for_day(day))
 	_restoring = false
-	if session.phase == NewsroomSession.Phase.IDLE:
+	if not _story_id.is_empty():
+		_show_story(_story_id, _story_page)
+	elif session.phase == NewsroomSession.Phase.IDLE:
 		if presentation.get("screen", "intro") == "tutorial":
 			_show_lesson()
 		else:
 			_show_intro()
 	else:
 		_on_phase_changed()
-		if session.phase == NewsroomSession.Phase.WORK:
+	if session.phase == NewsroomSession.Phase.WORK:
+		if view == View.STORY:
+			work.show_article()
+		else:
 			work.restore_presentation(presentation.get("newsroom", {}))
 	_run_active = true
 	_autosave_elapsed = 0.0
@@ -364,7 +379,10 @@ func _save_progress() -> bool:
 	if not _run_active or _restoring:
 		return true
 	var sections := NewsroomSaveData.capture(session)
-	sections["presentation"] = {"screen": VIEW_KEYS[view], "lesson": lesson, "newsroom": work.capture_presentation()}
+	var in_story := view in [View.INTRO, View.STORY]
+	sections["presentation"] = {"screen": VIEW_KEYS[view], "lesson": lesson,
+		"newsroom": work.capture_presentation(),
+		"story": {"id": _story_id if in_story else "", "page": _story_page if in_story else 0, "seen": _seen_stories.duplicate()}}
 	sections["extensions"] = GameState.capture_save_sections()
 	var document := _loaded_document.duplicate(true)
 	document["sections"] = SaveRepository.merge_sections(document.get("sections", {}), sections)
@@ -395,6 +413,37 @@ static func _validate_save(sections: Dictionary) -> bool:
 	var newsroom: Dictionary = presentation.get("newsroom", {})
 	if not newsroom.get("selected_index", -1) is int and not newsroom.get("selected_index", -1) is float:
 		return false
+	if presentation.has("story"):
+		var story: Variant = presentation.story
+		if not story is Dictionary or not story.get("seen", []) is Array:
+			return false
+		for episode in story.get("seen", []):
+			if not episode is String or not CHAPTER.EPISODES.has(episode):
+				return false
+		var episode: Variant = story.get("id", "")
+		var page: Variant = story.get("page", 0)
+		if not episode is String or not NewsroomSaveData._number(page):
+			return false
+		if int(page) != page or page < 0:
+			return false
+		if episode.is_empty():
+			if page != 0 or presentation.get("screen") in ["intro", "story"]:
+				return false
+		else:
+			if not CHAPTER.EPISODES.has(episode) or page >= CHAPTER.EPISODES[episode].size() or episode in story.get("seen", []):
+				return false
+			var run: Dictionary = sections.run
+			if episode == "intro":
+				if presentation.get("screen") != "intro" or run.phase != "idle":
+					return false
+			else:
+				if presentation.get("screen") != "story":
+					return false
+				if episode == "finale":
+					if run.phase != "ended" or not run.ending in ["victory", "goal_missed"]:
+						return false
+				elif run.phase != "work" or CHAPTER.episode_for_day(int(run.day)) != episode:
+					return false
 	var extensions: Variant = sections.get("extensions", {})
 	if not extensions is Dictionary:
 		return false
