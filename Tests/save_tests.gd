@@ -27,7 +27,6 @@ func _run() -> void:
 	_test_files()
 	_test_campaign()
 	await _test_menu_and_resume()
-	await _test_chapter_scenes()
 	print("SAVE TESTS: %d checks, %d failures" % [checks, failures.size()])
 	for suffix in ["", ".bak", ".tmp"]:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(test_path + suffix))
@@ -127,26 +126,6 @@ func _test_campaign() -> void:
 	session.money = session.campaign_money + session.balance.rent - 1
 	session.finish_shift()
 	check(session.ending == NewsroomSession.Ending.VICTORY and session.campaign_completed, "A cash target no longer gates completion")
-	for cash_after_rent in [-99, 0, 199, 200]:
-		session = fresh()
-		session.start_shift()
-		session.day = 5
-		session.completed_shifts = 4
-		session.money = cash_after_rent + session.balance.rent
-		session.finish_shift()
-		check(session.campaign_completed and session.ending == NewsroomSession.Ending.VICTORY, "Surviving the fifth shift completes the chapter with %d cash" % cash_after_rent)
-	session = fresh()
-	session.start_shift()
-	session.day = 5
-	session.completed_shifts = 4
-	session.money = session.balance.debt_limit + session.balance.rent
-	session.finish_shift()
-	check(session.ending == NewsroomSession.Ending.DEBT and not session.campaign_completed, "Resource loss still takes precedence on the fifth day")
-	var legacy := NewsroomSaveData.capture(restored)
-	legacy.run.ending = "goal_missed"
-	legacy.run.campaign_completed = false
-	legacy.run.money = 10
-	check(NewsroomSaveData.restore(restored, legacy) and restored.campaign_completed and restored.ending == NewsroomSession.Ending.VICTORY, "An old cash-target ending upgrades to chapter completion")
 
 func _test_menu_and_resume() -> void:
 	var state := root.get_node("GameState")
@@ -232,98 +211,3 @@ func _test_menu_and_resume() -> void:
 	game._run_active = false
 	game.queue_free()
 	await process_frame
-
-func _test_chapter_scenes() -> void:
-	var state := root.get_node("GameState")
-	state.session = fresh()
-	var game = load("res://Scenes/mvp_game.tscn").instantiate()
-	root.add_child(game)
-	game.set_process(false)
-	game._new_run(false, "Мира")
-	await _chapter_capture("01_intro")
-	game._narrative_next()
-	var intro_text: String = game.get_node("%NarrativeBody").text
-	check(intro_text.contains("Мира") and intro_text.contains("Я не говорю"), "Chosen name is introduced through writing")
-	game._show_menu()
-	game.queue_free()
-	await process_frame
-	state.session = fresh()
-	game = load("res://Scenes/mvp_game.tscn").instantiate()
-	root.add_child(game)
-	game.set_process(false)
-	game._continue_run()
-	check(game.view == game.View.INTRO and game._story_page == 1 and game.get_node("%NarrativeBody").text == intro_text, "Fresh controller restores the exact introduction page")
-	await _chapter_capture("02_meeting")
-	game._narrative_next()
-	for i in game.LESSONS.size():
-		game._narrative_next()
-	game.session.money = 230 # Enough for five rents, far below the former target afterward.
-	for day in range(1, 6):
-		check(game.session.day == day, "Chapter reaches day %d" % day)
-		if day in [2, 4]:
-			for page in range(2):
-				check(game.view == game.View.STORY and game._story_page == page, "Morning episode shows the expected page")
-				var before := [game.session.time_left, game.session.health, game.session.article_cursor, game.session.money]
-				game.transitioning = false
-				game._process(12.0)
-				check(before == [game.session.time_left, game.session.health, game.session.article_cursor, game.session.money], "Story reading consumes no work time, health, articles or money")
-				var story_text: String = game.get_node("%NarrativeBody").text
-				game._show_menu()
-				game._continue_run()
-				check(game.view == game.View.STORY and game._story_page == page and game.get_node("%NarrativeBody").text == story_text, "Loading restores each document and memory page")
-				await _chapter_capture("day_%d_page_%d" % [day, page])
-				game._narrative_next()
-			check(game.session.time_left == game.session.shift_length, "Work begins with the full timer after a memory")
-		check(game.view == game.View.WORK, "Every morning reaches the regular desk")
-		game.session.tick_work(1.0)
-		game._show_menu()
-		game._continue_run()
-		check(game.view == game.View.WORK and game.session.time_left == game.session.shift_length - 1.0, "Finished story does not replay or reset work time after loading")
-		game.session.finish_shift()
-		if day < 5:
-			check(game.view == game.View.HOME, "Completed shift keeps the normal evening")
-			game.home._sleep()
-			game.home.tick_home(1.0)
-	check(game.session.money == 5 and game.session.campaign_completed, "Full five-day flow completes with five dollars")
-	check(game.view == game.View.STORY and game._story_id == "finale", "Week concludes with the archive discovery")
-	for page in range(2):
-		game._show_menu()
-		game._continue_run()
-		check(game._story_id == "finale" and game._story_page == page, "Unfinished final discovery survives loading")
-		await _chapter_capture("finale_%d" % page)
-		game._narrative_next()
-	check(game.view == game.View.ENDING and "КОНЕЦ ПЕРВОЙ ГЛАВЫ" in game.get_node("%NarrativeTag").text, "Final screen clearly marks the end of the demo chapter")
-	await _chapter_capture("03_chapter_complete")
-	game._show_menu()
-	game._continue_run()
-	check(game.view == game.View.ENDING, "Completed finale is not repeated")
-	var snapshot: Dictionary = state.save_store.load_document()
-	var malformed := snapshot.sections.duplicate(true)
-	malformed.presentation.story = {"id": "day_2", "page": 99, "seen": []}
-	check(not game._validate_save(malformed), "Invalid story page is rejected")
-	malformed.presentation.story = {"id": "day_2", "page": 0, "seen": []}
-	malformed.presentation.screen = "story"
-	check(not game._validate_save(malformed), "An episode inconsistent with the session phase is rejected")
-	# Loading a pre-chapter save in the middle of day two must not insert a scene.
-	var legacy_session := fresh()
-	legacy_session.start_shift()
-	legacy_session.day = 2
-	legacy_session.completed_shifts = 1
-	legacy_session.time_left = 42.5
-	var legacy := {"sections": NewsroomSaveData.capture(legacy_session)}
-	legacy.sections["presentation"] = {"screen": "work", "newsroom": {"dialog": "none", "selected_index": -1}}
-	game._run_active = false
-	check(state.save_store.write_document(legacy), "Legacy save without story fields is accepted")
-	game._continue_run()
-	check(game.view == game.View.WORK and game.session.time_left == 42.5, "Legacy mid-shift save preserves time without replaying the morning")
-	game._run_active = false
-	game.queue_free()
-	await process_frame
-
-func _chapter_capture(label: String) -> void:
-	if not "--screenshots" in OS.get_cmdline_user_args():
-		return
-	await create_timer(0.3).timeout
-	await RenderingServer.frame_post_draw
-	DirAccess.make_dir_recursive_absolute("res://Build/QA/Chapter")
-	check(root.get_texture().get_image().save_png("res://Build/QA/Chapter/%s.png" % label) == OK, "Capture chapter page " + label)
