@@ -1,7 +1,8 @@
 extends Control
 
-enum View { MENU, INTRO, TUTORIAL, WORK, HOME, ENDING, PROFILE }
-const VIEW_KEYS := ["menu", "intro", "tutorial", "work", "home", "ending", "profile"]
+enum View { MENU, INTRO, TUTORIAL, WORK, HOME, ENDING, PROFILE, STORY }
+const VIEW_KEYS := ["menu", "intro", "tutorial", "work", "home", "ending", "profile", "story"]
+const CHAPTER := preload("res://Data/chapter_one.gd")
 const AUTOSAVE_SECONDS := 5.0
 
 const LESSONS: Array[Dictionary] = [
@@ -16,8 +17,7 @@ const ENDINGS: Dictionary = {
 	NewsroomSession.Ending.OFFICE_FIRE: ["Редакция больше не печатает", "Репутация компании упала до нуля. Люди, которых обманывали ваши заголовки, собрались у офиса. К утру от редакции остались обугленные стены.", 3],
 	NewsroomSession.Ending.ARREST: ["За вами уже пришли", "Лояльность государству упала до нуля. В дверь постучали сотрудники госбезопасности. Правдивость отдельных статей не стала для них оправданием.", 4],
 	NewsroomSession.Ending.DEBT: ["Ночлег на картонке", "Долг достиг предела. Хозяин комнаты сменил замок, а кредиторы забрали последние вещи. Сегодня вместо кровати — картонка под навесом.", 5],
-	NewsroomSession.Ending.VICTORY: ["Теперь у меня есть выбор", "Я выдержала эти смены и собрала нужную сумму. Теперь у меня есть запас на новую жизнь. Впервые за долгое время я могу решить сама, что делать дальше.", 0],
-	NewsroomSession.Ending.GOAL_MISSED: ["Денег не хватило", "Отведённые дни закончились. Я удержалась на работе, но накопить нужную сумму не смогла. Пока начать новую жизнь не получится.", 0]
+	NewsroomSession.Ending.VICTORY: ["Первая неделя позади", "Я прошла первую рабочую неделю. Прошлое пока не вернулось, но теперь у меня есть первая зацепка.\n\nСпасибо за прохождение демо «До печати». Первая глава завершена. История героини продолжится за пределами этой версии.", 0]
 }
 
 var session: NewsroomSession
@@ -33,6 +33,9 @@ var _restoring: bool = false
 var _save_queued: bool = false
 var _autosave_elapsed: float = 0.0
 var _loaded_document: Dictionary = {}
+var _story_id: String = ""
+var _story_page: int = 0
+var _seen_stories: Array[String] = []
 
 @onready var work: Control = %Work
 @onready var home: Control = %Home
@@ -125,6 +128,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 func _new_run(skip_story: bool, entered_name: String = "Редактор") -> void:
 	_run_active = false
 	_loaded_document = {}
+	_story_id = ""
+	_story_page = 0
+	_seen_stories.clear()
 	session.reset()
 	session.player_name = entered_name.strip_edges().left(24)
 	session.player_id = Crypto.new().generate_random_bytes(16).hex_encode()
@@ -139,13 +145,35 @@ func _new_run(skip_story: bool, entered_name: String = "Редактор") -> vo
 	_queue_save()
 
 func _show_intro() -> void:
-	_show_view(View.INTRO)
-	_set_narrative("ПРОЛОГ · ГЕРОИНЯ", "Мне нужна эта работа.", "Ещё вчера я ночевала в подворотне. Сегодня меня отмыли, посадили за стол в редакции и дали шанс заработать.\n\nНужны деньги на комнату, еду и кофе. Обратно на улицу я не хочу. Значит, придётся разобраться, какие слова здесь оплачивают — и чего эти слова стоят.", 0, "Познакомиться с боссом", "Сразу к работе")
+	_show_story("intro")
+
+func _show_story(episode_id: String, page: int = 0) -> void:
+	_story_id = episode_id
+	_story_page = page
+	var entry: Dictionary = CHAPTER.EPISODES[episode_id][page]
+	_show_view(View.INTRO if episode_id == "intro" else View.STORY)
+	_set_narrative(entry.tag, entry.title, entry.body.replace("{name}", session.player_name), entry.visual, entry.next, "Сразу к работе" if episode_id == "intro" else "В главное меню")
+	_queue_save()
+
+func _advance_story() -> void:
+	if _story_page + 1 < CHAPTER.EPISODES[_story_id].size():
+		_show_story(_story_id, _story_page + 1)
+		return
+	var finished := _story_id
+	if not finished in _seen_stories:
+		_seen_stories.append(finished)
+	_story_id = ""
+	_story_page = 0
+	if finished == "intro":
+		_show_lesson()
+	else:
+		_on_phase_changed()
+	_queue_save()
 
 func _narrative_next() -> void:
 	match view:
-		View.INTRO:
-			_show_lesson()
+		View.INTRO, View.STORY:
+			_advance_story()
 		View.TUTORIAL:
 			lesson += 1
 			if lesson >= LESSONS.size():
@@ -156,9 +184,11 @@ func _narrative_next() -> void:
 			_show_profile_setup()
 
 func _narrative_secondary() -> void:
-	if view == View.ENDING:
+	if view in [View.ENDING, View.STORY]:
 		_show_menu()
 	else:
+		_story_id = ""
+		_story_page = 0
 		session.start_shift()
 
 func _show_lesson() -> void:
@@ -174,19 +204,24 @@ func _on_phase_changed() -> void:
 		return
 	match session.phase:
 		NewsroomSession.Phase.WORK:
-			_show_view(View.WORK)
+			var episode_id: String = CHAPTER.episode_for_day(session.day)
+			if not episode_id.is_empty() and not episode_id in _seen_stories:
+				_show_story(episode_id)
+			else:
+				_show_view(View.WORK)
 		NewsroomSession.Phase.HOME:
 			_show_view(View.HOME)
 			home.open_evening()
 		NewsroomSession.Phase.ENDED:
+			if session.campaign_completed and not "finale" in _seen_stories:
+				_show_story("finale")
+				return
 			_show_view(View.ENDING)
 			var ending: Array = ENDINGS[session.ending]
 			var summary := "%s\n\nЗавершено смен: %d. Напечатано материалов: %d.\nДеньги: %d $ · репутация: %d · государство: %d." % [ending[1], session.completed_shifts, session.total_published, session.money, ceili(session.reputation), ceili(session.loyalty)]
 			if not session.last_result.is_empty():
 				summary += "\n\nПоследний заголовок: «%s»" % session.last_result.headline
-			if session.ending in [NewsroomSession.Ending.VICTORY, NewsroomSession.Ending.GOAL_MISSED]:
-				summary += "\n\nЦель: %d смен и %d $ после оплаты аренды." % [session.campaign_days, session.campaign_money]
-			_set_narrative("КАМПАНИЯ ПРОЙДЕНА" if session.campaign_completed else "КОНЕЦ ИСТОРИИ", ending[0], summary, ending[2], "Новая история", "В главное меню")
+			_set_narrative("КОНЕЦ ПЕРВОЙ ГЛАВЫ" if session.campaign_completed else "КОНЕЦ ИСТОРИИ", ending[0], summary, ending[2], "Новая история", "В главное меню")
 	_refresh_goal()
 
 func _show_menu() -> void:
@@ -208,12 +243,12 @@ func _show_view(next: View) -> void:
 	pause_panel.hide()
 	%Menu.visible = view == View.MENU
 	%ProfileSetup.visible = view == View.PROFILE
-	%Narrative.visible = view in [View.INTRO, View.TUTORIAL, View.ENDING]
+	%Narrative.visible = view in [View.INTRO, View.TUTORIAL, View.ENDING, View.STORY]
 	work.visible = view == View.WORK
 	home.visible = view == View.HOME
 	%HUD.visible = view in [View.WORK, View.HOME, View.ENDING]
-	%PauseButton.visible = view in [View.WORK, View.HOME]
-	%Location.text = {View.MENU: "НЕЗАВИСИМАЯ РЕДАКЦИЯ", View.INTRO: "НОВАЯ РАБОТА", View.TUTORIAL: "ПЕРЕД ПЕРВОЙ СМЕНОЙ", View.WORK: "РАБОЧИЙ СТОЛ", View.HOME: "СЪЁМНАЯ КОМНАТА", View.ENDING: "ПОСЛЕДНИЙ ВЫПУСК", View.PROFILE: "НОВОЕ ПРОХОЖДЕНИЕ"}[view]
+	%PauseButton.visible = view in [View.WORK, View.HOME, View.INTRO, View.TUTORIAL, View.STORY]
+	%Location.text = {View.MENU: "НЕЗАВИСИМАЯ РЕДАКЦИЯ", View.INTRO: "ГЛАВА I · АМНЕЗИЯ", View.TUTORIAL: "ПЕРЕД ПЕРВОЙ СМЕНОЙ", View.WORK: "РАБОЧИЙ СТОЛ", View.HOME: "СЪЁМНАЯ КОМНАТА", View.ENDING: "ИТОГИ НЕДЕЛИ" if session.campaign_completed else "ПОСЛЕДНИЙ ВЫПУСК", View.PROFILE: "НОВОЕ ПРОХОЖДЕНИЕ", View.STORY: "ГЛАВА I · АМНЕЗИЯ"}[view]
 	_refresh_goal()
 	if _fade_tween:
 		_fade_tween.kill()
@@ -265,19 +300,20 @@ func _start_named_run() -> void:
 
 func _refresh_goal() -> void:
 	%CampaignGoal.visible = view in [View.WORK, View.HOME, View.ENDING]
-	%CampaignGoal.text = "%s · Цель: %d смен и %d $" % [session.player_name, session.campaign_days, session.campaign_money]
+	%CampaignGoal.text = "%s · Первая неделя: %d / %d смен" % [session.player_name, session.completed_shifts, session.campaign_days]
 
 func _refresh_menu() -> void:
 	var document: Dictionary = GameState.save_store.load_document()
 	%ContinueGame.disabled = document.is_empty()
-	%Description.text = "Продержись %d смен и накопи %d $.\nРепутация, государство и собственная жизнь.\nЗа каждое слово кто-нибудь заплатит." % [session.balance.campaign_days, session.balance.campaign_money]
+	%Description.text = "Пройди первую рабочую неделю: %d смен.\nВыбирай заголовки и позаботься о себе.\nВ старых текстах осталось что-то знакомое." % session.balance.campaign_days
 	%SaveSummary.text = "Сохранений пока нет."
 	if document.is_empty() and GameState.save_store.exists():
 		%SaveSummary.text = "Сохранение недоступно."
 	if not document.is_empty():
 		var data: Dictionary = document.sections
 		%SaveSummary.text = "%s · день %d · %d $" % [data.profile.name, data.run.get("day", 0), data.run.get("money", 0)]
-		%ContinueGame.text = "ПОСМОТРЕТЬ ИТОГ" if data.run.phase == "ended" else "ПРОДОЛЖИТЬ"
+		var final_seen: bool = "finale" in data.get("presentation", {}).get("story", {}).get("seen", [])
+		%ContinueGame.text = "ПОСМОТРЕТЬ ИТОГ" if data.run.phase == "ended" and (not data.run.get("campaign_completed", false) or final_seen) else "ПРОДОЛЖИТЬ"
 		%PlayerName.text = data.profile.name
 	else:
 		%ContinueGame.text = "ПРОДОЛЖИТЬ"

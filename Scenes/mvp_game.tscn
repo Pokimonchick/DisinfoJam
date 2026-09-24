@@ -108,7 +108,7 @@ theme_override_constants/separation = 12
 layout_mode = 2
 theme_override_colors/font_color = Color(0.91, 0.74, 0.41, 1)
 theme_override_font_sizes/font_size = 16
-text = "РЕДАКТОРСКАЯ СМЕНА · MVP"
+text = "ГЛАВА I · АМНЕЗИЯ · ДЕМО"
 
 [node name="Title" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=402366423]
 layout_mode = 2
@@ -119,9 +119,9 @@ text = "ДО ПЕЧАТИ"
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "Три заголовка. Три минуты.
-Репутация, государство и собственная жизнь.
-За каждое слово кто-нибудь заплатит."
+text = "Пройди первую рабочую неделю.
+Выбирай заголовки и позаботься о себе.
+В старых текстах осталось что-то знакомое."
 
 [node name="ContinueGame" type="Button" parent="Padding/Layout/Stage/Menu/Card/Text"]
 unique_name_in_owner = true
@@ -181,14 +181,14 @@ text = "Как тебя записать?"
 
 [node name="Label" type="Label" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
 layout_mode = 2
-text = "Имя игрока останется в этом прохождении."
+text = "Прошлое не вспоминается. Выбери, как представиться."
 
 [node name="PlayerName" type="LineEdit" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 max_length = 24
-placeholder_text = "Имя игрока"
+placeholder_text = "Имя, которым ты представишься"
 
 [node name="NewRunWarning" type="Label" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
 unique_name_in_owner = true

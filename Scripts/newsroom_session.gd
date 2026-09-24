@@ -203,9 +203,9 @@ func finish_shift() -> void:
 	if _check_ending():
 		return
 	if mode == "campaign" and completed_shifts >= campaign_days:
-		campaign_completed = money >= campaign_money
+		campaign_completed = true
 		endless_unlocked = campaign_completed
-		ending = Ending.VICTORY if campaign_completed else Ending.GOAL_MISSED
+		ending = Ending.VICTORY
 		phase = Phase.ENDED
 		phase_changed.emit()
 		save_requested.emit()

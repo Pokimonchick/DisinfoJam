@@ -1,7 +1,7 @@
 @tool
 extends Control
 
-@export_enum("Героиня", "Босс", "Истощение", "Пожар", "Арест", "Долги") var kind: int = 0:
+@export_enum("Героиня", "Босс", "Истощение", "Пожар", "Арест", "Долги", "Документ") var kind: int = 0:
 	set(value):
 		kind = value
 		queue_redraw()
@@ -27,6 +27,15 @@ func _draw() -> void:
 	var unit := minf(size.x, size.y) / 260.0
 	var center := Vector2(size.x / 2.0, size.y / 2.0)
 	draw_circle(center, 114.0 * unit, Color("304a50"))
+	if kind == 6:
+		draw_rect(Rect2(center + Vector2(-83, -106) * unit, Vector2(166, 212) * unit), Color("f2e7c8"))
+		for row in range(7):
+			var start := center + Vector2(-60, -72 + row * 23) * unit
+			draw_line(start, start + Vector2(115, 0) * unit, Color("81745e"), 3 * unit)
+		var mark := center + Vector2(-60, -3) * unit
+		draw_arc(mark, 14 * unit, 0.4, TAU - 0.4, 24, Color("ab4840"), 3 * unit)
+		draw_line(mark + Vector2(10, 10) * unit, mark + Vector2(23, 19) * unit, Color("ab4840"), 3 * unit)
+		return
 	if kind == 3:
 		for offset in [-45.0, 0.0, 45.0]:
 			var base := center + Vector2(offset, 45.0) * unit
