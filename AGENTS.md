@@ -72,28 +72,22 @@ Keep the final report short:
 
 ## Task Handoff
 
-### TASK_STATE.md
+### State and commands
 
-Keep one tracked `TASK_STATE.md` in the project root as a compact snapshot of the current task. It is for switching models, continuing after `/compact` or in a new chat, and explicit user requests to save task state. It is not an action log or permanent project documentation. Do not update it after every ordinary request or code change.
+Keep one Git-tracked root `TASK_STATE.md` as a compact, portable snapshot of the current large task, not a request log, chat history, reasoning trace, permanent project document, or required subagent IPC. Use `Status` (`Active`, `Blocked`, `Completed`), `Current task`, `Context`, `Already done`, `Decisions`, `Relevant files`, `Do not touch`, `Remaining`, `Validation`, `Known issues / uncertainties`, and `Git state` (branch, relevant checkpoint, changed files, working tree). Keep `Remaining` actionable; never paste a full diff. Update the file only for `prepare`, an explicit save-state request, a substantial manual root handoff, or a dangerously stale snapshot. Reuse it for later large tasks; routine code changes and subagent calls do not require updates.
 
-Update it only when the user says `prepare`, explicitly asks to save or update task state, before handing work to another model, or when a major task change makes the existing snapshot dangerously misleading. Keep only current, concise facts; no chat transcript, large logs, code dumps, or internal chain-of-thought. Use these sections: `Status` (`Active`, `Blocked`, or `Completed`), `Current task`, `Context`, `Already done`, `Decisions`, `Relevant files`, `Do not touch`, `Remaining`, `Validation`, `Known issues / uncertainties`, and `Git state`. In `Git state`, record the branch, latest relevant checkpoint commit, files changed for this task, and whether uncommitted changes existed at handoff. Do not paste the full diff.
+For `prepare`, first obey Git Safety, then replace stale state with a concise handoff. Do not start new implementation or run `/compact` automatically. Suggest `/compact` only when a large conversation makes it useful. Do not create a separate handoff commit: the next request's checkpoint records the updated file.
 
-### `prepare`
+For `resume`, first obey Git Safety, then read `AGENTS.md` and `TASK_STATE.md`, plus `MVP_README.md` for gameplay/architecture or `Docs/SAVES.md` for saves. Verify branch, working tree, and relevant source files; code and Git override stale state. A checkpoint can leave `git diff` empty, so consult a short `git log` and `git show --stat` only when needed. Start with `Relevant files` and `Remaining`; broaden research only if necessary. `resume` is mainly for `/compact`, a root-model/chat change, or another context break, not required after `prepare` in the same intact conversation.
 
-Treat `prepare` as a new user request: first create the normal checkpoint commit under Git Safety. Do not create a separate handoff commit unless explicitly asked. Then read the current task state and update `TASK_STATE.md` with the current goal, completed work, decisions, relevant files, concrete remaining steps, validation, risks, and Git state. Remove stale information. If a faster model can continue mechanically, make `Remaining` precise enough for it to do so. Do not start new implementation after `prepare` unless the user also requests it.
+### Subagents and models
 
-### `resume`
+Keep short, sequential, context-heavy work with root. Use a subagent when a bounded task benefits from less context, independent or parallel research, repetitive implementation, or separate review. No user `prepare` is needed. Give each subagent a short just-in-time brief: objective, needed context and decisions, files/search area, constraints, expected result, and checks. Ask it to return findings, changed files, checks, concerns, and deviations. Reading `TASK_STATE.md` is optional for a subagent; avoid extra coordination layers.
 
-Treat `resume` as a new user request: first create the normal checkpoint commit. Read `AGENTS.md` and `TASK_STATE.md`; for gameplay or architecture also read `MVP_README.md`, and for save-system work also read `Docs/SAVES.md`. Check the current branch and working tree. A checkpoint may have committed the previous step, so use a short `git log` and `git show --stat` for the relevant checkpoint when `git diff` is empty; inspect the full commit only if needed. Source files and Git are the source of truth. If the snapshot disagrees with them, follow the code and correct the snapshot at the next `prepare`. Continue from `Remaining`, starting with `Relevant files`; inspect more of the repository only when necessary.
+If model selection is available, prefer Luna for bounded mechanical work, repository searches, simple plan execution, and checks; Sol for normal engineering, multi-file logic, debugging, and review; Astra for exceptionally hard bounded architecture, root-cause analysis, critical review, or a failing plan. Match the delegated task, not the root model. If mechanical work exposes ambiguity, a scope change, or significant gameplay/architecture risk, pause that part and return the issue for stronger analysis.
 
-### Model choice and escalation
+Switch the root model manually only when a substantial next phase warrants it; prefer a suitable subagent for one bounded task. A manual handoff may use `prepare`, optional `/compact` when the old conversation is large, then `resume`. `TASK_STATE.md` preserves portable task state; `/compact` reduces conversation context. Neither is a mandatory ritual, and unnecessary coordination should not displace useful work.
 
-Choose by type of work, not model name. Use a stronger reasoning model for unknown problems, root-cause analysis, complex debugging or review, architecture, ambiguous behavior, substantial planning, a failed plan, or decisions that materially affect gameplay or architecture. A faster model can implement an established plan, make small local or repetitive edits, rename or format, fix lint/style, update simple tests, run checks, and resolve obvious local errors from a clear `Remaining` list. If mechanical work reveals an architectural problem, ambiguity, conflict with game logic, scope change, out-of-scope gameplay risk, or a significant new decision, pause that part, record the issue briefly, and propose handing it to a stronger reasoning model.
+### Completion and Git
 
-### After `/compact` and completion
-
-After `/compact`, continue from `AGENTS.md`, `TASK_STATE.md`, `MVP_README.md` when relevant, and the source files in `Relevant files`. Do not reconstruct the full chat history when the snapshot is sufficient. When a task finishes, do not rewrite `TASK_STATE.md` after every later message. At the next `prepare` or explicit request, set `Status` to `Completed`, record the result and useful validation, and remove stale remaining steps. For a new task, reuse the same file and replace the old state.
-
-### Git integration
-
-Git Safety remains the controlling rule. `prepare` creates its usual checkpoint before updating `TASK_STATE.md`; the next user request's checkpoint naturally records that update. Do not add a parallel commit flow or a separate handoff commit without an explicit request. Keep `TASK_STATE.md` tracked by Git and out of `.gitignore`.
+Do not update `TASK_STATE.md` merely because work finished. At the next `prepare` or explicit request, set `Completed`, retain useful results, and clear stale `Remaining`. Git Safety remains the controlling commit rule; do not add handoff commits or ignore `TASK_STATE.md`.
