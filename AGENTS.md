@@ -6,6 +6,8 @@ Godot 4.x game project.
 
 Follow the existing project structure, naming, architecture, and code style. Prefer small, focused changes over rewrites.
 
+For gameplay or architecture work, read `MVP_README.md` as a short project map; for save-system work, also read `Docs/SAVES.md`. Verify relevant behavior in code before editing.
+
 ## Git Safety
 
 Before every new user request, create a checkpoint commit **before editing anything**.
