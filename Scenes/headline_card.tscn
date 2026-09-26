@@ -1,5 +1,7 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" uid="uid://c6t1mrk1inas3" path="res://Scripts/headline_pencil_mark.gd" id="1_pencil"]
+
 [node name="HeadlineCard" type="Button"]
 custom_minimum_size = Vector2(0, 270)
 layout_mode = 2
@@ -33,3 +35,7 @@ mouse_filter = 2
 theme_override_colors/font_color = Color(0.25, 0.33, 0.34, 1)
 theme_override_font_sizes/font_size = 16
 text = "ВЫБРАТЬ ЗАГОЛОВОК  →"
+
+[node name="PencilMark" type="Node2D" parent="."]
+z_index = 1
+script = ExtResource("1_pencil")

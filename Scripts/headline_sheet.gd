@@ -4,6 +4,8 @@ var _base_position := Vector2.ZERO
 var _base_scale := Vector2.ONE
 var _base_z_index := 0
 var _hover_tween: Tween
+@onready var _headline: Label = $Content/Headline
+@onready var _pencil_mark: Node2D = $PencilMark
 
 func _ready() -> void:
 	pivot_offset = size / 2.0
@@ -12,6 +14,8 @@ func _ready() -> void:
 	_base_z_index = z_index
 	mouse_entered.connect(_set_hovered.bind(true))
 	mouse_exited.connect(_set_hovered.bind(false))
+	button_down.connect(_pencil_mark.clear)
+	visibility_changed.connect(_on_visibility_changed)
 	var paper := StyleBoxFlat.new()
 	paper.bg_color = Color("f2e7c8")
 	paper.set_corner_radius_all(5)
@@ -35,9 +39,15 @@ func _set_hovered(value: bool) -> void:
 	_hover_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	if value:
 		z_index = 12
+		#_pencil_mark.trace(_headline)
 		_hover_tween.parallel().tween_property(self, "position", _base_position + Vector2(0.0, -18.0), 0.14)
 		_hover_tween.parallel().tween_property(self, "scale", _base_scale * 1.045, 0.14)
 	else:
+		_pencil_mark.clear()
 		_hover_tween.parallel().tween_property(self, "position", _base_position, 0.16)
 		_hover_tween.parallel().tween_property(self, "scale", _base_scale, 0.16)
 		_hover_tween.tween_callback(func(): z_index = _base_z_index)
+
+func _on_visibility_changed() -> void:
+	if not visible:
+		_pencil_mark.clear()
