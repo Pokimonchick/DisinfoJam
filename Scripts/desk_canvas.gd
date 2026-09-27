@@ -1,3 +1,4 @@
+@tool
 extends Control
 
 ## All desk art shares one coordinate system; fixed HUD controls stay outside World.
@@ -18,7 +19,7 @@ func _fit() -> void:
 	position = (available - design_size * factor) * 0.5
 
 func _process(delta: float) -> void:
-	if not is_visible_in_tree() or not motion_enabled:
+	if Engine.is_editor_hint() or not is_visible_in_tree() or not motion_enabled:
 		return
 	var normalized := get_local_mouse_position() / design_size * 2.0 - Vector2.ONE
 	normalized = normalized.clamp(-Vector2.ONE, Vector2.ONE)
