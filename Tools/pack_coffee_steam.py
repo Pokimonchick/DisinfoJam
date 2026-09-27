@@ -62,9 +62,12 @@ def main() -> None:
             'atlas = ExtResource("1_atlas")',
             f"region = Rect2({x}, {y}, {width}, {height})",
         ])
+    # The exported ends differ sharply. Playing back through the intermediate
+    # frames gives the steam a continuous breathing loop at both turnarounds.
+    play_order = list(range(len(frames))) + list(range(len(frames) - 2, 0, -1))
     frame_refs = ", ".join(
         f'{{"duration": 1.0, "texture": SubResource("AtlasTexture_{index}")}}'
-        for index in range(len(frames))
+        for index in play_order
     )
     lines.extend([
         "",

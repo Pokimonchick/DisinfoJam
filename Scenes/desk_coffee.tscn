@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Group 8 (2) 2.png" id="cup"]
 [ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Group 9 (2) 2.png" id="shadow"]
 [ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Union.png" id="swirl"]
-[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Union-1.png" id="stain"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/след от кофе.png" id="stain"]
 [ext_resource type="SpriteFrames" path="res://Data/coffee_steam.tres" id="steam"]
 
 [node name="DeskCoffee" type="Control"]
@@ -14,14 +14,14 @@ mouse_filter = 2
 script = ExtResource("1")
 
 [node name="Stain" type="TextureRect" parent="."]
-offset_left = 70.0
-offset_top = 68.0
-offset_right = 274.0
-offset_bottom = 278.0
+offset_left = 92.0
+offset_top = 8.0
+offset_right = 260.0
+offset_bottom = 321.0
 mouse_filter = 2
 texture = ExtResource("stain")
 expand_mode = 1
-modulate = Color(1,1,1,0.48)
+modulate = Color(1,1,1,0.72)
 
 [node name="Cup" type="TextureButton" parent="."]
 visible = false
@@ -52,8 +52,8 @@ texture = ExtResource("swirl")
 expand_mode = 1
 
 [node name="Steam" type="AnimatedSprite2D" parent="Cup"]
-position = Vector2(150, 87)
-scale = Vector2(0.92, 0.92)
+position = Vector2(171, 139)
+scale = Vector2(0.76, 0.76)
 modulate = Color(1,1,1,0.75)
 sprite_frames = ExtResource("steam")
 autoplay = "default"

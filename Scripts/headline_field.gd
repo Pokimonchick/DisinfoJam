@@ -10,11 +10,12 @@ func _ready() -> void:
 func set_headline(value: String) -> void:
 	$Text.text = value if not value.is_empty() else "Выбрать заголовок…"
 	var font: Font = $Text.get_theme_font("font")
-	var font_size := 36
-	while font_size > 24 and font.get_multiline_string_size($Text.text, HORIZONTAL_ALIGNMENT_LEFT, $Text.size.x, font_size).y > 130.0:
+	var font_size := 32
+	while font_size > 22 and font.get_multiline_string_size($Text.text, HORIZONTAL_ALIGNMENT_LEFT, $Text.size.x, font_size).y > 112.0:
 		font_size -= 2
 	$Text.add_theme_font_size_override("font_size", font_size)
 	$Replace.visible = not value.is_empty()
+	$Pencil.visible = value.is_empty()
 	tooltip_text = "Заменить заголовок" if not value.is_empty() else "Посмотреть варианты заголовка"
 
 func _highlight(hovered: bool) -> void:

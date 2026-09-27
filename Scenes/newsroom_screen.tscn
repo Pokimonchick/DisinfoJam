@@ -7,6 +7,8 @@
 [ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/image 21.png" id="green"]
 [ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/image 9.png" id="tab"]
 [ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Group 39.png" id="replace"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/карандаш.png" id="pencil"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Rectangle 8.png" id="source_rule"]
 [ext_resource type="PackedScene" path="res://Scenes/headline_card.tscn" id="card"]
 [ext_resource type="Script" path="res://Scripts/headline_sheet.gd" id="sheet"]
 [ext_resource type="PackedScene" path="res://Scenes/desk_focus.tscn" id="focus"]
@@ -16,7 +18,7 @@
 
 [sub_resource type="ShaderMaterial" id="SunMaterial"]
 shader = ExtResource("sun")
-shader_parameter/strength = 0.16
+shader_parameter/shadow_strength = 0.42
 
 [node name="Newsroom" type="Control"]
 layout_mode = 1
@@ -54,19 +56,19 @@ offset_bottom = 1080.0
 mouse_filter = 2
 
 [node name="Background" type="TextureRect" parent="Canvas/World"]
-offset_left = -300.0
-offset_top = -240.0
-offset_right = 2314.0
-offset_bottom = 1315.0
+offset_left = -147.0
+offset_top = -160.0
+offset_right = 2273.0
+offset_bottom = 1280.0
 mouse_filter = 2
 texture = ExtResource("background")
 expand_mode = 1
 
 [node name="ArticleNumber" type="Label" parent="Canvas/World"]
-offset_left = 580.0
-offset_top = 250.0
-offset_right = 795.0
-offset_bottom = 445.0
+offset_left = 637.0
+offset_top = 235.0
+offset_right = 822.0
+offset_bottom = 402.0
 unique_name_in_owner = true
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.40,0.43,0.19,1)
@@ -84,9 +86,9 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="HeadlineTab" type="TextureRect" parent="Canvas/World"]
-offset_left = 825.0
+offset_left = 843.0
 offset_top = 208.0
-offset_right = 1030.0
+offset_right = 1048.0
 offset_bottom = 276.0
 mouse_filter = 2
 texture = ExtResource("tab")
@@ -104,10 +106,10 @@ theme_override_font_sizes/font_size = 26
 text = "ЗАГОЛОВОК"
 
 [node name="HeadlineField" type="TextureButton" parent="Canvas/World"]
-offset_left = 820.0
+offset_left = 856.0
 offset_top = 250.0
 offset_right = 1670.0
-offset_bottom = 430.0
+offset_bottom = 414.0
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("green")
@@ -119,47 +121,65 @@ script = ExtResource("field")
 [node name="Text" type="Label" parent="Canvas/World/HeadlineField"]
 offset_left = 35.0
 offset_top = 20.0
-offset_right = 745.0
-offset_bottom = 150.0
+offset_right = 715.0
+offset_bottom = 144.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(1,0.97,0.78,1)
-theme_override_font_sizes/font_size = 36
+theme_override_font_sizes/font_size = 32
 vertical_alignment = 1
 autowrap_mode = 3
 text = "Выбрать заголовок…"
 
 [node name="Replace" type="TextureRect" parent="Canvas/World/HeadlineField"]
-offset_left = 753.0
+offset_left = 720.0
 offset_top = 4.0
-offset_right = 845.0
+offset_right = 812.0
 offset_bottom = 92.0
 mouse_filter = 2
 texture = ExtResource("replace")
 expand_mode = 1
 
+[node name="Pencil" type="TextureRect" parent="Canvas/World/HeadlineField"]
+offset_left = 746.0
+offset_top = 57.0
+offset_right = 796.0
+offset_bottom = 102.0
+mouse_filter = 2
+texture = ExtResource("pencil")
+expand_mode = 1
+
+[node name="SourceRule" type="TextureRect" parent="Canvas/World"]
+offset_left = 570.0
+offset_top = 444.0
+offset_right = 1644.0
+offset_bottom = 446.0
+mouse_filter = 2
+texture = ExtResource("source_rule")
+expand_mode = 1
+
 [node name="SourceTitle" type="Label" parent="Canvas/World"]
 offset_left = 645.0
-offset_top = 453.0
+offset_top = 465.0
 offset_right = 1610.0
-offset_bottom = 505.0
+offset_bottom = 512.0
 unique_name_in_owner = true
 mouse_filter = 2
 rotation = -0.022
 theme_override_colors/font_color = Color(0.36,0.27,0.12,1)
-theme_override_font_sizes/font_size = 27
+theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="SourceText" type="RichTextLabel" parent="Canvas/World"]
 offset_left = 650.0
-offset_top = 535.0
+offset_top = 520.0
 offset_right = 1640.0
 offset_bottom = 887.0
 unique_name_in_owner = true
 rotation = -0.022
 mouse_filter = 1
 theme_override_colors/default_color = Color(0.19,0.17,0.09,1)
-theme_override_font_sizes/normal_font_size = 32
+theme_override_font_sizes/normal_font_size = 28
 scroll_active = true
 
 [node name="Coffee" parent="Canvas/World" instance=ExtResource("coffee")]
