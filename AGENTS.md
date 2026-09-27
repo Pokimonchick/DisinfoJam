@@ -10,7 +10,7 @@ For gameplay or architecture work, read `MVP_README.md` as a short project map; 
 
 ## Git Safety
 
-Before every new user request, create a checkpoint commit **before editing anything**.
+Create a checkpoint commit before editing project files for a user request that asks for project changes. Do not create a checkpoint for questions, explanations, or read-only investigation.
 
 If there are changes:
 
@@ -76,9 +76,9 @@ Keep the final report short:
 
 Keep one Git-tracked root `TASK_STATE.md` as a compact, portable snapshot of the current large task, not a request log, chat history, reasoning trace, permanent project document, or required subagent IPC. Use `Status` (`Active`, `Blocked`, `Completed`), `Current task`, `Context`, `Already done`, `Decisions`, `Relevant files`, `Do not touch`, `Remaining`, `Validation`, `Known issues / uncertainties`, and `Git state` (branch, relevant checkpoint, changed files, working tree). Keep `Remaining` actionable; never paste a full diff. Update the file only for `prepare`, an explicit save-state request, a substantial manual root handoff, or a dangerously stale snapshot. Reuse it for later large tasks; routine code changes and subagent calls do not require updates.
 
-For `prepare`, first obey Git Safety, then replace stale state with a concise handoff. Do not start new implementation or run `/compact` automatically. Suggest `/compact` only when a large conversation makes it useful. Do not create a separate handoff commit: the next request's checkpoint records the updated file.
+For `prepare`, first obey Git Safety because updating `TASK_STATE.md` changes the project, then replace stale state with a concise handoff. Do not start new implementation or run `/compact` automatically. Suggest `/compact` only when a large conversation makes it useful. Do not create a separate handoff commit: the next project-changing request's checkpoint records the updated file.
 
-For `resume`, first obey Git Safety, then read `AGENTS.md` and `TASK_STATE.md`, plus `MVP_README.md` for gameplay/architecture or `Docs/SAVES.md` for saves. Verify branch, working tree, and relevant source files; code and Git override stale state. A checkpoint can leave `git diff` empty, so consult a short `git log` and `git show --stat` only when needed. Start with `Relevant files` and `Remaining`; broaden research only if necessary. `resume` is mainly for `/compact`, a root-model/chat change, or another context break, not required after `prepare` in the same intact conversation.
+For `resume`, read `AGENTS.md` and `TASK_STATE.md`, plus `MVP_README.md` for gameplay/architecture or `Docs/SAVES.md` for saves. Create a checkpoint before editing project files, but not for a read-only continuation. Verify branch, working tree, and relevant source files; code and Git override stale state. A checkpoint can leave `git diff` empty, so consult a short `git log` and `git show --stat` only when needed. Start with `Relevant files` and `Remaining`; broaden research only if necessary. `resume` is mainly for `/compact`, a root-model/chat change, or another context break, not required after `prepare` in the same intact conversation.
 
 ### Subagents and models
 
