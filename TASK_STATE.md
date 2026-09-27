@@ -4,22 +4,24 @@
 Completed
 
 ## Current task
-Refine the project handoff workflow, including when checkpoint commits are required.
+Evaluate the supplied long-task bootstrap prompt and apply a minimal compatible workflow to DisinfoJam. Acceptance: reuse existing instructions/state, preserve project policies, add only useful missing rules, and inspect the documentation changes.
 
 ## Context
-Git Safety requires a checkpoint before project changes, not for questions or read-only work. `MVP_README.md` is the existing project map; source files and Git remain authoritative.
+The prompt was accepted as a reusable one-time installer with project-specific adaptation. Runtime rules live in the root `AGENTS.md`; this file is the sole current task snapshot, maintained by the coordinating root. Current confirmed requirements define the goal; sources, Git and fresh checks establish implementation facts. Prepared for continuation in this same local workspace.
 
 ## Already done
-- Read the current `AGENTS.md` and `MVP_README.md`.
-- Updated the existing `Task Handoff` section with compact command, subagent, model-choice, and compaction rules.
-- Reused this existing task-state file instead of creating a duplicate.
-- Clarified the checkpoint rule in `AGENTS.md` for ordinary requests, `prepare`, and `resume`.
+- Reviewed the supplied bootstrap, existing instructions, snapshot, project map and Git changes.
+- Extended the existing `Task Handoff` section: snapshot ownership, acceptance/evidence, recovery, local versus transferred state, secret exclusion, parallel writes and completion criteria.
+- Preserved the existing checkpoint policy, selective state updates, subagent/model guidance and manual compaction workflow.
+- Committed the installed `AGENTS.md` changes in the checkpoint preceding this preparation.
+- No helpers or background writers were started for this task; no continuing task processes are known.
 
 ## Decisions
-- Keep the checkpoint flow; no separate handoff commits.
-- Give subagents short task-specific briefs without requiring `prepare` or this file.
-- Recommend `/compact` only when reducing the old conversation would help.
-- `prepare` changes `TASK_STATE.md` and needs a checkpoint; read-only `resume` does not.
+- Keep one root-owned, Git-tracked snapshot; add separate task records only if multiple unfinished tasks need preservation.
+- Update state for explicit preparation/saving, substantial handoff or materially misleading stale content, not after every routine step or completion.
+- `prepare` requires a checkpoint before editing; read-only `resume` does not. No separate handoff commit or automatic `/compact`.
+- Helpers receive bounded briefs and separate write areas; independent writing roots need isolation or coordinated ownership.
+- Other projects may reuse the bootstrap after adapting their storage, Git rules and available capabilities. Nothing was installed globally.
 
 ## Relevant files
 - `AGENTS.md`
@@ -30,16 +32,20 @@ Git Safety requires a checkpoint before project changes, not for questions or re
 - `MVP_README.md`, game code, scenes, resources, and unrelated documentation for this task.
 
 ## Remaining
-None for this task.
+None for this completed task. On continuation, read `AGENTS.md`, verify Git and take the next user request; do not restart bootstrap or create a fictitious active task.
 
 ## Validation
-- Documentation diff inspected; `git diff --check` passed. Godot was not run.
+- Installed workflow, now committed at `9ab6445`: diff inspected; `git diff --check` passed; confirmed one `Task Handoff` section, unchanged instructions outside it, and preserved previous snapshot during installation.
+- This preparation: snapshot structure and final diff checked with `git diff --check`.
+- Godot/product tests and isolated recovery in a fresh chat were not run; documentation checks do not establish recovery reliability.
 
 ## Known issues / uncertainties
-None identified.
+- No known blocker. Cross-environment delivery and recipient access were not requested or verified.
+- The updated snapshot remains local and uncommitted after preparation, under the existing checkpoint policy.
 
 ## Git state
+- Workspace: `C:\Users\User\Desktop\gdg\DisinfoJam`.
 - Branch: `elfat`.
-- Relevant checkpoint: `d1ff57c` (`checkpoint: before checkpoint policy change`).
-- Changed for this task: `AGENTS.md`, `TASK_STATE.md`.
-- Working tree: these documentation edits are uncommitted after the checkpoint.
+- Bootstrap checkpoint: `abebd67` (`checkpoint: before agent workflow bootstrap`).
+- Current HEAD/checkpoint: `9ab6445` (`checkpoint: before workflow state preparation`), containing the installed `AGENTS.md` changes.
+- Working tree after preparation: only `TASK_STATE.md` modified; no separate handoff commit or push performed.
