@@ -25,6 +25,7 @@ var article_cursor: int = 0
 var option_order: Array[int] = []
 var coffee_ready: bool = false
 var coffee_used_today: bool = false
+var approval_time_applied: bool = false
 var food_stocked: bool = false
 var combo_type: int = -1
 var combo_count: int = 0
@@ -70,6 +71,7 @@ func reset(seed_value: int = -1) -> void:
 	article_cursor = 0
 	coffee_ready = false
 	coffee_used_today = false
+	approval_time_applied = false
 	food_stocked = false
 	combo_type = -1
 	combo_count = 0
@@ -94,7 +96,8 @@ func start_shift() -> void:
 	if phase == Phase.HOME:
 		health = minf(balance.maximum_stat, health + balance.sleep_health)
 	day += 1
-	shift_length = balance.shift_seconds
+	approval_time_applied = loyalty >= balance.state_approval.threshold
+	shift_length = balance.shift_seconds + (balance.state_approval.amount if approval_time_applied else 0.0)
 	coffee_used_today = false
 	combo_type = -1
 	combo_count = 0
@@ -144,6 +147,7 @@ func publish_headline(display_index: int) -> bool:
 	combo_count = combo_count + 1 if combo_type == option.editorial_type else 1
 	combo_type = option.editorial_type
 	var multiplier := combo_multiplier()
+	var stamina_cost := publication_stamina_cost()
 	last_result = {
 		"article_id": current_article().id,
 		"headline": option.text,
@@ -153,13 +157,14 @@ func publish_headline(display_index: int) -> bool:
 		"combo_type": combo_type,
 		"combo_count": combo_count,
 		"multiplier": multiplier,
+		"stamina_cost": stamina_cost,
 		"explanation": option.explanation,
 		"day": day,
 	}
 	money += last_result.money
 	reputation = clampf(reputation + last_result.reputation, 0.0, balance.maximum_stat)
 	loyalty = clampf(loyalty + last_result.loyalty, 0.0, balance.maximum_stat)
-	health = maxf(0.0, health - balance.publication_health_cost)
+	health = maxf(0.0, health - stamina_cost)
 	published_today += 1
 	total_published += 1
 	earned_today += last_result.money
@@ -255,6 +260,11 @@ func drink_coffee() -> bool:
 func combo_multiplier(count: int = -1) -> float:
 	var length := combo_count if count < 0 else count
 	return minf(balance.combo_max_multiplier, 1.0 + maxi(0, length - 1) * balance.combo_step)
+
+
+func publication_stamina_cost() -> float:
+	var reduction := balance.reader_support.amount if reputation >= balance.reader_support.threshold else 0.0
+	return maxf(0.0, balance.publication_health_cost - reduction)
 
 
 func _check_ending() -> bool:

@@ -24,6 +24,7 @@ func fresh() -> NewsroomSession:
 
 func _run() -> void:
 	_test_snapshots()
+	_test_benefit_save()
 	_test_files()
 	_test_campaign()
 	await _test_menu_and_resume()
@@ -73,6 +74,20 @@ func _test_snapshots() -> void:
 	check(not NewsroomSaveData.validate(invalid), "Malformed article effects rejected")
 	var extended := SaveRepository.merge_sections({"run": {"future_feature": 17}}, snapshot)
 	check(extended.run.future_feature == 17, "Unknown fields survive saving")
+
+func _test_benefit_save() -> void:
+	var session := fresh()
+	session.loyalty = session.balance.state_approval.threshold
+	session.start_shift()
+	session.tick_work(5.0)
+	var snapshot: Dictionary = JSON.parse_string(JSON.stringify(NewsroomSaveData.capture(session)))
+	var restored := fresh()
+	check(NewsroomSaveData.restore(restored, snapshot), "Restore a shift with the approval bonus")
+	check(restored.approval_time_applied and restored.shift_length == 200.0 and restored.time_left == 195.0, "Restoring the shift does not add approval time again")
+	snapshot.run.erase("approval_time_applied")
+	check(NewsroomSaveData.restore(restored, snapshot) and not restored.approval_time_applied, "Older saves without the approval flag use the default")
+	check(restored.shift_length == 200.0 and restored.time_left == 195.0, "Older saves retain their saved timer")
+
 
 func _test_files() -> void:
 	var repository := SaveRepository.new(test_path)

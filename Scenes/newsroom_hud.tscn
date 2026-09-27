@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://Scripts/newsroom_hud.gd" id="1"]
 [ext_resource type="Script" path="res://Scripts/timer_ring.gd" id="2_ring"]
+[ext_resource type="PackedScene" path="res://Scenes/stat_benefit_hint.tscn" id="3_benefit"]
 
 [node name="HUD" type="HBoxContainer"]
 custom_minimum_size = Vector2(0, 88)
@@ -51,6 +52,10 @@ custom_minimum_size = Vector2(0, 9)
 layout_mode = 2
 show_percentage = false
 
+[node name="ReputationHint" parent="ReputationGroup" instance=ExtResource("3_benefit")]
+unique_name_in_owner = true
+layout_mode = 2
+
 [node name="LoyaltyGroup" type="VBoxContainer" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -71,6 +76,10 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 9)
 layout_mode = 2
 show_percentage = false
+
+[node name="LoyaltyHint" parent="LoyaltyGroup" instance=ExtResource("3_benefit")]
+unique_name_in_owner = true
+layout_mode = 2
 
 [node name="MoneyGroup" type="VBoxContainer" parent="."]
 custom_minimum_size = Vector2(120, 0)

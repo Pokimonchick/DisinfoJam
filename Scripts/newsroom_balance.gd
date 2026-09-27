@@ -17,6 +17,10 @@ extends Resource
 ## Scales catalogue payouts, including saved articles; rounding happens after combo.
 @export_range(0.0, 2.0, 0.05) var publication_income_multiplier: float = 0.45
 
+@export_group("Преимущества")
+@export var reader_support: StatBenefit = preload("res://Data/reader_support.tres")
+@export var state_approval: StatBenefit = preload("res://Data/state_approval.tres")
+
 @export_group("Эффект усталости")
 ## Доля максимальной выносливости, ниже которой появляется эффект.
 @export_range(0.01, 1.0, 0.01) var fatigue_threshold: float = 0.30

@@ -145,7 +145,7 @@ func _close_focus() -> void:
 
 func _show_result(result: Dictionary) -> void:
 	popup_kind = DialogKind.RESULT
-	var changes := "[color=#78512c]%s · серия %d · ×%.2f[/color]\nДеньги: %+d $ · Репутация: %+d · Государство: %+d\nВыносливость: −%.1f\n\n%s" % [HeadlineOption.TYPE_NAMES[result.combo_type], result.combo_count, result.multiplier, result.money, result.reputation, result.loyalty, session.balance.publication_health_cost, result.explanation]
+	var changes := "[color=#78512c]%s · серия %d · ×%.2f[/color]\nДеньги: %+d $ · Репутация: %+d · Государство: %+d\nВыносливость: −%.1f\n\n%s" % [HeadlineOption.TYPE_NAMES[result.combo_type], result.combo_count, result.multiplier, result.money, result.reputation, result.loyalty, float(result.get("stamina_cost", session.balance.publication_health_cost)), result.explanation]
 	var full_issue := session.publication_limit_reached()
 	if full_issue:
 		changes += "\n\n[color=#78512c]В текущем выпуске газеты недостаточно места для новых публикаций.[/color]"

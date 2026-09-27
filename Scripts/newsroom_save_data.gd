@@ -6,7 +6,7 @@ extends RefCounted
 const NUMBERS := ["health", "reputation", "loyalty", "money", "day", "time_left",
 	"shift_length", "article_cursor", "combo_type", "combo_count", "published_today",
 	"earned_today", "total_published", "completed_shifts", "campaign_days", "campaign_money"]
-const FLAGS := ["coffee_ready", "coffee_used_today", "food_stocked", "awaiting_acknowledgement", "campaign_completed"]
+const FLAGS := ["coffee_ready", "coffee_used_today", "approval_time_applied", "food_stocked", "awaiting_acknowledgement", "campaign_completed"]
 const PHASES := ["idle", "work", "home", "ended"]
 const ENDINGS := ["none", "exhaustion", "office_fire", "arrest", "debt", "victory", "goal_missed"]
 

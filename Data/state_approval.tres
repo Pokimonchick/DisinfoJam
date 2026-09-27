@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="StatBenefit" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/stat_benefit.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+threshold = 75.0
+amount = 20.0
+locked_text = "ПРИ {threshold}: +{amount} С К СМЕНЕ"
+ready_text = "СЛЕДУЮЩАЯ СМЕНА: +{amount} С"
+applied_text = "СЕГОДНЯШНЯЯ СМЕНА: +{amount} С"
+explanation = "Власти меньше задерживают выпуск проверками.\nЕсли лояльность не ниже {threshold} в начале смены, добавляется {amount} секунд. Уже полученное время не отнимается."

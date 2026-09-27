@@ -38,14 +38,3 @@ func restore_save_sections(data: Dictionary) -> void:
 		var restore: Callable = _save_sections[id].restore
 		if restore.is_valid():
 			restore.call(data.get(id, {}).duplicate(true))
-
-var society_points: int = 0
-var day_1_completed: bool = false
-
-
-func complete_day_1(score_change: int) -> void:
-	if day_1_completed:
-		return
-
-	day_1_completed = true
-	society_points += score_change

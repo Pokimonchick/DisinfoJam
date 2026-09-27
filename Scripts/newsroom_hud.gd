@@ -16,6 +16,14 @@ func refresh() -> void:
 	_set_meter(%Health, %HealthValue, session.health, Color("b6c995"))
 	_set_meter(%Reputation, %ReputationValue, session.reputation, Color("79bec1"))
 	_set_meter(%Loyalty, %LoyaltyValue, session.loyalty, Color("c4a3d3"))
+	%ReputationHint.present(session.balance.reader_support,
+		StatBenefitHint.State.READY if session.reputation >= session.balance.reader_support.threshold else StatBenefitHint.State.LOCKED)
+	var approval_state := StatBenefitHint.State.LOCKED
+	if session.phase == NewsroomSession.Phase.WORK and session.approval_time_applied:
+		approval_state = StatBenefitHint.State.APPLIED
+	elif session.loyalty >= session.balance.state_approval.threshold:
+		approval_state = StatBenefitHint.State.READY
+	%LoyaltyHint.present(session.balance.state_approval, approval_state)
 	%Money.text = "%d $" % session.money
 	%Money.add_theme_color_override("font_color", Color("ed987e") if session.money < 0 else Color("e8bd68"))
 	%Day.text = "СМЕНА %02d" % session.day

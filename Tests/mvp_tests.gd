@@ -61,6 +61,7 @@ func _run() -> void:
 	_test_publication_limit()
 	_test_coffee_inventory()
 	_test_combos()
+	_test_benefits()
 	_test_endings()
 	await _test_scenes()
 	if failures.is_empty():
@@ -292,7 +293,7 @@ func _test_combos() -> void:
 		_check(not s.publish_headline(display_index) and s.combo_count == count_before, "Double publication cannot grow the combo")
 		s.acknowledge_publication()
 	_check(s.money == start_money + 380, "Combo income is counted exactly once")
-	_check(s.health == start_health - 6 * s.balance.publication_health_cost, "Combo does not multiply stamina costs")
+	_check(s.health == start_health - 6 * maxf(0.0, s.balance.publication_health_cost - s.balance.reader_support.amount), "Combo does not multiply stamina costs")
 	s.publish_headline(s.option_order.find(0))
 	_check(s.combo_count == 1 and s.combo_type == 0 and s.last_result.multiplier == 1.0, "Changing editorial type resets the series")
 	s.acknowledge_publication()
@@ -304,6 +305,47 @@ func _test_combos() -> void:
 	_check(s.combo_multiplier(20) == 3.0, "A designer can raise the cap to three")
 	s.reset()
 	_check(s.combo_count == 0 and s.combo_type == -1, "New run resets combo")
+
+
+func _test_benefits() -> void:
+	var s := _fresh()
+	s.articles = [NewsArticle.from_row({
+		"id": "benefit_fixture", "source": "Fixture", "text": "Known effects.",
+		"options": [
+			["Support", 20, 2, 0, "Known effects", 0],
+			["Criticism", 20, -10, 0, "Known effects", 1],
+			["Neutral", 20, 0, 0, "Known effects", 2]
+		]
+	})]
+	s.reputation = 74.0
+	s.start_shift()
+	var before := s.health
+	s.publish_headline(s.option_order.find(0))
+	_check(s.reputation == 76.0 and s.last_result.stamina_cost == 1.5 and s.health == before - 1.5, "Crossing the reputation threshold benefits the next article")
+	s.acknowledge_publication()
+	before = s.health
+	s.publish_headline(s.option_order.find(2))
+	_check(s.last_result.stamina_cost == 0.5 and s.health == before - 0.5, "Reader support reduces publication stamina cost")
+	s.acknowledge_publication()
+	s.publish_headline(s.option_order.find(1))
+	_check(s.reputation < 75.0 and s.last_result.stamina_cost == 0.5, "An article keeps a benefit earned before its effects")
+	s.acknowledge_publication()
+	s.publish_headline(s.option_order.find(2))
+	_check(s.last_result.stamina_cost == 1.5, "Falling below the threshold removes the next publication benefit")
+
+	s = _fresh()
+	s.loyalty = 75.0
+	s.start_shift()
+	_check(s.approval_time_applied and s.shift_length == 200.0 and s.time_left == 200.0, "High loyalty adds time once when the shift starts")
+	s.loyalty = 10.0
+	s.tick_work(5.0)
+	_check(s.shift_length == 200.0 and s.time_left == 195.0, "Losing loyalty mid-shift does not revoke granted time")
+	s.coffee_ready = true
+	s.drink_coffee()
+	_check(s.shift_length == 260.0 and s.time_left == 255.0, "Approval and coffee time bonuses add together")
+	s.finish_shift()
+	s.start_shift()
+	_check(not s.approval_time_applied and s.shift_length == 180.0, "Low loyalty does not grant time next shift")
 
 func _test_scenes() -> void:
 	# Never overwrite a real player's campaign while running UI tests.
