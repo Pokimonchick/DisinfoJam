@@ -10,9 +10,7 @@ For gameplay or architecture work, read `MVP_README.md` as a short project map; 
 
 ## Git Safety
 
-Commit in two cases: after 10 completed user requests that changed project files other than the counter since the last commit, or after a completed substantial change. Count each request once, regardless of how many messages, files or iterations it takes. Questions, read-only work and a `prepare` that only updates `TASK_STATE.md` do not count. Decide whether a change is substantial by its scope, importance and risk. Using a particular model, including Astra, can prompt a closer look but is not itself a commit trigger.
-
-Keep the pending request count as a single number in `.codex/commit-count.txt`. Read and increment it after each qualifying request; reset it to `0` in every commit. At 10, commit the completed accumulated work and the reset counter. A substantial change triggers a commit after relevant validation and also resets the counter. Do not create automatic pre-edit or empty checkpoint commits. If the count is missing or inconsistent, use only reliable evidence to reconstruct it; do not guess.
+Commit a completed, validated change when it forms a meaningful, reviewable unit: a new system or feature, an important behavior change, a release milestone, or a cohesive batch of related small fixes. Decide by the work's scope, importance and risk, not by the number of user requests or the model used. An isolated small fix can wait for a related batch, a meaningful milestone, or an explicit commit request. Do not create automatic pre-edit or empty checkpoint commits.
 
 Before committing, inspect Git status and the diff, then stage only files intended for that commit. Preserve unrelated work. If an operation could discard uncommitted work, safeguard it first. Do not amend, squash, delete, rewrite, or push commits unless explicitly asked.
 
