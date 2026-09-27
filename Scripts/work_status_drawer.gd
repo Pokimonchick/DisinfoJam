@@ -12,13 +12,28 @@ var _slide_tween: Tween
 
 
 func _ready() -> void:
+	_style_help_tooltips()
 	%TabButton.pressed.connect(_toggle)
-	for bar: ProgressBar in [%HealthBar, %ReputationBar, %LoyaltyBar]:
-		bar.add_theme_stylebox_override("fill", bar.get_theme_stylebox("fill").duplicate())
 	%SlidingPanel.position.x = OPEN_X if expanded else CLOSED_X
 	%Arrow.flip_h = not expanded
 	_update_tab_tooltip()
 	_refresh()
+
+
+func _style_help_tooltips() -> void:
+	var paper := StyleBoxFlat.new()
+	paper.bg_color = Color("34291f")
+	paper.border_color = Color("b28a52")
+	paper.set_border_width_all(2)
+	paper.set_corner_radius_all(5)
+	paper.set_content_margin_all(14)
+	paper.shadow_color = Color(0.08, 0.05, 0.02, 0.55)
+	paper.shadow_size = 5
+	var tooltip_theme := Theme.new()
+	tooltip_theme.set_stylebox("panel", "TooltipPanel", paper)
+	tooltip_theme.set_color("font_color", "TooltipLabel", Color("f8e9c7"))
+	for help: Control in [$SlidingPanel/DeskHelp, %ReputationHelp, %LoyaltyHelp]:
+		help.theme = tooltip_theme
 
 
 func bind(model: NewsroomSession) -> void:
@@ -67,9 +82,9 @@ func _refresh() -> void:
 		return
 	%Shift.text = "СМЕНА %02d" % session.day
 	%Player.text = session.player_name
-	_set_meter(%HealthBar, %HealthValue, session.health, Color("ae8751"))
-	_set_meter(%ReputationBar, %ReputationValue, session.reputation, Color("a67d41"))
-	_set_meter(%LoyaltyBar, %LoyaltyValue, session.loyalty, Color("9e773e"))
+	_set_meter(%HealthBar, %HealthValue, session.health, Color("6b7046"))
+	_set_meter(%ReputationBar, %ReputationValue, session.reputation, Color("916038"))
+	_set_meter(%LoyaltyBar, %LoyaltyValue, session.loyalty, Color("626648"))
 	var support: StatBenefit = session.balance.reader_support
 	var support_text := support.ready_text if session.reputation >= support.threshold else support.locked_text
 	%ReputationHint.text = support.formatted(support_text)
@@ -83,12 +98,11 @@ func _refresh() -> void:
 	%LoyaltyHint.text = approval.formatted(approval_text)
 	%LoyaltyHelp.tooltip_text = approval.formatted(approval.explanation)
 	%MoneyValue.text = "%d $" % session.money
-	%MoneyValue.add_theme_color_override("font_color", Color("9a3427") if session.money < 0 else Color("47311d"))
+	%MoneyValue.add_theme_color_override("font_color", Color("ff9f82") if session.money < 0 else Color("f8e9c7"))
 
 
-func _set_meter(bar: ProgressBar, label: Label, value: float, color: Color) -> void:
+func _set_meter(bar: PencilMeter, label: Label, value: float, color: Color) -> void:
 	bar.max_value = session.balance.maximum_stat
 	bar.value = value
 	label.text = "%d / %d" % [ceili(value), int(session.balance.maximum_stat)]
-	var fill := bar.get_theme_stylebox("fill") as StyleBoxFlat
-	fill.bg_color = Color("a5462e") if value < 25.0 else color
+	bar.ink_color = Color("a5462e") if value < 25.0 else color
