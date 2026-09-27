@@ -10,22 +10,9 @@ For gameplay or architecture work, read `MVP_README.md` as a short project map; 
 
 ## Git Safety
 
-Create a checkpoint commit before editing project files for a user request that asks for project changes. Do not create a checkpoint for questions, explanations, or read-only investigation.
+Commit completed, substantial changes after relevant validation: for example, adding a save system, a major gameplay feature, or reaching a release milestone. Decide by the change's scope, importance and risk, not by the kind of file or edit. Small changes can remain uncommitted until a meaningful milestone or an explicit commit request. Do not commit every request or create an automatic checkpoint before editing.
 
-If there are changes:
-
-```bash
-git add -A
-git commit -m "checkpoint: before <short task description>"
-```
-
-If the tree is clean:
-
-```bash
-git commit --allow-empty -m "checkpoint: before <short task description>"
-```
-
-Do not amend, squash, delete, or push checkpoint commits unless explicitly asked.
+Before committing, inspect Git status and the diff, then stage only files intended for that commit. Preserve unrelated work. If an operation could discard uncommitted work, safeguard it first. Do not amend, squash, delete, rewrite, or push commits unless explicitly asked.
 
 ## Scope
 
@@ -74,7 +61,7 @@ Keep the final report short:
 
 ### State and commands
 
-Keep one Git-tracked root `TASK_STATE.md` as a compact, portable snapshot of the current large task, not a request log, chat history, reasoning trace, permanent project document, or required subagent IPC. Use `Status` (`Active`, `Blocked`, `Completed`), `Current task` (goal, scope, acceptance), `Context`, `Already done`, `Decisions`, `Relevant files`, `Do not touch`, `Remaining`, `Validation` (result, checked revision or stage, unchecked items), `Known issues / uncertainties`, and `Git state` (workspace, branch, relevant checkpoint, changed files, working tree). Keep `Remaining` actionable; never paste a full diff. Update the file only for `prepare`, an explicit save-state request, a substantial manual root handoff, or a dangerously stale snapshot. Material changes to requirements, decisions, results or blockers that would mislead recovery count as stale; batch their correction at a natural work boundary. Routine code changes and subagent calls do not require updates.
+Keep one Git-tracked root `TASK_STATE.md` as a compact, portable snapshot of the current large task, not a request log, chat history, reasoning trace, permanent project document, or required subagent IPC. Use `Status` (`Active`, `Blocked`, `Completed`), `Current task` (goal, scope, acceptance), `Context`, `Already done`, `Decisions`, `Relevant files`, `Do not touch`, `Remaining`, `Validation` (result, checked revision or stage, unchecked items), `Known issues / uncertainties`, and `Git state` (workspace, branch, relevant commit, changed files, working tree). Keep `Remaining` actionable; never paste a full diff. Update the file only for `prepare`, an explicit save-state request, a substantial manual root handoff, or a dangerously stale snapshot. Material changes to requirements, decisions, results or blockers that would mislead recovery count as stale; batch their correction at a natural work boundary. Routine code changes and subagent calls do not require updates.
 
 The coordinating root owns this snapshot and integrates results; helpers do not write it. Read it on recovery, task changes or before updating, not on every request. Match the user's goal and workspace; a `Completed` snapshot is not an instruction to resume old work. Do not overwrite another unfinished task or assume ownership from an old owner label; resolve ambiguity first. Reuse this file after the previous task is complete; separate task records are needed only if multiple unfinished tasks actually need preservation.
 
@@ -82,11 +69,11 @@ Before saving, reread the current file, preserve valid constraints and others' c
 
 `prepare` and `resume` are explicit workflow requests, not built-in slash commands; quoted examples or unrelated uses of these words do not trigger them.
 
-For `prepare`, first obey Git Safety because updating `TASK_STATE.md` changes the project, then replace stale state with a concise handoff. Verify actual results and account for known helpers/processes still writing; collect results or coordinate a pause when needed, and identify continuing work. Do not start new implementation or run `/compact` automatically. Suggest `/compact` only when a large conversation makes it useful; follow the platform's context handling without fixed thresholds. Do not create a separate handoff commit: the next project-changing request's checkpoint records the updated file.
+For `prepare`, replace stale state with a concise handoff. Verify actual results and account for known helpers/processes still writing; collect results or coordinate a pause when needed, and identify continuing work. Do not start new implementation or run `/compact` automatically. Suggest `/compact` only when a large conversation makes it useful; follow the platform's context handling without fixed thresholds. Local preparation does not require a commit; for a requested transfer, preserve state and necessary results using the agreed repository workflow.
 
 Saving here preserves local continuation. Git-tracked, committed, transferred and accessible to a recipient are separate facts. For a requested handoff to another environment, use the existing repository workflow within authorization and account for uncommitted/untracked files and required artifacts; report unverified delivery explicitly. Do not require a remote transfer check for continuation here.
 
-For `resume`, read `AGENTS.md` and the matching `TASK_STATE.md`, plus `MVP_README.md` for gameplay/architecture or `Docs/SAVES.md` for saves. Create a checkpoint before editing project files, but not for a read-only continuation. Verify branch, working tree and relevant source files. Current confirmed requirements define the goal; code, Git and fresh checks establish actual implementation, not permission to discard an unmet requirement. A checkpoint can leave `git diff` empty, so consult a short `git log` and `git show --stat` only when needed. Start with `Relevant files` and `Remaining`; broaden research only for a concrete gap. Recover missing state from evidence; clarify an unrecoverable goal or decision before dependent edits. Never reset to a recorded commit or erase others' work automatically. `resume` is mainly for `/compact`, a root-model/chat change, or another context break, not required after `prepare` in the same intact conversation.
+For `resume`, read `AGENTS.md` and the matching `TASK_STATE.md`, plus `MVP_README.md` for gameplay/architecture or `Docs/SAVES.md` for saves. Verify branch, working tree and relevant source files. Current confirmed requirements define the goal; code, Git and fresh checks establish actual implementation, not permission to discard an unmet requirement. A commit can leave `git diff` empty, so consult a short `git log` and `git show --stat` only when needed. Start with `Relevant files` and `Remaining`; broaden research only for a concrete gap. Recover missing state from evidence; clarify an unrecoverable goal or decision before dependent edits. Never reset to a recorded commit or erase others' work automatically. `resume` is mainly for `/compact`, a root-model/chat change, or another context break, not required after `prepare` in the same intact conversation.
 
 ### Subagents and models
 
@@ -100,4 +87,4 @@ Switch the root model manually only when a substantial next phase warrants it; p
 
 ### Completion and Git
 
-Do not update `TASK_STATE.md` merely because work finished. At the next `prepare` or explicit request, set `Completed` only when the agreed scope and required checks are satisfied or exceptions explicitly accepted; retain useful results and clear stale `Remaining`. Otherwise use `Active`, or `Blocked` for a concrete obstacle. Retain the completed snapshot until reuse; completion does not authorize deleting artifacts or uncommitted work. Git Safety remains the controlling commit rule; do not add handoff commits or ignore `TASK_STATE.md`. Change this workflow only for an observed failure or new need; no periodic audit or product test suite is required for instruction-only changes.
+Do not update `TASK_STATE.md` merely because work finished. At the next `prepare` or explicit request, set `Completed` only when the agreed scope and required checks are satisfied or exceptions explicitly accepted; retain useful results and clear stale `Remaining`. Otherwise use `Active`, or `Blocked` for a concrete obstacle. Retain the completed snapshot until reuse; completion does not authorize deleting artifacts or uncommitted work. Git Safety remains the controlling commit rule; do not make routine handoff commits or ignore `TASK_STATE.md`. Change this workflow only for an observed failure or new need; no periodic audit or product test suite is required for instruction-only changes.

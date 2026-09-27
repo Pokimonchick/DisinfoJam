@@ -19,7 +19,7 @@ The prompt was accepted as a reusable one-time installer with project-specific a
 ## Decisions
 - Keep one root-owned, Git-tracked snapshot; add separate task records only if multiple unfinished tasks need preservation.
 - Update state for explicit preparation/saving, substantial handoff or materially misleading stale content, not after every routine step or completion.
-- `prepare` requires a checkpoint before editing; read-only `resume` does not. No separate handoff commit or automatic `/compact`.
+- Current commit policy is defined in `AGENTS.md`; the checkpoints below record the earlier workflow. No automatic `/compact`.
 - Helpers receive bounded briefs and separate write areas; independent writing roots need isolation or coordinated ownership.
 - Other projects may reuse the bootstrap after adapting their storage, Git rules and available capabilities. Nothing was installed globally.
 
@@ -41,11 +41,11 @@ None for this completed task. On continuation, read `AGENTS.md`, verify Git and 
 
 ## Known issues / uncertainties
 - No known blocker. Cross-environment delivery and recipient access were not requested or verified.
-- The updated snapshot remains local and uncommitted after preparation, under the existing checkpoint policy.
+- Check current Git state before relying on this completed snapshot.
 
 ## Git state
 - Workspace: `C:\Users\User\Desktop\gdg\DisinfoJam`.
 - Branch: `elfat`.
 - Bootstrap checkpoint: `abebd67` (`checkpoint: before agent workflow bootstrap`).
-- Current HEAD/checkpoint: `9ab6445` (`checkpoint: before workflow state preparation`), containing the installed `AGENTS.md` changes.
-- Working tree after preparation: only `TASK_STATE.md` modified; no separate handoff commit or push performed.
+- Installed workflow at preparation: `9ab6445` (`checkpoint: before workflow state preparation`).
+- The preparation snapshot was committed at `aebae2f` before the later commit-policy change; current HEAD and working tree must be verified on continuation.
