@@ -24,7 +24,6 @@ expand_mode = 1
 modulate = Color(1,1,1,0.72)
 
 [node name="Cup" type="TextureButton" parent="."]
-visible = false
 offset_right = 350.0
 offset_bottom = 315.0
 texture_normal = ExtResource("cup")

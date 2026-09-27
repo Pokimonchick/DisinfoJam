@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://Scripts/desk_canvas.gd" id="canvas"]
 [ext_resource type="Script" path="res://Scripts/headline_field.gd" id="field"]
 [ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Group 40.png" id="background"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/image 10.png" id="issue_preview"]
 [ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/image 21.png" id="green"]
 [ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/image 9.png" id="tab"]
 [ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Group 39.png" id="replace"]
@@ -21,6 +22,7 @@ shader = ExtResource("sun")
 shader_parameter/shadow_strength = 0.42
 
 [node name="Newsroom" type="Control"]
+editor_description = "Макет рабочего стола: фон и статья — Canvas/World; таймер, кнопки и панель показателей — Canvas. Текст и чашка здесь служат образцом для редактора."
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -56,6 +58,7 @@ offset_bottom = 1080.0
 mouse_filter = 2
 
 [node name="Background" type="TextureRect" parent="Canvas/World"]
+editor_description = "Фон стола. Оставляйте запас по краям для параллакса."
 offset_left = -147.0
 offset_top = -160.0
 offset_right = 2273.0
@@ -82,6 +85,7 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
+texture = ExtResource("issue_preview")
 expand_mode = 1
 stretch_mode = 5
 
@@ -169,6 +173,7 @@ theme_override_colors/font_color = Color(0.36,0.27,0.12,1)
 theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 autowrap_mode = 3
+text = "Письмо жительницы · квартал Фонарей"
 
 [node name="SourceText" type="RichTextLabel" parent="Canvas/World"]
 offset_left = 650.0
@@ -181,8 +186,10 @@ mouse_filter = 1
 theme_override_colors/default_color = Color(0.19,0.17,0.09,1)
 theme_override_font_sizes/normal_font_size = 28
 scroll_active = true
+text = "Каждый вечер я вижу одного чёрного кота у своего подъезда. Мне кажется, он за мной следит! Соседка говорит, что кот ждёт хозяйку из ночной смены. К полиции я пока не обращалась. Пожалуйста, выясните, что происходит."
 
 [node name="Coffee" parent="Canvas/World" instance=ExtResource("coffee")]
+editor_description = "Чашка и кофейный след. Откройте вложенную сцену desk_coffee.tscn для правки частей чашки."
 offset_left = 1650.0
 offset_top = 370.0
 offset_right = 2000.0
@@ -200,6 +207,7 @@ z_index = 10
 material = SubResource("SunMaterial")
 
 [node name="Choices" type="Control" parent="Canvas/World"]
+editor_description = "Записки скрыты для чистого вида стола. Для подгонки временно включите значок глаза в дереве сцены."
 offset_left = 0.0
 offset_top = 0.0
 offset_right = 1920.0
@@ -307,6 +315,7 @@ theme_override_constants/outline_size = 3
 theme_override_font_sizes/font_size = 23
 
 [node name="Drawer" parent="Canvas" instance=ExtResource("drawer")]
+editor_description = "Выдвижная панель. Внутренние элементы редактируются в work_status_drawer.tscn."
 unique_name_in_owner = true
 z_index = 60
 
@@ -337,6 +346,7 @@ horizontal_alignment = 1
 theme_override_colors/font_outline_color = Color(0.26,0.13,0.05,1)
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 25
+text = "СМЕНА 01"
 
 [node name="Pause" type="Button" parent="Canvas"]
 offset_left = 1650.0

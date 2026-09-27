@@ -10,6 +10,8 @@ func _ready() -> void:
 		if available:
 			activated.emit()
 	)
+	# The cup is visible in the editor for layout work; gameplay starts without one.
+	$Cup.hide()
 	set_available(false, false)
 
 func set_available(value: bool, animate := true) -> void:
