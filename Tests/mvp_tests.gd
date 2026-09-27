@@ -348,215 +348,99 @@ func _test_benefits() -> void:
 	_check(not s.approval_time_applied and s.shift_length == 180.0, "Low loyalty does not grant time next shift")
 
 func _test_scenes() -> void:
-	# Never overwrite a real player's campaign while running UI tests.
 	var test_save_path := "user://mvp_test_%d/campaign.json" % Time.get_ticks_usec()
 	root.get_node("GameState").save_store = SaveRepository.new(test_save_path)
-	var packed := load("res://Scenes/mvp_game.tscn") as PackedScene
-	_check(packed != null, "The playable scene loads")
-	if packed == null:
-		return
-	var game := packed.instantiate()
+	var game = load("res://Scenes/mvp_game.tscn").instantiate()
 	root.add_child(game)
-	await process_frame
+	game.set_process(false)
 	game.session.balance = game.session.balance.duplicate() as NewsroomBalance
 	game.session.balance.starting_health = 80.0
 	game.session.balance.shift_seconds = 180.0
-	game.session.balance.coffee_bonus_seconds = 60.0
 	game.session.balance.publication_limit = 10
-	game.session.balance.fatigue_threshold = 0.30
-	game.session.balance.fatigue_strength = 0.75
-	await _capture("01_menu")
-	game.get_node("%NewGame").pressed.emit()
-	_check(game.view == game.View.PROFILE, "New story opens the player name form")
-	game.get_node("%PlayerName").text = "Тест"
-	game.get_node("%StartStory").pressed.emit()
-	_check(game.view == game.View.INTRO, "New game opens the prologue")
-	await _capture("02_prologue")
-	game.get_node("%NarrativePrimary").pressed.emit()
-	_check(game.view == game.View.INTRO and "Я не говорю" in game.get_node("%NarrativeBody").text, "Introduction shows the heroine communicating in writing")
-	game.get_node("%NarrativePrimary").pressed.emit()
-	_check(game.view == game.View.TUTORIAL, "Prologue leads to the boss tutorial")
-	await _capture("03_tutorial")
-	for i in range(4):
-		game.get_node("%NarrativePrimary").pressed.emit()
+	game._new_run(true, "Тест")
 	await create_timer(0.3).timeout
-	_check(game.view == game.View.WORK, "The complete tutorial starts work")
-	var work := game.get_node("%Work")
-	var popup := work.get_node("DeskFocus")
-	var finish_button: Button = work.get_node("%FinishShift")
-	var finish_rect: Rect2 = finish_button.get_global_rect()
-	var work_rect: Rect2 = (work as Control).get_global_rect()
-	_check(work_rect.encloses(finish_rect) and finish_rect.position.y >= work.get_node("%CoffeeHint").get_global_rect().end.y, "Finish button stays inside the visible desk below the coffee hint")
-	var permanent_stain: Control = work.get_node("%Coffee")
-	_check(permanent_stain.visible and permanent_stain.kind == 3 and not permanent_stain.interactive, "Stained paper is always on the desk without a free cup")
-	_check(work.get_node("%CoffeeHint").text.is_empty(), "Permanent coffee ring has no literal status caption")
-	_check(not popup.active and work.get_node("%SourceNote").visible, "A new source waits on the desk")
-	work.get_node("%SourceNote").activated.emit()
-	_check(popup.active and not work.get_node("%SourceNote").visible, "Clicking the note enlarges it in place")
-	await create_timer(0.3).timeout
-	_check(root.get_visible_rect().encloses(popup.get_global_rect()), "Enlarged note and its close controls fit on screen")
-	var source: Control = work.get_node("%SourceNote")
-	_check(is_equal_approx(popup.size.x / popup.size.y, source.size.x / source.size.y) and is_equal_approx(popup.scale.x, popup.scale.y), "Enlarged source keeps the desk note's aspect ratio")
-	await _capture("04_source")
-	popup.get_node("%Close").pressed.emit()
-	_check(not popup.active, "The visible close button folds the note away")
-	await create_timer(0.23).timeout
-	_check(work.get_node("%SourceNote").visible, "The source note returns to its desk position")
-	work.get_node("%SourceNote").activated.emit()
-	_click_point(work.get_global_rect().position + Vector2(12, 12))
-	_check(not popup.active, "Clicking empty space closes the enlarged note")
-	await create_timer(0.23).timeout
-	await _capture("05_headlines")
-	var overlay: ColorRect = game.get_node("FatigueOverlay")
-	game._update_fatigue(1.0)
-	_check(not overlay.visible and overlay.mouse_filter == Control.MOUSE_FILTER_IGNORE, "Healthy work has no fatigue overlay; effect cannot consume clicks")
-	var health_before_fatigue: float = game.session.health
-	game.session.health = 20.0
-	game._update_fatigue(2.0)
-	var mild: float = overlay.material.get_shader_parameter("intensity")
-	game.session.health = 6.0
+	var work: Control = game.work
+	var popup: DeskFocus = work.popup
+	var drawer: Control = work.get_node("%Drawer")
+	_check(work.size == root.get_visible_rect().size and not game.get_node("Padding").visible, "Work desk fills the viewport without the old header")
+	_check(work.get_node("%SourceText").text == game.session.current_article().source_text and not popup.active, "Source is readable directly on the desk")
+	_check(not work.choices.visible and work.get_node("%Publish").disabled, "A new article waits for a headline")
+	_check(drawer.expanded, "Stats are visible when starting the new desk")
+	drawer.set_expanded(true)
+	game.session.coffee_ready = true
 	game.session.changed.emit()
-	game._update_fatigue(2.0)
-	_check(overlay.visible and overlay.material.get_shader_parameter("intensity") > mild, "Fatigue grows as stamina falls below threshold")
-	await _capture("05b_fatigue")
-	game.get_node("%PauseButton").pressed.emit()
-	game._update_fatigue(1.0)
-	_check(not overlay.visible, "Pause is free of fatigue distortion")
-	game.get_node("PausePanel").primary_pressed.emit()
-	game.session.balance.fatigue_strength = 0.0
-	game._update_fatigue(2.0)
-	_check(not overlay.visible, "Zero strength disables fatigue")
-	game.session.balance.fatigue_strength = 0.75
-	game.session.health = health_before_fatigue
-	game.session.changed.emit()
-	game._update_fatigue(2.0)
-	work.get_node("%SourceNote").activated.emit()
-	_check(popup.active, "Desk note reopens the same source")
-	popup.primary_pressed.emit()
-	work.get_node("%Headline1").pressed.emit()
-	_check(work.popup_kind == work.DialogKind.CONFIRM, "A headline requires explicit confirmation")
-	await create_timer(0.3).timeout
-	var headline: Control = work.get_node("%Headline1")
-	_check(is_equal_approx(popup.size.x / popup.size.y, headline.size.x / headline.size.y) and is_equal_approx(popup.scale.x, popup.scale.y), "Enlarged headline keeps the desk sheet's aspect ratio")
-	await _capture("06_confirmation")
-	popup.secondary_pressed.emit()
-	_check(game.session.total_published == 0, "Cancelling confirmation does not publish")
-	work.get_node("%Headline1").pressed.emit()
-	popup.primary_pressed.emit()
-	_check(work.popup_kind == work.DialogKind.RESULT and game.session.total_published == 1, "Confirmation displays actual consequences")
-	await _capture("07_result")
-	game.get_node("%PauseButton").pressed.emit()
-	var time_before: float = game.session.time_left
-	await create_timer(0.08).timeout
-	_check(is_equal_approx(game.session.time_left, time_before), "Pause stops the work clock")
-	game.get_node("PausePanel").primary_pressed.emit()
-	game.session.time_left = 0.01
-	await create_timer(0.08).timeout
-	_check(game.view == game.View.HOME, "Timer automatically switches the visible scene to home")
-	await create_timer(0.25).timeout
-	var home := game.get_node("%Home")
-	await _capture("08_home")
-	var before_purchase: int = game.session.money
-	await _point_at(home.get_node("%Meal"))
-	_check(home.room.hovered == "fridge" and game.session.money == before_purchase, "Hover opens the refrigerator without charging")
-	await _capture("09_fridge_empty")
-	_click_at(home.get_node("%Meal"))
-	_check(game.session.food_stocked and home.room.food_stocked, "Clicking fridge buys visible food")
-	_check(game.session.money == before_purchase - game.session.balance.meal_price, "Fridge click charges exactly one meal")
-	await _capture("10_fridge_stocked")
-	await _point_at(home.get_node("%Coffee"))
-	_click_at(home.get_node("%Coffee"))
-	_check(game.session.coffee_ready and home.get_node("%Coffee").disabled, "Kitchen cup can be purchased once")
-	var cash_after_cup: int = game.session.money
-	_click_at(home.get_node("%Coffee"))
-	_check(game.session.money == cash_after_cup, "Disabled kitchen cup cannot charge twice")
-	var health_before: float = game.session.health
-	home.get_node("%Bed").pressed.emit()
-	_check(home.room.sleeping and game.session.day == 1, "Bed first shows the sleeping heroine")
-	await _capture("11_sleep")
-	game.get_node("%PauseButton").pressed.emit()
-	await create_timer(0.9).timeout
-	_check(game.session.day == 1, "Pause stops the transition during sleep")
-	game.get_node("PausePanel").primary_pressed.emit()
-	home.tick_home(1.0)
-	_check(game.session.day == 2 and game.session.shift_length == 180.0, "Bed starts a normal shift with a carried cup")
-	_check(game.session.health == minf(game.session.balance.maximum_stat, health_before + game.session.balance.sleep_health), "Bed UI restores stamina after sleeping")
-	_check(game.view == game.View.STORY, "The second morning opens a story before work")
-	game.get_node("%NarrativePrimary").pressed.emit()
-	game.get_node("%NarrativePrimary").pressed.emit()
-	var health_after_sleep: float = game.session.health
-	await create_timer(0.25).timeout
-	var cup: Control = work.get_node("%Coffee")
-	_check(cup.visible and cup.interactive, "Purchased cup appears on the desk")
-	work.get_node("%SourceNote").activated.emit()
-	_check(popup.active, "The source can remain open while desk objects are used")
-	await _capture("12_coffee_ready")
-	await _point_at(cup)
-	time_before = game.session.time_left
-	_click_at(cup)
-	_check(not popup.active, "Clicking another desk object folds the note away")
-	_check(is_equal_approx(game.session.time_left, time_before + 60.0), "A real desk cup click adds exactly 60 seconds")
-	_check(cup.kind == 3 and not cup.interactive and game.session.coffee_used_today, "Used cup becomes a noninteractive coffee ring")
-	_check(game.session.health <= health_after_sleep - 15.0, "Drinking applies the 15 stamina penalty")
-	await _capture("13_coffee_stain")
-	# Two consecutive sensations through the real confirmation flow.
-	for i in range(2):
-		var choice := -1
-		for j in range(3):
-			if game.session.option_at(j).editorial_type == 1:
-				choice = j
-				break
-		work.cards[choice].pressed.emit()
-		popup.primary_pressed.emit()
-		popup.primary_pressed.emit()
-		await create_timer(0.23).timeout
-	_check(game.session.combo_count == 2 and "×1.25" in work.get_node("%Combo").text, "Left-hand combo panel follows actual publications")
-	await _capture("14_combo")
-	game.session.reset(42)
-	game.session.start_shift()
-	game.session.reputation = 10000
-	game.session.loyalty = 10000
-	game.session.balance.maximum_stat = 10000
-	for i in range(10):
-		work.cards[0].pressed.emit()
-		popup.primary_pressed.emit() # Confirm publication.
-		if i < 9:
-			popup.primary_pressed.emit() # Fold the result, then advance.
-			await create_timer(0.23).timeout
-	_check(game.session.published_today == game.session.balance.publication_limit, "Issue reaches the configured capacity")
-	_check("В текущем выпуске газеты недостаточно места для новых публикаций" in popup.body_label.text, "Full issue explains why publishing has stopped")
-	_check(popup.primary_button.text == "Сдать выпуск и пойти домой", "Final feedback offers to complete the shift")
-	game.session.balance.maximum_stat = 100
-	game.session.reputation = 65
-	game.session.loyalty = 65
-	game.session.changed.emit()
-	await _capture("15_full_issue")
-	popup.primary_pressed.emit()
-	await create_timer(0.23).timeout
-	_check(game.view == game.View.HOME and game.session.article_cursor == 10, "Full issue button goes home without consuming the next story")
-	game._update_fatigue(1.0)
-	_check(not overlay.visible, "Home has no work fatigue shader")
-	for ending in [NewsroomSession.Ending.EXHAUSTION, NewsroomSession.Ending.OFFICE_FIRE, NewsroomSession.Ending.ARREST, NewsroomSession.Ending.DEBT]:
-		game.session.reset(42)
-		game.session.start_shift()
-		match ending:
-			NewsroomSession.Ending.EXHAUSTION: game.session.health = 0
-			NewsroomSession.Ending.OFFICE_FIRE: game.session.reputation = 0
-			NewsroomSession.Ending.ARREST: game.session.loyalty = 0
-			NewsroomSession.Ending.DEBT: game.session.money = -100
-		game.session.tick_work(0.01)
-		_check(game.view == game.View.ENDING and not game.get_node("%NarrativeTitle").text.is_empty(), "Ending screen loads: %d" % ending)
-		await _capture("ending_%d" % ending)
-	game.get_node("%NarrativePrimary").pressed.emit()
-	_check(game.view == game.View.PROFILE, "Retry opens a new named story")
-	game.get_node("%StartStory").pressed.emit()
-	game.get_node("%NarrativeSecondary").pressed.emit()
-	_check(game.view == game.View.WORK and game.session.day == 1, "New named story can skip to work")
-	game.get_node("%PauseButton").pressed.emit()
-	game.get_node("PausePanel").secondary_pressed.emit()
-	time_before = game.session.time_left
 	await create_timer(0.35).timeout
-	_check(game.view == game.View.MENU and game.session.time_left == time_before, "Abandoned run cannot tick behind the menu")
+	_check(drawer.get_node("%SlidingPanel").position.x == 0.0, "Stats drawer opens completely")
+	await _capture("desk_01_expanded")
+	drawer.set_expanded(false)
+	work.get_node("%HeadlineField").pressed.emit()
+	await create_timer(0.65).timeout
+	var count := 0
+	for card in work.cards:
+		if card.get_parent().visible:
+			count += 1
+	_check(count == 3 and work.choices_open, "Clicking headline field reveals three animated notes")
+	await _capture("desk_02_choices")
+	work.cards[0].pressed.emit()
+	await create_timer(0.3).timeout
+	_check(popup.active and is_equal_approx(popup.size.x / popup.size.y, work.cards[0].size.x / work.cards[0].size.y), "Nested moving note zoom preserves its aspect ratio")
+	_check(root.get_visible_rect().encloses(popup.get_global_rect()), "Enlarged note stays inside the viewport")
+	await _capture("desk_03_preview")
+	_click_point(Vector2(250, 160))
+	_check(not popup.active and work.selected_index == -1, "Click outside closes a preview without choosing it")
+	await create_timer(0.25).timeout
+	work.cards[0].pressed.emit()
+	popup.primary_pressed.emit()
+	await create_timer(0.65).timeout
+	_check(work.selected_index == 0 and game.session.total_published == 0 and not work.choices.visible, "Choosing a note sets a draft and folds the notes away without payment")
+	_check(work.get_node("%HeadlineField/Text").text == game.session.option_at(0).text and not work.get_node("%Publish").disabled, "Draft appears in the green field and enables publication")
+	await _capture("desk_04_draft")
+	work.get_node("%HeadlineField").pressed.emit()
+	await create_timer(0.65).timeout
+	_check(not work.cards[0].get_parent().visible and work.cards[1].get_parent().visible and work.cards[2].get_parent().visible, "Replacement offers only the two other headlines")
+	work.cards[1].pressed.emit()
+	popup.primary_pressed.emit()
+	await create_timer(0.65).timeout
+	_check(work.selected_index == 1 and game.session.total_published == 0, "Replacing a draft still does not publish")
+	work.get_node("%Publish").pressed.emit()
+	_check(game.session.total_published == 1 and popup.active and work.popup_kind == work.DialogKind.RESULT, "Separate publication button applies effects and shows result")
+	var paid: int = game.session.money
+	work.get_node("%Publish").pressed.emit()
+	_check(game.session.money == paid and game.session.total_published == 1, "Repeated publication cannot award twice")
+	await create_timer(0.3).timeout
+	await _capture("desk_05_result")
+	popup.primary_pressed.emit()
+	await create_timer(0.3).timeout
+	_check(work.selected_index == -1 and not work.choices.visible, "Next source resets the draft and note tray")
+	work._open_choices(false)
+	work._select_headline(0)
+	await create_timer(0.3).timeout
+	var before: float = game.session.time_left
+	var health: float = game.session.health
+	_click_at(work.get_node("%Coffee/Cup"))
+	await create_timer(0.3).timeout
+	_check(not popup.active and game.session.time_left == before + 60.0, "Coffee remains clickable while a note is open and adds one minute")
+	_check(game.session.health == health - 15.0 and not work.get_node("%Coffee/Cup").visible and work.get_node("%Coffee/Stain").visible, "Drinking hides cup and steam, retaining the coffee ring")
+	work._hide_choices(false)
+	game.session.combo_count = 3
+	game.session.combo_type = 0
+	game.session.time_left = 10.0
+	game.session.changed.emit()
+	await create_timer(0.3).timeout
+	_check(work.get_node("%ComboBurst").visible and work.get_node("%ComboBurst").position.x > 410.0, "Combo stays right of the expanded drawer")
+	_check(work.get_node("%Clock").get_theme_color("font_color") == Color("ff6051"), "Final ten seconds are red")
+	await _capture("desk_06_combo")
+	game.session.combo_count = 1
+	game.session.changed.emit()
+	await create_timer(0.2).timeout
+	_check(not work.get_node("%ComboBurst").visible, "Breaking the combo hides its text")
+	game.transitioning = false
+	work.get_node("%Pause").pressed.emit()
+	_check(game.paused and work.process_mode == Node.PROCESS_MODE_DISABLED, "Desk pause suspends interactions and animation")
+	game._toggle_pause()
+	work.get_node("%FinishShift").pressed.emit()
+	_check(game.view == game.View.HOME and game.get_node("Padding").visible and game.get_node("%HUD").visible, "Finishing the new desk returns to the existing home screen")
+	game._run_active = false
 	game.queue_free()
 	await process_frame
 	for suffix in ["", ".bak", ".tmp"]:

@@ -169,17 +169,22 @@ func _test_menu_and_resume() -> void:
 	check(game.view == game.View.TUTORIAL and game.lesson == 2, "Continue restores the tutorial page")
 	game.session.start_shift()
 	game.session.time_left = 42.5
+	game.work._open_choices(false)
 	game.work._select_headline(1)
 	var name_id: String = game.session.player_id
 	game._show_menu()
 	game._continue_run()
-	check(game.session.time_left == 42.5 and game.work.selected_index == 1 and game.work.popup_kind == game.work.DialogKind.CONFIRM, "Continue restores time, headline selection and confirmation")
+	check(game.session.time_left == 42.5 and game.work.preview_index == 1 and game.work.selected_index == -1 and game.work.popup_kind == game.work.DialogKind.CONFIRM, "Continue restores time and a preview without selecting or publishing it")
 	game.transitioning = false
 	game._autosave_elapsed = game.AUTOSAVE_SECONDS
 	game._process(0.1)
 	await process_frame
 	check(is_equal_approx(state.save_store.load_document().sections.run.time_left, game.session.time_left), "Periodic autosave records time without a player action")
 	game.work.popup.primary_pressed.emit()
+	game._show_menu()
+	game._continue_run()
+	check(game.work.selected_index == 1 and not game.work.choices_open and not game.work.popup.active and game.session.total_published == 0, "A saved draft restores on the article without being published")
+	game.work._publish_selected()
 	var money_before: int = game.session.money
 	game._show_menu()
 	game._continue_run()

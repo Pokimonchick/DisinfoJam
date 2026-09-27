@@ -34,6 +34,8 @@ func _ready() -> void:
 	get_node("Content/Hint").add_theme_color_override("font_color", Color("6e583c"))
 
 func _set_hovered(value: bool) -> void:
+	if disabled:
+		return
 	if _hover_tween:
 		_hover_tween.kill()
 	_hover_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -50,4 +52,12 @@ func _set_hovered(value: bool) -> void:
 
 func _on_visibility_changed() -> void:
 	if not visible:
-		_pencil_mark.clear()
+		reset_hover()
+
+func reset_hover() -> void:
+	if _hover_tween:
+		_hover_tween.kill()
+	_pencil_mark.clear()
+	position = _base_position
+	scale = _base_scale
+	z_index = _base_z_index

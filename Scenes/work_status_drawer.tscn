@@ -1,0 +1,341 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://Scripts/work_status_drawer.gd" id="1_drawer"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Group 37.png" id="2_frame"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Group 36.png" id="3_paper"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Group 35.png" id="4_strap"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Group 27 (1) 2.png" id="5_clip"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/image 30.png" id="6_tab"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Arrow 3.png" id="7_arrow"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Group 38.png" id="8_help"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_track"]
+bg_color = Color(0.764706, 0.67451, 0.482353, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fill"]
+bg_color = Color(0.682353, 0.529412, 0.317647, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[node name="WorkStatusDrawer" type="Control"]
+layout_mode = 3
+offset_right = 500.0
+offset_bottom = 1080.0
+mouse_filter = 2
+script = ExtResource("1_drawer")
+
+[node name="SlidingPanel" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 500.0
+offset_bottom = 1080.0
+mouse_filter = 2
+
+[node name="Frame" type="TextureRect" parent="SlidingPanel"]
+layout_mode = 0
+offset_right = 410.0
+offset_bottom = 1080.0
+mouse_filter = 2
+texture = ExtResource("2_frame")
+expand_mode = 1
+
+[node name="Paper" type="TextureRect" parent="SlidingPanel"]
+layout_mode = 0
+offset_left = 21.0
+offset_top = 26.0
+offset_right = 386.0
+offset_bottom = 1052.0
+mouse_filter = 2
+texture = ExtResource("3_paper")
+expand_mode = 1
+
+[node name="Strap" type="TextureRect" parent="SlidingPanel"]
+layout_mode = 0
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 206.0
+offset_bottom = 199.0
+mouse_filter = 2
+texture = ExtResource("4_strap")
+expand_mode = 1
+
+[node name="Clip" type="TextureRect" parent="SlidingPanel"]
+layout_mode = 0
+offset_left = 151.0
+offset_top = 0.0
+offset_right = 253.0
+offset_bottom = 78.0
+mouse_filter = 2
+texture = ExtResource("5_clip")
+expand_mode = 1
+
+[node name="Shift" type="Label" parent="SlidingPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 49.0
+offset_top = 111.0
+offset_right = 357.0
+offset_bottom = 151.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 31
+text = "СМЕНА 01"
+horizontal_alignment = 1
+
+[node name="Player" type="Label" parent="SlidingPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 49.0
+offset_top = 157.0
+offset_right = 357.0
+offset_bottom = 194.0
+theme_override_colors/font_color = Color(0.329412, 0.25098, 0.14902, 1)
+theme_override_font_sizes/font_size = 22
+text = "Редактор"
+horizontal_alignment = 1
+text_overrun_behavior = 3
+
+[node name="Rule" type="ColorRect" parent="SlidingPanel"]
+layout_mode = 0
+offset_left = 52.0
+offset_top = 215.0
+offset_right = 354.0
+offset_bottom = 217.0
+mouse_filter = 2
+color = Color(0.584314, 0.435294, 0.243137, 0.7)
+
+[node name="HealthTitle" type="Label" parent="SlidingPanel"]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 240.0
+offset_right = 354.0
+offset_bottom = 273.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 24
+text = "ВЫНОСЛИВОСТЬ"
+
+[node name="HealthValue" type="Label" parent="SlidingPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 50.0
+offset_top = 273.0
+offset_right = 354.0
+offset_bottom = 312.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 28
+text = "100 / 100"
+
+[node name="HealthBar" type="ProgressBar" parent="SlidingPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 50.0
+offset_top = 318.0
+offset_right = 355.0
+offset_bottom = 334.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_track")
+theme_override_styles/fill = SubResource("StyleBoxFlat_fill")
+show_percentage = false
+
+[node name="ReputationTitle" type="Label" parent="SlidingPanel"]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 372.0
+offset_right = 355.0
+offset_bottom = 405.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 22
+text = "РЕПУТАЦИЯ КОМПАНИИ"
+
+[node name="ReputationValue" type="Label" parent="SlidingPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 50.0
+offset_top = 408.0
+offset_right = 355.0
+offset_bottom = 447.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 28
+text = "50 / 100"
+
+[node name="ReputationBar" type="ProgressBar" parent="SlidingPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 50.0
+offset_top = 453.0
+offset_right = 355.0
+offset_bottom = 469.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_track")
+theme_override_styles/fill = SubResource("StyleBoxFlat_fill")
+show_percentage = false
+
+[node name="ReputationHint" type="Label" parent="SlidingPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 50.0
+offset_top = 482.0
+offset_right = 312.0
+offset_bottom = 542.0
+theme_override_colors/font_color = Color(0.329412, 0.25098, 0.14902, 1)
+theme_override_font_sizes/font_size = 19
+text = "ПРИ 75: −1 К РАСХОДУ СИЛ"
+autowrap_mode = 2
+
+[node name="ReputationHelp" type="Button" parent="SlidingPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 319.0
+offset_top = 480.0
+offset_right = 351.0
+offset_bottom = 512.0
+tooltip_text = "Подробнее о бонусе"
+focus_mode = 0
+flat = true
+
+[node name="Icon" type="TextureRect" parent="SlidingPanel/ReputationHelp"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("8_help")
+expand_mode = 1
+
+[node name="LoyaltyTitle" type="Label" parent="SlidingPanel"]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 574.0
+offset_right = 355.0
+offset_bottom = 607.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 22
+text = "ЛОЯЛЬНОСТЬ ГОСУДАРСТВУ"
+
+[node name="LoyaltyValue" type="Label" parent="SlidingPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 50.0
+offset_top = 610.0
+offset_right = 355.0
+offset_bottom = 649.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 28
+text = "50 / 100"
+
+[node name="LoyaltyBar" type="ProgressBar" parent="SlidingPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 50.0
+offset_top = 655.0
+offset_right = 355.0
+offset_bottom = 671.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_track")
+theme_override_styles/fill = SubResource("StyleBoxFlat_fill")
+show_percentage = false
+
+[node name="LoyaltyHint" type="Label" parent="SlidingPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 50.0
+offset_top = 684.0
+offset_right = 312.0
+offset_bottom = 744.0
+theme_override_colors/font_color = Color(0.329412, 0.25098, 0.14902, 1)
+theme_override_font_sizes/font_size = 19
+text = "ПРИ 75: +20 С К СМЕНЕ"
+autowrap_mode = 2
+
+[node name="LoyaltyHelp" type="Button" parent="SlidingPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 319.0
+offset_top = 682.0
+offset_right = 351.0
+offset_bottom = 714.0
+tooltip_text = "Подробнее о бонусе"
+focus_mode = 0
+flat = true
+
+[node name="Icon" type="TextureRect" parent="SlidingPanel/LoyaltyHelp"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("8_help")
+expand_mode = 1
+
+[node name="MoneyTitle" type="Label" parent="SlidingPanel"]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 815.0
+offset_right = 355.0
+offset_bottom = 850.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 25
+text = "БАЛАНС"
+
+[node name="MoneyValue" type="Label" parent="SlidingPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 50.0
+offset_top = 854.0
+offset_right = 355.0
+offset_bottom = 905.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 36
+text = "0 $"
+
+[node name="Tab" type="TextureRect" parent="SlidingPanel"]
+layout_mode = 0
+offset_left = 396.0
+offset_top = 55.0
+offset_right = 488.0
+offset_bottom = 135.0
+mouse_filter = 2
+texture = ExtResource("6_tab")
+expand_mode = 1
+
+[node name="TabButton" type="Button" parent="SlidingPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 398.0
+offset_top = 57.0
+offset_right = 482.0
+offset_bottom = 129.0
+tooltip_text = "Открыть показатели"
+focus_mode = 0
+flat = true
+
+[node name="Arrow" type="TextureRect" parent="SlidingPanel/TabButton"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 24.0
+offset_top = 22.0
+offset_right = 59.0
+offset_bottom = 52.0
+mouse_filter = 2
+texture = ExtResource("7_arrow")
+expand_mode = 1
+
+[node name="DeskHelp" type="TextureButton" parent="SlidingPanel"]
+offset_left = 308.0
+offset_top = 44.0
+offset_right = 367.0
+offset_bottom = 100.0
+texture_normal = ExtResource("8_help")
+ignore_texture_size = true
+stretch_mode = 0
+mouse_default_cursor_shape = 2
+tooltip_text = "Прочитайте источник на столе. Нажмите на зелёное поле, чтобы выбрать заголовок. Выбор можно заменить; деньги и последствия начисляются только после нажатия «Опубликовать»."

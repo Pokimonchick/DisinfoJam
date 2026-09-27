@@ -62,9 +62,10 @@ func present(origin: Control, tag: String, title: String, body: String, primary:
 	_opening = false
 	size = target_size
 	pivot_offset = target_size / 2.0
-	position = origin.position + (origin.size - target_size) / 2.0
-	scale = Vector2.ONE * (origin.size.x / target_size.x) * origin.scale.x
-	rotation = origin.rotation
+	var origin_transform := _origin_transform()
+	position = origin_transform * (origin.size * 0.5) - target_size * 0.5
+	scale = Vector2.ONE * (origin.size.x / target_size.x) * origin_transform.get_scale().x
+	rotation = origin_transform.get_rotation()
 	modulate.a = 1.0
 	$Margin.modulate.a = 0.0
 	_motion = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
@@ -90,9 +91,10 @@ func close(after_close: Callable = Callable()) -> void:
 	if _motion and _motion.is_valid():
 		_motion.kill()
 	_motion = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	_motion.tween_property(self, "position", _origin.position + (_origin.size - size) / 2.0, ZOOM_TIME * 0.75)
-	_motion.tween_property(self, "scale", Vector2.ONE * (_origin.size.x / size.x) * _origin.scale.x, ZOOM_TIME * 0.75)
-	_motion.tween_property(self, "rotation", _origin.rotation, ZOOM_TIME * 0.75)
+	var origin_transform := _origin_transform()
+	_motion.tween_property(self, "position", origin_transform * (_origin.size * 0.5) - size * 0.5, ZOOM_TIME * 0.75)
+	_motion.tween_property(self, "scale", Vector2.ONE * (_origin.size.x / size.x) * origin_transform.get_scale().x, ZOOM_TIME * 0.75)
+	_motion.tween_property(self, "rotation", origin_transform.get_rotation(), ZOOM_TIME * 0.75)
 	_motion.tween_property($Margin, "modulate:a", 0.0, ZOOM_TIME * 0.5)
 	_motion.chain().tween_callback(func():
 		if is_instance_valid(_origin):
@@ -102,6 +104,10 @@ func close(after_close: Callable = Callable()) -> void:
 		if after_close.is_valid():
 			after_close.call()
 	)
+
+func _origin_transform() -> Transform2D:
+	# Cards may live under a moving/scaled desk layer, not beside the focus.
+	return (get_parent() as Control).get_global_transform().affine_inverse() * _origin.get_global_transform()
 
 func reset() -> void:
 	_version += 1

@@ -267,7 +267,7 @@ layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_font_sizes/font_size = 18
 
-[node name="Work" parent="Padding/Layout/Stage" unique_id=346840475 instance=ExtResource("3")]
+[node name="Work" parent="." unique_id=346840475 instance=ExtResource("3")]
 unique_name_in_owner = true
 layout_mode = 1
 

@@ -54,6 +54,7 @@ func _ready() -> void:
 	work.bind(session)
 	home.bind(session)
 	work.view_changed.connect(_queue_save)
+	work.pause_requested.connect(_toggle_pause)
 	%NewGame.pressed.connect(_show_profile_setup)
 	%ContinueGame.pressed.connect(_continue_run)
 	%StartStory.pressed.connect(_start_named_run)
@@ -240,13 +241,15 @@ func _show_menu() -> void:
 func _show_view(next: View) -> void:
 	view = next
 	paused = false
+	work.process_mode = Node.PROCESS_MODE_INHERIT
 	pause_panel.hide()
 	%Menu.visible = view == View.MENU
 	%ProfileSetup.visible = view == View.PROFILE
 	%Narrative.visible = view in [View.INTRO, View.TUTORIAL, View.ENDING, View.STORY]
 	work.visible = view == View.WORK
 	home.visible = view == View.HOME
-	%HUD.visible = view in [View.WORK, View.HOME, View.ENDING]
+	$Padding.visible = view != View.WORK
+	%HUD.visible = view in [View.HOME, View.ENDING]
 	%PauseButton.visible = view in [View.WORK, View.HOME, View.INTRO, View.TUTORIAL, View.STORY]
 	%Location.text = {View.MENU: "НЕЗАВИСИМАЯ РЕДАКЦИЯ", View.INTRO: "ГЛАВА I · АМНЕЗИЯ", View.TUTORIAL: "ПЕРЕД ПЕРВОЙ СМЕНОЙ", View.WORK: "РАБОЧИЙ СТОЛ", View.HOME: "СЪЁМНАЯ КОМНАТА", View.ENDING: "ИТОГИ НЕДЕЛИ" if session.campaign_completed else "ПОСЛЕДНИЙ ВЫПУСК", View.PROFILE: "НОВОЕ ПРОХОЖДЕНИЕ", View.STORY: "ГЛАВА I · АМНЕЗИЯ"}[view]
 	_refresh_goal()
@@ -276,6 +279,7 @@ func _toggle_pause() -> void:
 	if view in [View.MENU, View.PROFILE] or transitioning:
 		return
 	paused = not paused
+	work.process_mode = Node.PROCESS_MODE_DISABLED if paused else Node.PROCESS_MODE_INHERIT
 	if paused:
 		_save_progress()
 		pause_panel.present("ПАУЗА", "Выпуск подождёт.", "Время и выносливость остановлены.\n\nПрогресс сохраняется автоматически. После выхода в меню можно продолжить с этого места.", "Продолжить", "Сохранить и в меню")
@@ -413,6 +417,13 @@ static func _validate_save(sections: Dictionary) -> bool:
 	var newsroom: Dictionary = presentation.get("newsroom", {})
 	if not newsroom.get("selected_index", -1) is int and not newsroom.get("selected_index", -1) is float:
 		return false
+	if newsroom.has("preview_index"):
+		var preview: Variant = newsroom.preview_index
+		if not NewsroomSaveData._number(preview) or int(preview) != preview or preview < -1 or preview > 2:
+			return false
+	for key in ["choices_open", "drawer_expanded"]:
+		if newsroom.has(key) and not newsroom[key] is bool:
+			return false
 	if presentation.has("story"):
 		var story: Variant = presentation.story
 		if not story is Dictionary or not story.get("seen", []) is Array:
