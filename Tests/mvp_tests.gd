@@ -357,7 +357,7 @@ func _test_scenes() -> void:
 	game.session.balance.starting_health = 80.0
 	game.session.balance.shift_seconds = 180.0
 	game.session.balance.publication_limit = 10
-	game._new_run(true, "Тест")
+	game._new_run(true)
 	await create_timer(0.3).timeout
 	var work: Control = game.work
 	var popup: DeskFocus = work.popup
@@ -382,28 +382,20 @@ func _test_scenes() -> void:
 	_check(count == 3 and work.choices_open, "Clicking headline field reveals three animated notes")
 	await _capture("desk_02_choices")
 	work.cards[0].pressed.emit()
-	await create_timer(0.3).timeout
-	_check(popup.active and is_equal_approx(popup.size.x / popup.size.y, work.cards[0].size.x / work.cards[0].size.y), "Nested moving note zoom preserves its aspect ratio")
-	_check(root.get_visible_rect().encloses(popup.get_global_rect()), "Enlarged note stays inside the viewport")
-	await _capture("desk_03_preview")
-	_click_point(Vector2(250, 160))
-	_check(not popup.active and work.selected_index == -1, "Click outside closes a preview without choosing it")
-	await create_timer(0.25).timeout
-	work.cards[0].pressed.emit()
-	popup.primary_pressed.emit()
-	await create_timer(0.65).timeout
-	_check(work.selected_index == 0 and game.session.total_published == 0 and not work.choices.visible, "Choosing a note sets a draft and folds the notes away without payment")
+	await create_timer(0.4).timeout
+	_check(not popup.active and work.selected_index == 0 and game.session.total_published == 0 and not work.choices.visible, "Clicking a note sets a draft directly without payment")
 	_check(work.get_node("%HeadlineField/Text").text == game.session.option_at(0).text and not work.get_node("%Publish").disabled, "Draft appears in the green field and enables publication")
-	await _capture("desk_04_draft")
+	await _capture("desk_03_draft")
 	work.get_node("%HeadlineField").pressed.emit()
 	await create_timer(0.65).timeout
 	_check(not work.cards[0].get_parent().visible and work.cards[1].get_parent().visible and work.cards[2].get_parent().visible, "Replacement offers only the two other headlines")
 	work.cards[1].pressed.emit()
-	popup.primary_pressed.emit()
-	await create_timer(0.65).timeout
+	await create_timer(0.4).timeout
 	_check(work.selected_index == 1 and game.session.total_published == 0, "Replacing a draft still does not publish")
 	work.get_node("%Publish").pressed.emit()
 	_check(game.session.total_published == 1 and popup.active and work.popup_kind == work.DialogKind.RESULT, "Separate publication button applies effects and shows result")
+	await create_timer(0.3).timeout
+	_check(is_equal_approx(popup.size.x / popup.size.y, work.cards[1].size.x / work.cards[1].size.y), "Printed result zoom preserves the note's aspect ratio")
 	var paid: int = game.session.money
 	work.get_node("%Publish").pressed.emit()
 	_check(game.session.money == paid and game.session.total_published == 1, "Repeated publication cannot award twice")
@@ -419,7 +411,7 @@ func _test_scenes() -> void:
 	var health: float = game.session.health
 	_click_at(work.get_node("%Coffee/Cup"))
 	await create_timer(0.3).timeout
-	_check(not popup.active and game.session.time_left == before + 60.0, "Coffee remains clickable while a note is open and adds one minute")
+	_check(not popup.active and game.session.time_left == before + 60.0, "Coffee remains clickable after choosing a headline and adds one minute")
 	_check(game.session.health == health - 15.0 and not work.get_node("%Coffee/Cup").visible and work.get_node("%Coffee/Stain").visible, "Drinking hides cup and steam, retaining the coffee ring")
 	work._hide_choices(false)
 	game.session.combo_count = 3

@@ -59,10 +59,8 @@ func _ready() -> void:
 	%NewGame.pressed.connect(_show_profile_setup)
 	%MenuSettings.pressed.connect(_open_settings)
 	%ContinueGame.pressed.connect(_continue_run)
-	%StartStory.pressed.connect(_start_named_run)
+	%StartStory.pressed.connect(_start_campaign)
 	%CancelStory.pressed.connect(_show_menu)
-	%PlayerName.text_submitted.connect(func(_text: String): _start_named_run())
-	%PlayerName.text_changed.connect(func(value: String): %StartStory.disabled = value.strip_edges().is_empty())
 	%Quit.pressed.connect(_quit_game)
 	%QuitWithoutSave.confirmed.connect(func(): get_tree().quit())
 	%NarrativePrimary.pressed.connect(_narrative_next)
@@ -134,14 +132,14 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		if not paused and view == View.WORK:
 			session.finish_shift()
 
-func _new_run(skip_story: bool, entered_name: String = "Редактор") -> void:
+func _new_run(skip_story: bool) -> void:
 	_run_active = false
 	_loaded_document = {}
 	_story_id = ""
 	_story_page = 0
 	_seen_stories.clear()
 	session.reset()
-	session.player_name = entered_name.strip_edges().left(24)
+	session.player_name = NewsroomSession.CAMPAIGN_HERO_NAME
 	session.player_id = Crypto.new().generate_random_bytes(16).hex_encode()
 	session.run_id = Crypto.new().generate_random_bytes(16).hex_encode()
 	GameState.restore_save_sections({})
@@ -161,7 +159,7 @@ func _show_story(episode_id: String, page: int = 0) -> void:
 	_story_page = page
 	var entry: Dictionary = CHAPTER.EPISODES[episode_id][page]
 	_show_view(View.INTRO if episode_id == "intro" else View.STORY)
-	_set_narrative(entry.tag, entry.title, entry.body.replace("{name}", session.player_name), entry.visual, entry.next, "Сразу к работе" if episode_id == "intro" else "В главное меню")
+	_set_narrative(entry.tag, entry.title, entry.body.replace("{name}", NewsroomSession.CAMPAIGN_HERO_NAME), entry.visual, entry.next, "Сразу к работе" if episode_id == "intro" else "")
 	_queue_save()
 
 func _advance_story() -> void:
@@ -193,7 +191,7 @@ func _narrative_next() -> void:
 			_show_profile_setup()
 
 func _narrative_secondary() -> void:
-	if view in [View.ENDING, View.STORY]:
+	if view == View.ENDING:
 		_show_menu()
 	else:
 		_story_id = ""
@@ -282,6 +280,7 @@ func _set_narrative(tag: String, title: String, body: String, visual: int, prima
 	%NarrativeVisual.kind = visual
 	%NarrativePrimary.text = primary
 	%NarrativeSecondary.text = secondary
+	%NarrativeSecondary.visible = not secondary.is_empty()
 	%NarrativePrimary.grab_focus()
 
 func _toggle_pause() -> void:
@@ -313,19 +312,14 @@ func _show_profile_setup() -> void:
 	_run_active = false
 	_show_view(View.PROFILE)
 	%NewRunWarning.text = "Начало новой истории заменит текущее сохранение." if GameState.save_store.exists() else "Прогресс будет сохраняться автоматически."
-	%StartStory.disabled = %PlayerName.text.strip_edges().is_empty()
-	%PlayerName.grab_focus()
+	%StartStory.grab_focus()
 
-func _start_named_run() -> void:
-	var entered_name: String = %PlayerName.text.strip_edges()
-	if entered_name.is_empty():
-		%PlayerName.grab_focus()
-		return
-	_new_run(false, entered_name)
+func _start_campaign() -> void:
+	_new_run(false)
 
 func _refresh_goal() -> void:
 	%CampaignGoal.visible = view in [View.WORK, View.HOME, View.ENDING]
-	%CampaignGoal.text = "%s · Первая неделя: %d / %d смен" % [session.player_name, session.completed_shifts, session.campaign_days]
+	%CampaignGoal.text = "%s · Первая неделя: %d / %d смен" % [NewsroomSession.CAMPAIGN_HERO_NAME, session.completed_shifts, session.campaign_days]
 
 func _refresh_menu() -> void:
 	var document: Dictionary = GameState.save_store.load_document()
@@ -336,10 +330,9 @@ func _refresh_menu() -> void:
 		%SaveSummary.text = "Сохранение недоступно."
 	if not document.is_empty():
 		var data: Dictionary = document.sections
-		%SaveSummary.text = "%s · день %d · %d $" % [data.profile.name, data.run.get("day", 0), data.run.get("money", 0)]
+		%SaveSummary.text = "%s · день %d · %d $" % [NewsroomSession.CAMPAIGN_HERO_NAME, data.run.get("day", 0), data.run.get("money", 0)]
 		var final_seen: bool = "finale" in data.get("presentation", {}).get("story", {}).get("seen", [])
 		%ContinueGame.text = "ПОСМОТРЕТЬ ИТОГ" if data.run.phase == "ended" and (not data.run.get("campaign_completed", false) or final_seen) else "ПРОДОЛЖИТЬ"
-		%PlayerName.text = data.profile.name
 	else:
 		%ContinueGame.text = "ПРОДОЛЖИТЬ"
 	if not GameState.save_store.error_message.is_empty():

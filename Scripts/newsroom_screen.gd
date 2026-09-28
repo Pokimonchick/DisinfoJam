@@ -16,12 +16,11 @@ const NUMBER_ART: Array[Texture2D] = [
 	preload("res://Assets/Assets for new version of game/Untitled (22)/IMG_1378 1.png"),
 ]
 
-enum DialogKind { NONE, SOURCE, CONFIRM, RESULT }
+enum DialogKind { NONE, RESULT }
 
 var session: NewsroomSession
-# Selected is the article's draft; preview is only the note currently enlarged.
+# Selected is the article's draft, not a published headline.
 var selected_index := -1
-var preview_index := -1
 var popup_kind: DialogKind = DialogKind.NONE
 var choices_open := false
 var _choices_animating := false
@@ -135,7 +134,6 @@ func show_article() -> void:
 	if session.phase != NewsroomSession.Phase.WORK:
 		return
 	selected_index = -1
-	preview_index = -1
 	popup.reset()
 	popup_kind = DialogKind.NONE
 	_hide_choices(false)
@@ -223,25 +221,16 @@ func _select_headline(index: int) -> void:
 		return
 	if session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement:
 		return
-	preview_index = index
-	popup_kind = DialogKind.CONFIRM
-	popup.present(cards[index], "ВАРИАНТ ЗАГОЛОВКА", session.option_at(index).text, "", "Выбрать заголовок", "", Vector2(640, 800))
+	selected_index = index
+	%HeadlineField.set_headline(session.option_at(index).text)
+	_hide_choices()
 	_refresh_actions()
 	view_changed.emit()
 
 func _on_primary() -> void:
 	if session.phase != NewsroomSession.Phase.WORK:
 		return
-	if popup_kind == DialogKind.CONFIRM:
-		selected_index = preview_index
-		%HeadlineField.set_headline(session.option_at(selected_index).text)
-		popup_kind = DialogKind.NONE
-		choices_open = false
-		_choices_animating = true
-		popup.close(func(): _hide_choices())
-		_refresh_actions()
-		view_changed.emit()
-	elif popup_kind == DialogKind.RESULT:
+	if popup_kind == DialogKind.RESULT:
 		_close_focus()
 
 func _publish_selected() -> void:
@@ -254,7 +243,6 @@ func _close_focus() -> void:
 		return
 	var was_result := popup_kind == DialogKind.RESULT
 	popup_kind = DialogKind.NONE
-	preview_index = -1
 	popup.close(func():
 		if was_result:
 			session.acknowledge_publication()
@@ -280,8 +268,8 @@ func _show_result(result: Dictionary) -> void:
 	view_changed.emit()
 
 func capture_presentation() -> Dictionary:
-	return {"layout_version": 2, "dialog": ["none", "source", "confirm", "result"][popup_kind],
-		"selected_index": selected_index, "preview_index": preview_index,
+	return {"layout_version": 2, "dialog": "result" if popup_kind == DialogKind.RESULT else "none",
+		"selected_index": selected_index,
 		"choices_open": choices_open, "drawer_expanded": %Drawer.expanded}
 
 func restore_presentation(data: Dictionary) -> void:
@@ -296,10 +284,11 @@ func restore_presentation(data: Dictionary) -> void:
 	var preview := int(data.get("selected_index", -1)) if legacy else int(data.get("preview_index", -1))
 	if legacy:
 		selected_index = -1
+	# A save made while inspecting a note now resumes with that draft selected.
+	if dialog == "confirm" and preview >= 0 and preview < cards.size():
+		selected_index = preview
 	if selected_index >= 0:
 		%HeadlineField.set_headline(session.option_at(selected_index).text)
-	if bool(data.get("choices_open", false)) or dialog == "confirm":
+	if bool(data.get("choices_open", false)) and dialog != "confirm":
 		_open_choices(false)
-	if dialog == "confirm" and preview >= 0 and preview < cards.size() and preview != selected_index:
-		_select_headline(preview)
 	_refresh_actions()

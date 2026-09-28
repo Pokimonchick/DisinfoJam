@@ -151,14 +151,10 @@ func _test_menu_and_resume() -> void:
 	game.set_process(false)
 	await process_frame
 	game.get_node("%NewGame").pressed.emit()
-	check(game.view == game.View.PROFILE and game.get_node("%NewRunWarning").text.contains("заменит"), "New game asks for name and warns about replacing the slot")
-	game.get_node("%PlayerName").text = "   "
-	game._start_named_run()
-	check(game.view == game.View.PROFILE, "An empty name cannot replace a save")
-	game.get_node("%PlayerName").text = "Лиса"
+	check(game.view == game.View.PROFILE and game.get_node("%NewRunWarning").text.contains("заменит"), "New campaign warns about replacing the slot")
 	game.get_node("%StartStory").pressed.emit()
 	await process_frame
-	check(game.view == game.View.INTRO and game.session.player_name == "Лиса", "Named run starts the chapter prologue")
+	check(game.view == game.View.INTRO and game.session.player_name == NewsroomSession.CAMPAIGN_HERO_NAME, "Campaign starts the chapter with the fixed heroine name")
 	game._show_menu()
 	game._continue_run()
 	check(game.view == game.View.INTRO, "Continue restores the prologue")
@@ -174,16 +170,18 @@ func _test_menu_and_resume() -> void:
 	var name_id: String = game.session.player_id
 	game._show_menu()
 	game._continue_run()
-	check(game.session.time_left == 42.5 and game.work.preview_index == 1 and game.work.selected_index == -1 and game.work.popup_kind == game.work.DialogKind.CONFIRM, "Continue restores time and a preview without selecting or publishing it")
+	check(game.session.time_left == 42.5 and game.work.selected_index == 1 and not game.work.popup.active and game.session.total_published == 0, "Continue restores time and the selected draft without publishing it")
 	game.transitioning = false
 	game._autosave_elapsed = game.AUTOSAVE_SECONDS
 	game._process(0.1)
 	await process_frame
 	check(is_equal_approx(state.save_store.load_document().sections.run.time_left, game.session.time_left), "Periodic autosave records time without a player action")
-	game.work.popup.primary_pressed.emit()
 	game._show_menu()
 	game._continue_run()
 	check(game.work.selected_index == 1 and not game.work.choices_open and not game.work.popup.active and game.session.total_published == 0, "A saved draft restores on the article without being published")
+	game.work.restore_presentation({"layout_version": 2, "dialog": "confirm", "selected_index": 1, "preview_index": 2, "choices_open": true})
+	check(game.work.selected_index == 2 and not game.work.popup.active and game.session.total_published == 0, "An old preview save becomes a draft without publishing")
+	game.work.restore_presentation({"layout_version": 2, "selected_index": 1})
 	game.work._publish_selected()
 	var money_before: int = game.session.money
 	game._show_menu()
@@ -223,6 +221,7 @@ func _test_menu_and_resume() -> void:
 	game._show_menu()
 	game._continue_run()
 	check(game.view == game.View.STORY and game._story_id == "finale", "Completed week resumes the unfinished finale")
+	check(not game.get_node("%NarrativeSecondary").visible, "Campaign cutscenes have no redundant menu button")
 	game._narrative_next()
 	game._narrative_next()
 	game._show_menu()

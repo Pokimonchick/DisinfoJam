@@ -185,18 +185,11 @@ theme_override_constants/separation = 18
 [node name="Title" type="Label" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
-text = "Как тебя записать?"
+text = "Новая история"
 
 [node name="Label" type="Label" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
 layout_mode = 2
-text = "Прошлое не вспоминается. Выбери, как представиться."
-
-[node name="PlayerName" type="LineEdit" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 54)
-layout_mode = 2
-max_length = 24
-placeholder_text = "Имя, которым ты представишься"
+text = "История Николы Коко начинается с первого рабочего дня."
 
 [node name="NewRunWarning" type="Label" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
 unique_name_in_owner = true

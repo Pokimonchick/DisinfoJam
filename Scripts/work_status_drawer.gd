@@ -64,7 +64,7 @@ func _refresh() -> void:
 	if session == null or not is_node_ready():
 		return
 	%Shift.text = "СМЕНА %02d" % session.day
-	%Player.text = session.player_name
+	%Player.text = NewsroomSession.CAMPAIGN_HERO_NAME
 	_set_meter(%HealthBar, %HealthValue, session.health, Color("6b7046"))
 	_set_meter(%ReputationBar, %ReputationValue, session.reputation, Color("916038"))
 	_set_meter(%LoyaltyBar, %LoyaltyValue, session.loyalty, Color("626648"))

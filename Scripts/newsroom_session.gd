@@ -1,6 +1,8 @@
 class_name NewsroomSession
 extends RefCounted
 
+const CAMPAIGN_HERO_NAME := "Никола Коко"
+
 signal changed
 signal phase_changed
 signal article_changed
@@ -37,7 +39,7 @@ var completed_shifts: int = 0
 var journal: Array[Dictionary] = []
 var last_shift: Dictionary = {}
 var last_result: Dictionary = {}
-var player_name: String = "Редактор"
+var player_name: String = CAMPAIGN_HERO_NAME
 var player_id: String = ""
 var run_id: String = ""
 var mode: String = "campaign"
