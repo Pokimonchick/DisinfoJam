@@ -3,6 +3,7 @@ extends Control
 signal view_changed
 signal pause_requested
 
+const CHOICE_OVERLAY: PackedScene = preload("res://Scenes/headline_choice_overlay.tscn")
 const NUMBER_ART: Array[Texture2D] = [
 	preload("res://Assets/Assets for new version of game/Untitled (22)/image 10.png"),
 	preload("res://Assets/Assets for new version of game/Untitled (22)/IMG_1370 1.png"),
@@ -25,6 +26,7 @@ var popup_kind: DialogKind = DialogKind.NONE
 var choices_open := false
 var _choices_animating := false
 var _choice_tween: Tween
+var _choice_close_button: Button
 var _shown_combo_count := -1
 var _shown_combo_type := -1
 var _combo_tween: Tween
@@ -34,6 +36,11 @@ var _combo_tween: Tween
 @onready var choices: Control = $Canvas/World/Choices
 
 func _ready() -> void:
+	var overlay := CHOICE_OVERLAY.instantiate() as Control
+	choices.add_child(overlay)
+	choices.move_child(overlay, 0)
+	_choice_close_button = overlay.get_node("Close") as Button
+	_choice_close_button.pressed.connect(_hide_choices)
 	for i in cards.size():
 		cards[i].pressed.connect(_select_headline.bind(i))
 	%HeadlineField.pressed.connect(_toggle_choices)
@@ -50,11 +57,24 @@ func _process(_delta: float) -> void:
 	$Canvas.motion_enabled = not popup.visible
 
 func _input(event: InputEvent) -> void:
-	if not is_visible_in_tree() or not popup.active:
+	if not is_visible_in_tree() or not event is InputEventMouseButton:
 		return
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+	if event.button_index != MOUSE_BUTTON_LEFT or not event.pressed:
+		return
+	if popup.active:
 		if not Rect2(Vector2.ZERO, popup.size).has_point(popup.get_local_mouse_position()):
 			_close_focus()
+	elif choices_open:
+		if _pointer_over(%HeadlineField, event.position) or _pointer_over(_choice_close_button, event.position):
+			return
+		for card in cards:
+			if card.visible and card.get_parent().visible and _pointer_over(card, event.position):
+				return
+		_hide_choices()
+
+func _pointer_over(control: Control, viewport_position: Vector2) -> bool:
+	var local_position := control.get_global_transform_with_canvas().affine_inverse() * viewport_position
+	return Rect2(Vector2.ZERO, control.size).has_point(local_position)
 
 func bind(model: NewsroomSession) -> void:
 	session = model
