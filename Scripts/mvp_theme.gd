@@ -31,4 +31,11 @@ static func create() -> Theme:
 	result.set_color("font_disabled_color", "Button", Color("bdc5c2"))
 	result.set_stylebox("background", "ProgressBar", box(Color("15282d"), 5, 0))
 	result.set_stylebox("fill", "ProgressBar", box(GOLD, 5, 0))
+	var tooltip_paper := box(Color("34291f"), 5, 14)
+	tooltip_paper.border_color = Color("b28a52")
+	tooltip_paper.set_border_width_all(2)
+	tooltip_paper.shadow_color = Color(0.08, 0.05, 0.02, 0.55)
+	tooltip_paper.shadow_size = 5
+	result.set_stylebox("panel", "TooltipPanel", tooltip_paper)
+	result.set_color("font_color", "TooltipLabel", Color("f8e9c7"))
 	return result

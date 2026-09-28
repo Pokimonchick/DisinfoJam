@@ -12,28 +12,11 @@ var _slide_tween: Tween
 
 
 func _ready() -> void:
-	_style_help_tooltips()
 	%TabButton.pressed.connect(_toggle)
 	%SlidingPanel.position.x = OPEN_X if expanded else CLOSED_X
 	%Arrow.flip_h = not expanded
 	_update_tab_tooltip()
 	_refresh()
-
-
-func _style_help_tooltips() -> void:
-	var paper := StyleBoxFlat.new()
-	paper.bg_color = Color("34291f")
-	paper.border_color = Color("b28a52")
-	paper.set_border_width_all(2)
-	paper.set_corner_radius_all(5)
-	paper.set_content_margin_all(14)
-	paper.shadow_color = Color(0.08, 0.05, 0.02, 0.55)
-	paper.shadow_size = 5
-	var tooltip_theme := Theme.new()
-	tooltip_theme.set_stylebox("panel", "TooltipPanel", paper)
-	tooltip_theme.set_color("font_color", "TooltipLabel", Color("f8e9c7"))
-	for help: Control in [$SlidingPanel/DeskHelp, %ReputationHelp, %LoyaltyHelp]:
-		help.theme = tooltip_theme
 
 
 func bind(model: NewsroomSession) -> void:
