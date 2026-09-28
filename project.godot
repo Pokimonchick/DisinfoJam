@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 GameState="*res://Scripts/game_state.gd"
+GameSettings="*res://Scripts/game_settings.gd"
 CursorTooltip="*res://Scripts/cursor_tooltip.gd"
 
 [display]

@@ -74,3 +74,11 @@ custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 text = "Назад"
+
+[node name="Settings" type="Button" parent="Center/Paper/Layout"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "Настройки"

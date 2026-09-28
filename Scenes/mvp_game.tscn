@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://tmr0o4wmncm6" path="res://Scenes/message_panel.tscn" id="5"]
 [ext_resource type="Script" uid="uid://bawydys7cfi50" path="res://Scripts/placeholder_visual.gd" id="6"]
 [ext_resource type="Shader" uid="uid://cytlrl67y5fep" path="res://Shaders/fatigue.gdshader" id="7_fatigue"]
+[ext_resource type="PackedScene" path="res://Scenes/settings_panel.tscn" id="8_settings"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_fatigue"]
 resource_local_to_scene = true
@@ -142,6 +143,13 @@ custom_minimum_size = Vector2(0, 62)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 text = "НАЧАТЬ НОВУЮ ИСТОРИЮ"
+
+[node name="MenuSettings" type="Button" parent="Padding/Layout/Stage/Menu/Card/Text"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "НАСТРОЙКИ"
 
 [node name="Quit" type="Button" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=2057678127]
 unique_name_in_owner = true
@@ -300,6 +308,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.065, 0.125, 0.145, 1)
+
+[node name="SettingsPanel" parent="." instance=ExtResource("8_settings")]
+z_index = 115
+layout_mode = 1
 
 [node name="SaveNotice" type="Label" parent="."]
 unique_name_in_owner = true

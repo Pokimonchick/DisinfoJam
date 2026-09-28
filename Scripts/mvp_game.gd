@@ -40,6 +40,7 @@ var _seen_stories: Array[String] = []
 @onready var work: Control = %Work
 @onready var home: Control = %Home
 @onready var pause_panel: MessagePanel = $PausePanel
+@onready var settings_panel: SettingsPanel = $SettingsPanel
 @onready var fatigue_overlay: ColorRect = $FatigueOverlay
 
 func _ready() -> void:
@@ -56,6 +57,7 @@ func _ready() -> void:
 	work.view_changed.connect(_queue_save)
 	work.pause_requested.connect(_toggle_pause)
 	%NewGame.pressed.connect(_show_profile_setup)
+	%MenuSettings.pressed.connect(_open_settings)
 	%ContinueGame.pressed.connect(_continue_run)
 	%StartStory.pressed.connect(_start_named_run)
 	%CancelStory.pressed.connect(_show_menu)
@@ -68,6 +70,8 @@ func _ready() -> void:
 	%PauseButton.pressed.connect(_toggle_pause)
 	pause_panel.primary_pressed.connect(_toggle_pause)
 	pause_panel.secondary_pressed.connect(_show_menu)
+	pause_panel.settings_pressed.connect(_open_settings)
+	settings_panel.closed.connect(_on_settings_closed)
 	get_window().min_size = Vector2i(960, 640)
 	get_tree().auto_accept_quit = false
 	_show_menu()
@@ -112,6 +116,10 @@ func _update_fatigue(delta: float) -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F11:
 		get_window().mode = Window.MODE_MAXIMIZED if get_window().mode in [Window.MODE_FULLSCREEN, Window.MODE_EXCLUSIVE_FULLSCREEN] else Window.MODE_FULLSCREEN
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("ui_cancel") and settings_panel.visible:
+		settings_panel.close()
 		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("ui_cancel") and view == View.PROFILE:
@@ -243,6 +251,7 @@ func _show_view(next: View) -> void:
 	paused = false
 	work.process_mode = Node.PROCESS_MODE_INHERIT
 	pause_panel.hide()
+	settings_panel.hide()
 	%Menu.visible = view == View.MENU
 	%ProfileSetup.visible = view == View.PROFILE
 	%Narrative.visible = view in [View.INTRO, View.TUTORIAL, View.ENDING, View.STORY]
@@ -282,9 +291,21 @@ func _toggle_pause() -> void:
 	work.process_mode = Node.PROCESS_MODE_DISABLED if paused else Node.PROCESS_MODE_INHERIT
 	if paused:
 		_save_progress()
-		pause_panel.present("ПАУЗА", "Выпуск подождёт.", "Время и выносливость остановлены.\n\nПрогресс сохраняется автоматически. После выхода в меню можно продолжить с этого места.", "Продолжить", "Сохранить и в меню")
+		pause_panel.present("ПАУЗА", "Выпуск подождёт.", "Время и выносливость остановлены.\n\nПрогресс сохраняется автоматически. После выхода в меню можно продолжить с этого места.", "Продолжить", "Сохранить и в меню", true)
 	else:
 		pause_panel.hide()
+
+
+func _open_settings() -> void:
+	settings_panel.present()
+
+
+func _on_settings_closed() -> void:
+	if paused:
+		pause_panel.settings_button.grab_focus()
+	else:
+		%MenuSettings.grab_focus()
+
 
 func _show_profile_setup() -> void:
 	if _run_active and not _save_progress():
