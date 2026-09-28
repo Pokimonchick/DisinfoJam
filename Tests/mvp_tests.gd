@@ -448,7 +448,7 @@ func _test_scenes() -> void:
 	_check(game.paused and work.process_mode == Node.PROCESS_MODE_DISABLED, "Desk pause suspends interactions and animation")
 	game._toggle_pause()
 	work.get_node("%FinishShift").pressed.emit()
-	_check(game.view == game.View.HOME and game.get_node("Padding").visible and game.get_node("%HUD").visible, "Finishing the new desk returns to the existing home screen")
+	_check(game.view == game.View.HOME and not game.get_node("Padding").visible and game.home.visible, "Finishing the new desk opens the fullscreen home")
 	game._run_active = false
 	game.queue_free()
 	await process_frame
