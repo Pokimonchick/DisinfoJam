@@ -1,6 +1,8 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" uid="uid://c6t1mrk1inas3" path="res://Scripts/headline_pencil_mark.gd" id="1_pencil"]
+[ext_resource type="Texture2D" path="res://Assets/note_select/note.png" id="2_note"]
+[ext_resource type="Texture2D" path="res://Assets/note_select/selected_note.png" id="3_selected"]
 
 [node name="HeadlineCard" type="Button"]
 custom_minimum_size = Vector2(0, 270)
@@ -8,15 +10,36 @@ layout_mode = 2
 size_flags_horizontal = 3
 mouse_default_cursor_shape = 2
 
+[node name="Note" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = -28.0
+offset_top = -15.0
+offset_right = 382.0
+offset_bottom = 466.0
+mouse_filter = 2
+texture = ExtResource("2_note")
+expand_mode = 1
+
+[node name="SelectedNote" type="TextureRect" parent="."]
+visible = false
+layout_mode = 0
+offset_left = -66.0
+offset_top = -53.0
+offset_right = 428.0
+offset_bottom = 492.0
+mouse_filter = 2
+texture = ExtResource("3_selected")
+expand_mode = 1
+
 [node name="Content" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 24.0
-offset_top = 24.0
-offset_right = -24.0
-offset_bottom = -24.0
+offset_left = 45.0
+offset_top = 116.0
+offset_right = -45.0
+offset_bottom = -60.0
 mouse_filter = 2
 theme_override_constants/separation = 18
 
@@ -27,14 +50,17 @@ mouse_filter = 2
 theme_override_colors/font_color = Color(0.09, 0.17, 0.19, 1)
 theme_override_font_sizes/font_size = 32
 text = "Заголовок будущей статьи"
+horizontal_alignment = 1
+vertical_alignment = 1
 autowrap_mode = 3
 
 [node name="Hint" type="Label" parent="Content"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.25, 0.33, 0.34, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 18
 text = "ВЫБРАТЬ ЗАГОЛОВОК  →"
+horizontal_alignment = 1
 
 [node name="PencilMark" type="Node2D" parent="."]
 z_index = 1
