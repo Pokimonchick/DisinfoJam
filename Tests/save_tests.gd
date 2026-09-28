@@ -48,6 +48,10 @@ func _test_snapshots() -> void:
 	check(restored.money == session.money and restored.combo_count == 1, "Effects and combo survive loading")
 	check(restored.coffee_used_today and not restored.coffee_ready, "Consumed coffee cannot be used twice")
 	check(restored.awaiting_acknowledgement and restored.article_cursor == 1, "Published result and next article cursor survive")
+	check(restored.articles[0].id == session.articles[0].id and restored.current_article().id == session.current_article().id, "The shuffled article queue survives loading")
+	var time_during_result := restored.time_left
+	restored.tick_work(20.0)
+	check(restored.time_left == time_during_result, "A restored result keeps the shift timer paused")
 	var money_before := restored.money
 	check(not restored.publish_headline(0) and restored.money == money_before, "Loading a result cannot award it twice")
 	restored.acknowledge_publication()

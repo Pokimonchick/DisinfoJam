@@ -56,6 +56,7 @@ func reset(seed_value: int = -1) -> void:
 	else:
 		_rng.seed = seed_value
 	articles = preload("res://Data/article_catalog.gd").create_articles()
+	_shuffle_articles()
 	mode = "campaign"
 	campaign_days = balance.campaign_days
 	campaign_money = balance.campaign_money
@@ -115,7 +116,7 @@ func start_shift() -> void:
 
 
 func tick_work(delta: float) -> void:
-	if phase != Phase.WORK or delta <= 0.0:
+	if phase != Phase.WORK or awaiting_acknowledgement or delta <= 0.0:
 		return
 	var elapsed := minf(delta, time_left)
 	time_left = maxf(0.0, time_left - elapsed)
@@ -288,6 +289,14 @@ func _check_ending() -> bool:
 	phase_changed.emit()
 	save_requested.emit()
 	return true
+
+
+func _shuffle_articles() -> void:
+	for i in range(articles.size() - 1, 0, -1):
+		var other := _rng.randi_range(0, i)
+		var previous: NewsArticle = articles[i]
+		articles[i] = articles[other]
+		articles[other] = previous
 
 
 func _shuffle_options() -> void:

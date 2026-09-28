@@ -263,7 +263,7 @@ func _show_result(result: Dictionary) -> void:
 	var full_issue := session.publication_limit_reached()
 	if full_issue:
 		changes += "\n\n[color=#78512c]В текущем выпуске газеты недостаточно места для новых публикаций.[/color]"
-	popup.present(cards[maxi(selected_index, 0)], "ВЫПУСК ЗАПОЛНЕН" if full_issue else "НАПЕЧАТАНО · ТАЙМЕР ИДЁТ", result.headline, changes, "Сдать выпуск и пойти домой" if full_issue else "Следующий материал", "", Vector2(640, 800))
+	popup.present(cards[maxi(selected_index, 0)], "ВЫПУСК ЗАПОЛНЕН" if full_issue else "НАПЕЧАТАНО · ВРЕМЯ ОСТАНОВЛЕНО", result.headline, changes, "Сдать выпуск и пойти домой" if full_issue else "Следующий материал", "", Vector2(640, 800))
 	_refresh_actions()
 	view_changed.emit()
 

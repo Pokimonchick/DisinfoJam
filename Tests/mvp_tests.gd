@@ -73,7 +73,18 @@ func _run() -> void:
 func _test_catalog() -> void:
 	var s := _fresh()
 	_check(s.articles.size() == 32, "The shared pool includes eight community stories")
-	_check(s.articles[2].id == "cats_rumor" and s.articles[9].id == "bloom_letter", "Community stories retain sequence after the introduction")
+	var catalog_order: Array[String] = []
+	for article in preload("res://Data/article_catalog.gd").create_articles():
+		catalog_order.append(article.id)
+	var shuffled_order: Array[String] = []
+	for article in s.articles:
+		shuffled_order.append(article.id)
+	_check(shuffled_order != catalog_order, "A new campaign shuffles the authored article order")
+	var same_seed := _fresh()
+	var other_seed := _fresh()
+	other_seed.reset(43)
+	_check(same_seed.articles.map(func(article: NewsArticle): return article.id) == shuffled_order, "The same seed reproduces the article queue")
+	_check(other_seed.articles.map(func(article: NewsArticle): return article.id) != shuffled_order, "Another new run gets a different article queue")
 	var ids: Dictionary = {}
 	var dangerous := 0
 	for article in s.articles:
@@ -130,10 +141,15 @@ func _test_publication_queue() -> void:
 	_check(s.money == before + roundi(chosen.money * s.balance.publication_income_multiplier) and s.total_published == 1, "Publication rewards are applied once")
 	_check(s.last_result.headline == chosen.text, "Feedback describes the actual shuffled choice")
 	_check(not s.publish_headline(0) and s.total_published == 1, "Double clicks cannot publish twice")
+	var next_article := s.current_article().id
+	var time_during_result := s.time_left
+	var health_during_result := s.health
 	s.tick_work(180.0)
+	_check(s.phase == NewsroomSession.Phase.WORK and s.time_left == time_during_result and s.health == health_during_result, "Feedback pauses the shift clock and passive stamina drain")
 	s.acknowledge_publication()
+	s.tick_work(180.0)
 	s.start_shift()
-	_check(s.article_cursor == 1 and s.current_article().id == "market_gate", "Timeout during feedback cannot repeat a published story")
+	_check(s.article_cursor == 1 and s.current_article().id == next_article, "The next day keeps the shuffled queue after a published story")
 	# Walk the entire deck through the public publication API without running
 	# out of resources. Only the test's balance resource is modified.
 	s = _fresh()
@@ -151,7 +167,7 @@ func _test_publication_queue() -> void:
 		s.acknowledge_publication()
 		if s.phase == NewsroomSession.Phase.HOME:
 			s.start_shift()
-	_check(seen.size() == 32 and s.current_article().id == "black_cat", "All stories appear before the pool cycles")
+	_check(seen.size() == 32 and s.current_article().id == s.articles[0].id, "All stories appear before the shuffled pool cycles")
 	_check(orders.size() > 1, "Headline positions vary between stories")
 
 func _test_publication_limit() -> void:
@@ -185,14 +201,15 @@ func _test_publication_limit() -> void:
 		s.start_shift()
 		_check(s.published_today == 0 and not s.publication_limit_reached() and s.current_article().id == next_article, "New day resets capacity and preserves the next story")
 		_check(s.publish_headline(0), "New day permits publishing again")
-	# Timer expiry can still close the final feedback without double charging.
+	# The final feedback pauses the clock; acknowledging it closes the issue once.
 	var timed := _fresh()
 	timed.balance.publication_limit = 1
 	timed.start_shift()
 	timed.publish_headline(0)
 	timed.tick_work(180.0)
+	_check(timed.phase == NewsroomSession.Phase.WORK and timed.time_left == timed.shift_length, "Full-issue feedback also pauses the timer")
 	timed.acknowledge_publication()
-	_check(timed.phase == NewsroomSession.Phase.HOME and timed.completed_shifts == 1 and timed.article_cursor == 1, "Timeout on a full issue completes exactly once")
+	_check(timed.phase == NewsroomSession.Phase.HOME and timed.completed_shifts == 1 and timed.article_cursor == 1, "Acknowledging a full issue completes exactly once")
 
 func _test_endings() -> void:
 	var s := _fresh()
