@@ -14,6 +14,8 @@ Commit a completed, validated change when it forms a meaningful, reviewable unit
 
 Before committing, inspect Git status and the diff, then stage only files intended for that commit. Preserve unrelated work. If an operation could discard uncommitted work, safeguard it first. Do not amend, squash, delete, rewrite, or push commits unless explicitly asked.
 
+The user authorizes pushing the current branch to its configured upstream after every three new Codex commits, starting after `8caa65b`. After a successful push, count the next three commits from the pushed tip. Inspect outgoing commits before pushing; never force-push or create extra commits just to reach the threshold.
+
 ## Scope
 
 Before editing, inspect the relevant files and understand the current implementation.
