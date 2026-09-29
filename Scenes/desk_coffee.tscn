@@ -1,38 +1,46 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene format=3 uid="uid://bxjea0aa6grf7"]
 
-[ext_resource type="Script" path="res://Scripts/desk_coffee.gd" id="1"]
-[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Group 8 (2) 2.png" id="cup"]
-[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Group 9 (2) 2.png" id="shadow"]
-[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Union.png" id="swirl"]
-[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/след от кофе.png" id="stain"]
-[ext_resource type="SpriteFrames" path="res://Data/coffee_steam.tres" id="steam"]
+[ext_resource type="Script" uid="uid://dbi6mg7068h2w" path="res://Scripts/desk_coffee.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://di3e7a1p2t5rf" path="res://Assets/Assets for new version of game/Untitled (22)/Group 8 (2) 2.png" id="cup"]
+[ext_resource type="Texture2D" uid="uid://b065meaphbqr" path="res://Assets/Assets for new version of game/Untitled (22)/Group 9 (2) 2.png" id="shadow"]
+[ext_resource type="Texture2D" uid="uid://bsl0g2mw5kqkg" path="res://Assets/Assets for new version of game/Untitled (22)/след от кофе.png" id="stain"]
+[ext_resource type="SpriteFrames" uid="uid://b4bcj0nduqwlv" path="res://Data/coffee_steam.tres" id="steam"]
+[ext_resource type="Texture2D" uid="uid://dpo1xqdkqk5tw" path="res://Assets/Assets for new version of game/Untitled (22)/Union.png" id="swirl"]
 
-[node name="DeskCoffee" type="Control"]
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_ye0lt"]
+
+[node name="DeskCoffee" type="Control" unique_id=2128497325]
+layout_mode = 3
+anchors_preset = 0
 offset_right = 350.0
 offset_bottom = 315.0
 mouse_filter = 2
 script = ExtResource("1")
 
-[node name="Stain" type="TextureRect" parent="."]
-offset_left = 92.0
-offset_top = 8.0
-offset_right = 260.0
-offset_bottom = 321.0
+[node name="Stain" type="TextureRect" parent="." unique_id=1634422947]
+material = SubResource("CanvasItemMaterial_ye0lt")
+layout_mode = 0
+offset_left = 124.0
+offset_top = 53.0
+offset_right = 292.0
+offset_bottom = 366.0
 mouse_filter = 2
 texture = ExtResource("stain")
 expand_mode = 1
-modulate = Color(1,1,1,0.72)
 
-[node name="Cup" type="TextureButton" parent="."]
-offset_right = 350.0
+[node name="Cup" type="TextureButton" parent="." unique_id=250566351]
+layout_mode = 0
+offset_left = -19.0
+offset_right = 331.0
 offset_bottom = 315.0
+mouse_default_cursor_shape = 2
 texture_normal = ExtResource("cup")
 ignore_texture_size = true
 stretch_mode = 0
-mouse_default_cursor_shape = 2
 
-[node name="Shadow" type="TextureRect" parent="Cup"]
+[node name="Shadow" type="TextureRect" parent="Cup" unique_id=1701819981]
 z_index = -1
+layout_mode = 0
 offset_left = 11.0
 offset_top = 16.0
 offset_right = 350.0
@@ -41,7 +49,8 @@ mouse_filter = 2
 texture = ExtResource("shadow")
 expand_mode = 1
 
-[node name="Swirl" type="TextureRect" parent="Cup"]
+[node name="Swirl" type="TextureRect" parent="Cup" unique_id=1189917568]
+layout_mode = 0
 offset_left = 110.0
 offset_top = 120.0
 offset_right = 206.0
@@ -50,9 +59,10 @@ mouse_filter = 2
 texture = ExtResource("swirl")
 expand_mode = 1
 
-[node name="Steam" type="AnimatedSprite2D" parent="Cup"]
-position = Vector2(171, 139)
+[node name="Steam" type="AnimatedSprite2D" parent="Cup" unique_id=2055128434]
+modulate = Color(1, 1, 1, 0.75)
+position = Vector2(-490, 153)
 scale = Vector2(0.76, 0.76)
-modulate = Color(1,1,1,0.75)
 sprite_frames = ExtResource("steam")
 autoplay = "default"
+frame_progress = 0.13018288

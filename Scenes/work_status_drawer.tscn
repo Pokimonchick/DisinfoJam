@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://dtnau3fa6rg8e"]
 
 [ext_resource type="Script" uid="uid://by4p37yn26t4c" path="res://Scripts/work_status_drawer.gd" id="1_drawer"]
-[ext_resource type="Script" path="res://Scripts/pencil_meter.gd" id="9_pencil_meter"]
 [ext_resource type="Texture2D" uid="uid://d4muajjn1n2ot" path="res://Assets/Assets for new version of game/Untitled (22)/Group 37.png" id="2_frame"]
 [ext_resource type="Texture2D" uid="uid://bqk74lonehlwv" path="res://Assets/Assets for new version of game/Untitled (22)/Group 36.png" id="3_paper"]
 [ext_resource type="Texture2D" uid="uid://bhelvl6gkdt5y" path="res://Assets/Assets for new version of game/Untitled (22)/Group 35.png" id="4_strap"]
@@ -9,6 +8,19 @@
 [ext_resource type="Texture2D" uid="uid://cxp7tiavf3r3n" path="res://Assets/Assets for new version of game/Untitled (22)/image 30.png" id="6_tab"]
 [ext_resource type="Texture2D" uid="uid://d3en4e2iouj0q" path="res://Assets/Assets for new version of game/Untitled (22)/Arrow 3.png" id="7_arrow"]
 [ext_resource type="Texture2D" uid="uid://b8lk2an53p42w" path="res://Assets/Assets for new version of game/Untitled (22)/Group 38.png" id="8_help"]
+[ext_resource type="Script" uid="uid://c5iynoxvvikfr" path="res://Scripts/pencil_meter.gd" id="9_pencil_meter"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_eagcc"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_nyhhg"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_b8ynm"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_yofgt"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_r64ts"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_w1yn8"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_balance"]
 bg_color = Color(0.204, 0.161, 0.122, 1)
@@ -77,13 +89,12 @@ mouse_filter = 2
 texture = ExtResource("5_clip")
 expand_mode = 1
 
-[node name="Folio" type="Label" parent="SlidingPanel"]
+[node name="Folio" type="Label" parent="SlidingPanel" unique_id=1775956423]
 layout_mode = 0
 offset_left = 50.0
 offset_top = 82.0
 offset_right = 354.0
 offset_bottom = 112.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(0.55, 0.36, 0.13, 1)
 theme_override_font_sizes/font_size = 16
 text = "КАРТОЧКА РЕДАКТОРА"
@@ -153,6 +164,8 @@ offset_top = 291.0
 offset_right = 355.0
 offset_bottom = 317.0
 mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxEmpty_eagcc")
+theme_override_styles/fill = SubResource("StyleBoxEmpty_nyhhg")
 value = 70.0
 show_percentage = false
 script = ExtResource("9_pencil_meter")
@@ -187,6 +200,8 @@ offset_top = 437.0
 offset_right = 355.0
 offset_bottom = 463.0
 mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxEmpty_b8ynm")
+theme_override_styles/fill = SubResource("StyleBoxEmpty_yofgt")
 value = 65.0
 show_percentage = false
 script = ExtResource("9_pencil_meter")
@@ -257,6 +272,8 @@ offset_top = 632.0
 offset_right = 355.0
 offset_bottom = 658.0
 mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxEmpty_r64ts")
+theme_override_styles/fill = SubResource("StyleBoxEmpty_w1yn8")
 value = 65.0
 show_percentage = false
 script = ExtResource("9_pencil_meter")
@@ -295,7 +312,7 @@ mouse_filter = 2
 texture = ExtResource("8_help")
 expand_mode = 1
 
-[node name="BalanceCard" type="Panel" parent="SlidingPanel"]
+[node name="BalanceCard" type="Panel" parent="SlidingPanel" unique_id=2107403312]
 layout_mode = 0
 offset_left = 42.0
 offset_top = 784.0
@@ -326,10 +343,11 @@ theme_override_font_sizes/font_size = 43
 text = "0 $"
 
 [node name="Tab" type="TextureRect" parent="SlidingPanel" unique_id=782465842]
+z_index = -1
 layout_mode = 0
-offset_left = 396.0
+offset_left = 391.0
 offset_top = 55.0
-offset_right = 488.0
+offset_right = 483.0
 offset_bottom = 135.0
 mouse_filter = 2
 texture = ExtResource("6_tab")
@@ -363,7 +381,10 @@ offset_left = 306.0
 offset_top = 33.0
 offset_right = 376.0
 offset_bottom = 103.0
-tooltip_text = "Прочитайте источник на столе.\nНажмите на зелёное поле, чтобы выбрать заголовок.\nВыбор можно заменить; деньги и последствия\nначисляются только после нажатия «Опубликовать»."
+tooltip_text = "Прочитайте источник на столе.
+Нажмите на зелёное поле, чтобы выбрать заголовок.
+Выбор можно заменить; деньги и последствия
+начисляются только после нажатия «Опубликовать»."
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("8_help")
 ignore_texture_size = true

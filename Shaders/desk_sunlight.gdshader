@@ -8,7 +8,7 @@ void fragment() {
 	// World-space boundaries follow the two broad diagonals in the desk reference.
 	vec2 desk = UV * vec2(2120.0, 1240.0) + vec2(-100.0, -80.0);
 	float upper_edge = 630.0 - 0.435 * desk.x + sin(TIME * speed) * 15.0;
-	float lower_edge = 1306.0 - 0.32 * desk.x + sin(TIME * speed * 0.83 + 1.1) * 18.0;
+	float lower_edge = 1306.0 - 0.355 * desk.x + sin(TIME * speed * 0.83 + 1.1) * 18.0;
 	float upper_shadow = 1.0 - smoothstep(-8.0, 8.0, desk.y - upper_edge);
 	float lower_shadow = smoothstep(-8.0, 8.0, desk.y - lower_edge);
 	float beam_center = 900.0 - 0.40 * desk.x + sin(TIME * speed * 0.72) * 24.0;

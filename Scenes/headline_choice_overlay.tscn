@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cmldigw188vft"]
 
-[ext_resource type="Texture2D" path="res://Assets/note_select/Group 17.png" id="1_backdrop"]
-[ext_resource type="Texture2D" path="res://Assets/note_select/image 48.png" id="2_banner"]
+[ext_resource type="Texture2D" uid="uid://b3k3n08tx0ady" path="res://Assets/note_select/Group 17.png" id="1_backdrop"]
+[ext_resource type="Texture2D" uid="uid://nys18psfydih" path="res://Assets/note_select/image 48.png" id="2_banner"]
 
 [sub_resource type="StyleBoxFlat" id="CloseNormal"]
 bg_color = Color(0.95, 0.68, 0.2, 1)
@@ -39,6 +39,8 @@ corner_radius_top_right = 40
 corner_radius_bottom_right = 40
 corner_radius_bottom_left = 40
 
+[sub_resource type="ViewportTexture" id="ViewportTexture_u8qlv"]
+
 [node name="HeadlineChoiceOverlay" type="Control" unique_id=1087954237]
 layout_mode = 3
 anchors_preset = 0
@@ -59,6 +61,7 @@ expand_mode = 1
 stretch_mode = 6
 
 [node name="Banner" type="TextureRect" parent="." unique_id=654798744]
+z_index = 50
 layout_mode = 0
 offset_left = 560.0
 offset_top = 138.0
@@ -104,3 +107,4 @@ theme_override_styles/normal = SubResource("CloseNormal")
 theme_override_styles/pressed = SubResource("ClosePressed")
 theme_override_styles/hover = SubResource("CloseHover")
 text = "×"
+icon = SubResource("ViewportTexture_u8qlv")

@@ -29,6 +29,16 @@ static func create() -> Theme:
 	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		result.set_color(state, "Button", INK)
 	result.set_color("font_disabled_color", "Button", Color("bdc5c2"))
+	# CheckBox is a toggle button: its checked state must keep the same padding
+	# as the hovered state, without looking permanently hovered.
+	for state in ["normal", "pressed"]:
+		result.set_stylebox(state, "CheckBox", box(PAPER))
+	for state in ["hover", "hover_pressed"]:
+		result.set_stylebox(state, "CheckBox", box(Color("fff1cd")))
+	result.set_stylebox("focus", "CheckBox", focus)
+	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
+		result.set_color(state, "CheckBox", INK)
+	result.set_constant("h_separation", "CheckBox", 10)
 	result.set_stylebox("background", "ProgressBar", box(Color("15282d"), 5, 0))
 	result.set_stylebox("fill", "ProgressBar", box(GOLD, 5, 0))
 	var tooltip_paper := box(Color("34291f"), 5, 14)

@@ -40,16 +40,15 @@ Use Godot-native solutions and follow existing architecture.
 
 ## Validation
 
-Do only validation proportional to the change.
+Choose the minimum validation needed for the actual risk and affected behavior, not the file type, number of edits, or task label. Always inspect the final diff and review changed code for obvious syntax and reference mistakes; this does not require running tools beyond diff inspection.
 
-Usually:
-1. inspect the final diff,
-2. check the touched files for obvious syntax/reference errors,
-3. run one relevant quick check if useful.
+For narrow, low-risk edits whose effect is clear from inspection, do not create or run tests, builds, project launches, or broad lint/static-analysis checks by default. Do not replace skipped tests with equivalent validation work under another name. User-requested checks and mandatory project gates still apply; do not invent additional gates.
 
-Do not run broad, repetitive, or expensive checks for small local changes.
+For nontrivial logic, interactions, or a concrete failure risk, use the smallest relevant existing checks for the changed behavior and directly affected integration points, including callers when needed. Scope checks by behavioral impact, not just edited files. Add or update tests only when they meaningfully verify new behavior or guard against a plausible regression; do not create test infrastructure for a routine edit or tests that merely repeat the implementation.
 
-Never claim something was tested if it was not.
+Broaden validation only when a specific unresolved risk, a focused failure, or a mandatory gate requires it. Run the whole project suite only when that breadth is justified; lack of a focused test command alone is not sufficient. Rerun only checks whose results subsequent edits could invalidate. Stop once the relevant behavior and identified risks are sufficiently checked; do not add repetitive or speculative checks for reassurance.
+
+Report briefly what was actually checked and any material unverified behavior. For low-risk edits, it is enough to say that the diff was reviewed and tests were not run under this policy; do not ask for approval to skip optional checks. Never claim something was tested if it was not.
 
 ## Final Response
 
