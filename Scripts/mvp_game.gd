@@ -56,7 +56,6 @@ func _ready() -> void:
 	home.bind(session)
 	work.view_changed.connect(_queue_save)
 	work.pause_requested.connect(_toggle_pause)
-	home.pause_requested.connect(_toggle_pause)
 	%NewGame.pressed.connect(_show_profile_setup)
 	%MenuSettings.pressed.connect(_open_settings)
 	%ContinueGame.pressed.connect(_continue_run)
@@ -249,7 +248,6 @@ func _show_view(next: View) -> void:
 	view = next
 	paused = false
 	work.process_mode = Node.PROCESS_MODE_INHERIT
-	home.process_mode = Node.PROCESS_MODE_INHERIT
 	pause_panel.hide()
 	settings_panel.hide()
 	%Menu.visible = view == View.MENU
@@ -257,9 +255,9 @@ func _show_view(next: View) -> void:
 	%Narrative.visible = view in [View.INTRO, View.TUTORIAL, View.ENDING, View.STORY]
 	work.visible = view == View.WORK
 	home.visible = view == View.HOME
-	$Padding.visible = view not in [View.WORK, View.HOME]
-	%HUD.visible = view == View.ENDING
-	%PauseButton.visible = view in [View.INTRO, View.TUTORIAL, View.STORY]
+	$Padding.visible = view != View.WORK
+	%HUD.visible = view in [View.HOME, View.ENDING]
+	%PauseButton.visible = view in [View.WORK, View.HOME, View.INTRO, View.TUTORIAL, View.STORY]
 	%Location.text = {View.MENU: "НЕЗАВИСИМАЯ РЕДАКЦИЯ", View.INTRO: "ГЛАВА I · АМНЕЗИЯ", View.TUTORIAL: "ПЕРЕД ПЕРВОЙ СМЕНОЙ", View.WORK: "РАБОЧИЙ СТОЛ", View.HOME: "СЪЁМНАЯ КОМНАТА", View.ENDING: "ИТОГИ НЕДЕЛИ" if session.campaign_completed else "ПОСЛЕДНИЙ ВЫПУСК", View.PROFILE: "НОВОЕ ПРОХОЖДЕНИЕ", View.STORY: "ГЛАВА I · АМНЕЗИЯ"}[view]
 	_refresh_goal()
 	if _fade_tween:
@@ -290,7 +288,6 @@ func _toggle_pause() -> void:
 		return
 	paused = not paused
 	work.process_mode = Node.PROCESS_MODE_DISABLED if paused else Node.PROCESS_MODE_INHERIT
-	home.process_mode = Node.PROCESS_MODE_DISABLED if paused else Node.PROCESS_MODE_INHERIT
 	if paused:
 		_save_progress()
 		pause_panel.present("ПАУЗА", "Выпуск подождёт.", "Время и выносливость остановлены.\n\nПрогресс сохраняется автоматически. После выхода в меню можно продолжить с этого места.", "Продолжить", "Сохранить и в меню", true)
