@@ -7,6 +7,8 @@ var _hover_tween: Tween
 @onready var _headline: Label = $Content/Headline
 @onready var _pencil_mark: Node2D = $PencilMark
 @onready var _selected_note: TextureRect = $SelectedNote
+@onready var _shadow: TextureRect = $Shadow
+@onready var _selected_shadow: TextureRect = $SelectedShadow
 
 func _ready() -> void:
 	pivot_offset = size / 2.0
@@ -14,6 +16,7 @@ func _ready() -> void:
 	_base_scale = scale
 	_base_z_index = z_index
 	_selected_note.modulate.a = 0.0
+	_selected_shadow.modulate.a = 0.0
 	mouse_entered.connect(_set_hovered.bind(true))
 	mouse_exited.connect(_set_hovered.bind(false))
 	button_down.connect(_pencil_mark.clear)
@@ -34,17 +37,23 @@ func _set_hovered(value: bool) -> void:
 	if value:
 		z_index = 12
 		_selected_note.show()
+		_selected_shadow.show()
 		_hover_tween.parallel().tween_property(_selected_note, "modulate:a", 1.0, 0.14)
+		_hover_tween.parallel().tween_property(_selected_shadow, "modulate:a", 1.0, 0.14)
+		_hover_tween.parallel().tween_property(_shadow, "modulate:a", 0.0, 0.14)
 		#_pencil_mark.trace(_headline)
 		_hover_tween.parallel().tween_property(self, "position", _base_position + Vector2(0.0, -18.0), 0.14)
 		_hover_tween.parallel().tween_property(self, "scale", _base_scale * 1.045, 0.14)
 	else:
 		_pencil_mark.clear()
 		_hover_tween.parallel().tween_property(_selected_note, "modulate:a", 0.0, 0.16)
+		_hover_tween.parallel().tween_property(_selected_shadow, "modulate:a", 0.0, 0.16)
+		_hover_tween.parallel().tween_property(_shadow, "modulate:a", 1.0, 0.16)
 		_hover_tween.parallel().tween_property(self, "position", _base_position, 0.16)
 		_hover_tween.parallel().tween_property(self, "scale", _base_scale, 0.16)
 		_hover_tween.tween_callback(func():
 			_selected_note.hide()
+			_selected_shadow.hide()
 			z_index = _base_z_index
 		)
 
@@ -58,6 +67,9 @@ func reset_hover() -> void:
 	_pencil_mark.clear()
 	_selected_note.hide()
 	_selected_note.modulate.a = 0.0
+	_selected_shadow.hide()
+	_selected_shadow.modulate.a = 0.0
+	_shadow.modulate.a = 1.0
 	position = _base_position
 	scale = _base_scale
 	z_index = _base_z_index

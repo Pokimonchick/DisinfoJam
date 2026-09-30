@@ -3,12 +3,42 @@
 [ext_resource type="Script" uid="uid://c6t1mrk1inas3" path="res://Scripts/headline_pencil_mark.gd" id="1_pencil"]
 [ext_resource type="Texture2D" path="res://Assets/note_select/note.png" id="2_note"]
 [ext_resource type="Texture2D" path="res://Assets/note_select/selected_note.png" id="3_selected"]
+[ext_resource type="Shader" path="res://Shaders/note_shadow.gdshader" id="4_shadow"]
+
+[sub_resource type="ShaderMaterial" id="NoteShadow"]
+shader = ExtResource("4_shadow")
+shader_parameter/shadow_strength = 0.26
+shader_parameter/blur_pixels = 3.0
 
 [node name="HeadlineCard" type="Button"]
 custom_minimum_size = Vector2(0, 270)
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_default_cursor_shape = 2
+
+[node name="Shadow" type="TextureRect" parent="."]
+editor_description = "Тень по альфа-силуэту записки. Интенсивность и размытие — Material / Shader Parameters; смещение — Layout."
+material = SubResource("NoteShadow")
+layout_mode = 0
+offset_left = -18.0
+offset_top = -1.0
+offset_right = 392.0
+offset_bottom = 480.0
+mouse_filter = 2
+texture = ExtResource("2_note")
+expand_mode = 1
+
+[node name="SelectedShadow" type="TextureRect" parent="."]
+visible = false
+material = SubResource("NoteShadow")
+layout_mode = 0
+offset_left = -56.0
+offset_top = -39.0
+offset_right = 438.0
+offset_bottom = 506.0
+mouse_filter = 2
+texture = ExtResource("3_selected")
+expand_mode = 1
 
 [node name="Note" type="TextureRect" parent="."]
 layout_mode = 0

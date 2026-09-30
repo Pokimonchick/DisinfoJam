@@ -2,42 +2,18 @@
 
 [ext_resource type="Texture2D" uid="uid://b3k3n08tx0ady" path="res://Assets/note_select/Group 17.png" id="1_backdrop"]
 [ext_resource type="Texture2D" uid="uid://nys18psfydih" path="res://Assets/note_select/image 48.png" id="2_banner"]
+[ext_resource type="Texture2D" path="res://Assets/note_select/Group 39 (2).png" id="3_close_background"]
 
-[sub_resource type="StyleBoxFlat" id="CloseNormal"]
-bg_color = Color(0.95, 0.68, 0.2, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(1, 0.84, 0.46, 1)
-corner_radius_top_left = 40
-corner_radius_top_right = 40
-corner_radius_bottom_right = 40
-corner_radius_bottom_left = 40
+[sub_resource type="StyleBoxTexture" id="CloseNormal"]
+texture = ExtResource("3_close_background")
 
-[sub_resource type="StyleBoxFlat" id="ClosePressed"]
-bg_color = Color(0.79, 0.51, 0.12, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.98, 0.77, 0.37, 1)
-corner_radius_top_left = 40
-corner_radius_top_right = 40
-corner_radius_bottom_right = 40
-corner_radius_bottom_left = 40
+[sub_resource type="StyleBoxTexture" id="ClosePressed"]
+texture = ExtResource("3_close_background")
+modulate_color = Color(0.85, 0.85, 0.85, 1)
 
-[sub_resource type="StyleBoxFlat" id="CloseHover"]
-bg_color = Color(1, 0.77, 0.28, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(1, 0.92, 0.63, 1)
-corner_radius_top_left = 40
-corner_radius_top_right = 40
-corner_radius_bottom_right = 40
-corner_radius_bottom_left = 40
+[sub_resource type="StyleBoxTexture" id="CloseHover"]
+texture = ExtResource("3_close_background")
+modulate_color = Color(1.1, 1.1, 1.1, 1)
 
 [node name="HeadlineChoiceOverlay" type="Control" unique_id=1087954237]
 layout_mode = 3
@@ -105,4 +81,5 @@ theme_override_font_sizes/font_size = 53
 theme_override_styles/normal = SubResource("CloseNormal")
 theme_override_styles/pressed = SubResource("ClosePressed")
 theme_override_styles/hover = SubResource("CloseHover")
+theme_override_styles/focus = SubResource("CloseHover")
 text = "×"
