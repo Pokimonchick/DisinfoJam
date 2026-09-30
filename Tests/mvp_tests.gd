@@ -444,7 +444,7 @@ func _test_scenes() -> void:
 	await create_timer(0.2).timeout
 	_check(not work.get_node("%ComboBurst").visible, "Breaking the combo hides its text")
 	game.transitioning = false
-	work.get_node("%Pause").pressed.emit()
+	game._toggle_pause()
 	_check(game.paused and work.process_mode == Node.PROCESS_MODE_DISABLED, "Desk pause suspends interactions and animation")
 	game._toggle_pause()
 	work.get_node("%FinishShift").pressed.emit()

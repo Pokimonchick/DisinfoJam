@@ -42,7 +42,7 @@ func _ready() -> void:
 	choices.move_child(_choice_overlay, 0)
 	_choice_close_button = _choice_overlay.get_node("Close") as Button
 	_choice_close_button.pressed.connect(_hide_choices)
-	GameSettings.changed.connect(_update_choice_overlay)
+	GameSettings.changed.connect(_on_settings_changed)
 	_update_choice_overlay()
 	for i in cards.size():
 		cards[i].pressed.connect(_select_headline.bind(i))
@@ -50,14 +50,13 @@ func _ready() -> void:
 	%Coffee.activated.connect(_drink_coffee)
 	%FinishShift.pressed.connect(_finish_shift)
 	%Publish.pressed.connect(_publish_selected)
-	%Pause.pressed.connect(func(): pause_requested.emit())
 	%Drawer.toggled.connect(func(_expanded: bool): view_changed.emit())
 	popup.primary_pressed.connect(_on_primary)
 	popup.secondary_pressed.connect(_close_focus)
 	popup.close_pressed.connect(_close_focus)
 
 func _process(_delta: float) -> void:
-	$Canvas.motion_enabled = not popup.visible
+	$Canvas.motion_enabled = not popup.visible and not (choices.visible and GameSettings.choice_overlay_enabled)
 
 func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree() or not event is InputEventMouseButton:
@@ -68,12 +67,13 @@ func _input(event: InputEvent) -> void:
 		if not Rect2(Vector2.ZERO, popup.size).has_point(popup.get_local_mouse_position()):
 			_close_focus()
 	elif choices_open and GameSettings.choice_overlay_enabled:
-		if _pointer_over(%HeadlineField, event.position) or _pointer_over(_choice_close_button, event.position):
+		if _pointer_over(_choice_close_button, event.position):
 			return
 		for card in cards:
 			if card.visible and card.get_parent().visible and _pointer_over(card, event.position):
 				return
 		_hide_choices()
+		get_viewport().set_input_as_handled()
 
 
 func _pointer_over(control: Control, viewport_position: Vector2) -> bool:
@@ -81,8 +81,23 @@ func _pointer_over(control: Control, viewport_position: Vector2) -> bool:
 	return Rect2(Vector2.ZERO, control.size).has_point(local_position)
 
 
+func _on_settings_changed() -> void:
+	var layout_changed := _choice_overlay.visible != GameSettings.choice_overlay_enabled
+	_update_choice_overlay()
+	if layout_changed and choices_open:
+		_open_choices(false)
+
+
 func _update_choice_overlay() -> void:
 	_choice_overlay.visible = GameSettings.choice_overlay_enabled
+	choices.z_index = 80 if GameSettings.choice_overlay_enabled else 30
+	combo_burst.z_index = 70 if GameSettings.choice_overlay_enabled else 100
+	var overlay_blocks := choices.visible and GameSettings.choice_overlay_enabled
+	%Drawer.visible = not overlay_blocks
+	%FinishShift.visible = not overlay_blocks
+	%Publish.visible = not overlay_blocks
+	if session != null:
+		_refresh_actions()
 
 func bind(model: NewsroomSession) -> void:
 	session = model
@@ -114,9 +129,11 @@ func _refresh_desk() -> void:
 
 func _refresh_actions() -> void:
 	var blocked := session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached()
-	%HeadlineField.disabled = blocked or _choices_animating
-	%Publish.disabled = blocked or selected_index < 0 or choices_open or _choices_animating or popup.visible
-	%FinishShift.disabled = blocked
+	var overlay_blocks := choices.visible and GameSettings.choice_overlay_enabled
+	%HeadlineField.disabled = blocked or _choices_animating or overlay_blocks
+	%Publish.disabled = blocked or selected_index < 0 or choices_open or _choices_animating or popup.visible or overlay_blocks
+	%FinishShift.disabled = blocked or overlay_blocks
+	%Coffee.get_node("Cup").disabled = not session.coffee_ready or overlay_blocks
 
 func _refresh_combo() -> void:
 	if session.combo_count == _shown_combo_count and session.combo_type == _shown_combo_type:
@@ -143,7 +160,8 @@ func _refresh_combo() -> void:
 	_combo_tween.tween_property(combo_burst, "scale", Vector2.ONE, 0.26).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func _drink_coffee() -> void:
-	session.drink_coffee()
+	if not (choices.visible and GameSettings.choice_overlay_enabled):
+		session.drink_coffee()
 
 func _display_source(article: NewsArticle) -> void:
 	%SourceTitle.text = article.source_title
@@ -186,6 +204,7 @@ func _open_choices(animate := true) -> void:
 		_choice_tween.kill()
 	choices_open = true
 	choices.show()
+	_update_choice_overlay()
 	var indices: Array[int] = []
 	for i in cards.size():
 		cards[i].get_parent().visible = i != selected_index
@@ -193,10 +212,11 @@ func _open_choices(animate := true) -> void:
 			indices.append(i)
 	_choices_animating = animate
 	_choice_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	var group_center_x: float = $Canvas.design_size.x * 0.5 if GameSettings.choice_overlay_enabled else 1125.0
 	for order in indices.size():
 		var card := cards[indices[order]]
 		var slot: Control = card.get_parent()
-		var target := Vector2(1125.0 - (indices.size() * 415.0 - 60.0) * 0.5 + order * 415.0, 340.0)
+		var target := Vector2(group_center_x - (indices.size() * 415.0 - 60.0) * 0.5 + order * 415.0, 340.0)
 		card.reset_hover()
 		card.show()
 		card.disabled = animate
@@ -224,6 +244,7 @@ func _hide_choices(animate := true) -> void:
 	_choices_animating = animate and choices.visible
 	if not _choices_animating:
 		choices.hide()
+		_update_choice_overlay()
 		return
 	_choice_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	for card in cards:
@@ -235,13 +256,13 @@ func _hide_choices(animate := true) -> void:
 	_choice_tween.chain().tween_callback(func():
 		choices.hide()
 		_choices_animating = false
-		_refresh_actions()
+		_update_choice_overlay()
 	)
 	_refresh_actions()
 	view_changed.emit()
 
 func _finish_shift() -> void:
-	if session.phase == NewsroomSession.Phase.WORK and not session.awaiting_acknowledgement:
+	if session.phase == NewsroomSession.Phase.WORK and not session.awaiting_acknowledgement and not (choices.visible and GameSettings.choice_overlay_enabled):
 		session.finish_shift()
 
 func _select_headline(index: int) -> void:

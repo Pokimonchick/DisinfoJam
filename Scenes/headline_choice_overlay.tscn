@@ -39,8 +39,6 @@ corner_radius_top_right = 40
 corner_radius_bottom_right = 40
 corner_radius_bottom_left = 40
 
-[sub_resource type="ViewportTexture" id="ViewportTexture_u8qlv"]
-
 [node name="HeadlineChoiceOverlay" type="Control" unique_id=1087954237]
 layout_mode = 3
 anchors_preset = 0
@@ -55,13 +53,13 @@ offset_left = -90.0
 offset_top = -60.0
 offset_right = 2010.0
 offset_bottom = 1140.0
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource("1_backdrop")
 expand_mode = 1
 stretch_mode = 6
 
 [node name="Banner" type="TextureRect" parent="." unique_id=654798744]
-z_index = 50
+z_index = 5
 layout_mode = 0
 offset_left = 560.0
 offset_top = 138.0
@@ -92,6 +90,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Close" type="Button" parent="." unique_id=1502333655]
+z_index = 5
 layout_mode = 0
 offset_left = 1742.0
 offset_top = 133.0
@@ -107,4 +106,3 @@ theme_override_styles/normal = SubResource("CloseNormal")
 theme_override_styles/pressed = SubResource("ClosePressed")
 theme_override_styles/hover = SubResource("CloseHover")
 text = "×"
-icon = SubResource("ViewportTexture_u8qlv")

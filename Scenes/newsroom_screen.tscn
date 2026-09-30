@@ -285,7 +285,7 @@ scale = Vector2(0.9270072, 0.8657718)
 texture = ExtResource("shadows")
 
 [node name="Choices" type="Control" parent="Canvas/World" unique_id=294016554]
-editor_description = "Записки скрыты для чистого вида стола. Для подгонки временно включите значок глаза в дереве сцены."
+editor_description = "Записки скрыты для чистого вида стола. В режиме с фоном этот слой перекрывает остальной интерфейс. Для подгонки временно включите значок глаза в дереве сцены."
 visible = false
 z_index = 30
 anchors_preset = 0
@@ -375,18 +375,6 @@ theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 25
 text = "СМЕНА 01"
 horizontal_alignment = 1
-
-[node name="Pause" type="Button" parent="Canvas" unique_id=918616749]
-unique_name_in_owner = true
-z_index = 50
-layout_mode = 0
-offset_left = 1650.0
-offset_top = 25.0
-offset_right = 1890.0
-offset_bottom = 85.0
-mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 24
-text = "Пауза · Esc"
 
 [node name="FinishShift" type="Button" parent="Canvas" unique_id=1131359857]
 unique_name_in_owner = true
