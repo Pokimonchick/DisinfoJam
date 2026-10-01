@@ -21,6 +21,7 @@ var reputation: float
 var loyalty: float
 var money: int
 var day: int = 0
+# Inert legacy save fields. Work no longer counts down or ends on a deadline.
 var time_left: float = 0.0
 var shift_length: float = 0.0
 var article_cursor: int = 0
@@ -28,6 +29,7 @@ var option_order: Array[int] = []
 var coffee_ready: bool = false
 var coffee_used_today: bool = false
 var approval_time_applied: bool = false
+var approval_stamina_applied: bool = false
 var food_stocked: bool = false
 var combo_type: int = -1
 var combo_count: int = 0
@@ -72,9 +74,10 @@ func reset(seed_value: int = -1) -> void:
 	time_left = 0.0
 	shift_length = 0.0
 	article_cursor = 0
-	coffee_ready = false
+	coffee_ready = true
 	coffee_used_today = false
 	approval_time_applied = false
+	approval_stamina_applied = false
 	food_stocked = false
 	combo_type = -1
 	combo_count = 0
@@ -99,12 +102,15 @@ func start_shift() -> void:
 	if phase == Phase.HOME:
 		health = minf(balance.maximum_stat, health + balance.sleep_health)
 	day += 1
-	approval_time_applied = loyalty >= balance.state_approval.threshold
-	shift_length = balance.shift_seconds + (balance.state_approval.amount if approval_time_applied else 0.0)
+	approval_stamina_applied = loyalty >= balance.state_approval.threshold
+	if approval_stamina_applied:
+		health = minf(balance.maximum_stat, health + balance.state_approval.amount)
+	approval_time_applied = false
+	shift_length = 0.0
 	coffee_used_today = false
 	combo_type = -1
 	combo_count = 0
-	time_left = shift_length
+	time_left = 0.0
 	published_today = 0
 	earned_today = 0
 	awaiting_acknowledgement = false
@@ -118,14 +124,9 @@ func start_shift() -> void:
 func tick_work(delta: float) -> void:
 	if phase != Phase.WORK or awaiting_acknowledgement or delta <= 0.0:
 		return
-	var elapsed := minf(delta, time_left)
-	time_left = maxf(0.0, time_left - elapsed)
-	health = maxf(0.0, health - elapsed * balance.health_drain_per_second)
+	health = maxf(0.0, health - delta * balance.health_drain_per_second)
 	changed.emit()
-	if _check_ending():
-		return
-	if time_left <= 0.0:
-		finish_shift()
+	_check_ending()
 
 
 func current_article() -> NewsArticle:
@@ -141,7 +142,7 @@ func option_at(display_index: int) -> HeadlineOption:
 
 
 func publish_headline(display_index: int) -> bool:
-	if phase != Phase.WORK or awaiting_acknowledgement or time_left <= 0.0 or publication_limit_reached():
+	if phase != Phase.WORK or awaiting_acknowledgement or publication_limit_reached():
 		return false
 	var option := option_at(display_index)
 	if option == null:
@@ -247,13 +248,11 @@ func buy_coffee() -> bool:
 
 
 func drink_coffee() -> bool:
-	if phase != Phase.WORK or not coffee_ready or coffee_used_today or time_left <= 0.0 or publication_limit_reached():
+	if phase != Phase.WORK or awaiting_acknowledgement or not coffee_ready or coffee_used_today or publication_limit_reached() or health >= balance.maximum_stat:
 		return false
 	coffee_ready = false
 	coffee_used_today = true
-	time_left += balance.coffee_bonus_seconds
-	shift_length += balance.coffee_bonus_seconds
-	health = maxf(0.0, health - balance.coffee_health_cost)
+	health = minf(balance.maximum_stat, health + balance.coffee_health_restore)
 	changed.emit()
 	_check_ending()
 	save_requested.emit()

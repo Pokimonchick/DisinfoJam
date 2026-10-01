@@ -7,11 +7,12 @@ extends Resource
 @export_range(0, 100000, 5) var campaign_money: int = 200
 
 @export_group("Смена")
-@export_range(5.0, 600.0) var shift_seconds: float = 180.0
+# Retained only for existing resources and saves; shifts no longer have a timer.
+@export_storage var shift_seconds: float = 180.0
 @export_range(1, 100, 1) var publication_limit: int = 10
-@export_range(0.0, 180.0) var coffee_bonus_seconds: float = 60.0
+@export_storage var coffee_bonus_seconds: float = 60.0
 @export_range(0.0, 1.0) var health_drain_per_second: float = 0.10
-@export_range(0.0, 10.0) var publication_health_cost: float = 1.5
+@export_range(0.0, 10.0) var publication_health_cost: float = 4.0
 
 @export_group("Доход")
 ## Scales catalogue payouts, including saved articles; rounding happens after combo.
@@ -47,4 +48,6 @@ extends Resource
 @export var snack_price: int = 12
 @export var snack_health: float = 15.0
 @export var coffee_price: int = 15
-@export var coffee_health_cost: float = 15.0
+@export_range(0.0, 100.0, 1.0) var coffee_health_restore: float = 20.0
+# Obsolete coffee penalty; keep serialized resources readable.
+@export_storage var coffee_health_cost: float = 15.0

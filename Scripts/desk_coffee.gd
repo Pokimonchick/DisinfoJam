@@ -10,7 +10,7 @@ func _ready() -> void:
 		if available:
 			activated.emit()
 	)
-	# The cup is visible in the editor for layout work; gameplay starts without one.
+	# Editor layout shows the cup; the bound session supplies gameplay inventory.
 	$Cup.hide()
 	set_available(false, false)
 

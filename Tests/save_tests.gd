@@ -44,17 +44,18 @@ func _test_snapshots() -> void:
 	var snapshot: Dictionary = JSON.parse_string(JSON.stringify(NewsroomSaveData.capture(session)))
 	var restored := fresh()
 	check(NewsroomSaveData.restore(restored, snapshot), "Restore a JSON round trip")
-	check(restored.time_left == session.time_left and restored.health == session.health, "Exact remaining time and stamina")
+	check(restored.time_left == session.time_left and restored.health == session.health, "Exact inert time and stamina")
 	check(restored.money == session.money and restored.combo_count == 1, "Effects and combo survive loading")
 	check(restored.coffee_used_today and not restored.coffee_ready, "Consumed coffee cannot be used twice")
 	check(restored.awaiting_acknowledgement and restored.article_cursor == 1, "Published result and next article cursor survive")
 	check(restored.articles[0].id == session.articles[0].id and restored.current_article().id == session.current_article().id, "The shuffled article queue survives loading")
-	var time_during_result := restored.time_left
+	var health_during_result := restored.health
 	restored.tick_work(20.0)
-	check(restored.time_left == time_during_result, "A restored result keeps the shift timer paused")
+	check(restored.health == health_during_result, "Restored feedback pauses stamina drain")
 	var money_before := restored.money
 	check(not restored.publish_headline(0) and restored.money == money_before, "Loading a result cannot award it twice")
 	restored.acknowledge_publication()
+	check(not restored.drink_coffee() and restored.health == health_during_result and not restored.coffee_ready, "Loading never replenishes consumed coffee")
 	session.acknowledge_publication()
 	restored.publish_headline(0)
 	session.publish_headline(0)
@@ -84,14 +85,25 @@ func _test_benefit_save() -> void:
 	session.loyalty = session.balance.state_approval.threshold
 	session.start_shift()
 	session.tick_work(5.0)
+	var saved_health := session.health
 	var snapshot: Dictionary = JSON.parse_string(JSON.stringify(NewsroomSaveData.capture(session)))
 	var restored := fresh()
-	check(NewsroomSaveData.restore(restored, snapshot), "Restore a shift with the approval bonus")
-	check(restored.approval_time_applied and restored.shift_length == 200.0 and restored.time_left == 195.0, "Restoring the shift does not add approval time again")
+	check(NewsroomSaveData.validate(snapshot), "Fresh work with zero legacy time validates")
+	check(NewsroomSaveData.restore(restored, snapshot), "Restore a shift with approval recovery")
+	check(restored.approval_stamina_applied and restored.health == saved_health and restored.time_left == 0.0, "Restoring does not regrant approval stamina")
+	check(NewsroomSaveData.restore(restored, snapshot) and restored.health == saved_health, "Repeated loading never duplicates approval recovery")
+	snapshot.run.erase("approval_stamina_applied")
 	snapshot.run.erase("approval_time_applied")
-	check(NewsroomSaveData.restore(restored, snapshot) and not restored.approval_time_applied, "Older saves without the approval flag use the default")
-	check(restored.shift_length == 200.0 and restored.time_left == 195.0, "Older saves retain their saved timer")
-
+	check(NewsroomSaveData.restore(restored, snapshot) and not restored.approval_stamina_applied and not restored.approval_time_applied and restored.health == saved_health, "Old saves default approval flags without recovery")
+	restored.tick_work(200.0)
+	check(restored.phase == NewsroomSession.Phase.WORK and is_equal_approx(restored.health, saved_health - 20.0), "Old zero-time saves keep draining without automatically finishing")
+	check(restored.publish_headline(0), "Old zero-time saves remain publishable")
+	snapshot.run.time_left = 195.0
+	snapshot.run.shift_length = 200.0
+	snapshot.run.approval_time_applied = true
+	check(NewsroomSaveData.restore(restored, snapshot) and restored.time_left == 195.0 and restored.shift_length == 200.0 and restored.approval_time_applied, "Old saves preserve legacy time values and flags")
+	restored.tick_work(220.0)
+	check(restored.phase == NewsroomSession.Phase.WORK and restored.time_left == 195.0 and restored.health == saved_health - 22.0, "Legacy countdown and approval flag never control gameplay")
 
 func _test_files() -> void:
 	var repository := SaveRepository.new(test_path)
@@ -168,13 +180,16 @@ func _test_menu_and_resume() -> void:
 	game._continue_run()
 	check(game.view == game.View.TUTORIAL and game.lesson == 2, "Continue restores the tutorial page")
 	game.session.start_shift()
+	game.session.shift_length = 180.0
 	game.session.time_left = 42.5
 	game.work._open_choices(false)
 	game.work._select_headline(1)
+	game.work.get_node("%Drawer").set_expanded(false)
 	var name_id: String = game.session.player_id
 	game._show_menu()
 	game._continue_run()
-	check(game.session.time_left == 42.5 and game.work.selected_index == 1 and not game.work.popup.active and game.session.total_published == 0, "Continue restores time and the selected draft without publishing it")
+	check(game.session.time_left == 42.5 and game.work.selected_index == 1 and not game.work.popup.active and game.session.total_published == 0, "Continue preserves legacy time and draft without publishing")
+	check(not game.work.get_node("%Drawer").expanded, "Continue preserves the collapsed stats drawer")
 	game.transitioning = false
 	game._autosave_elapsed = game.AUTOSAVE_SECONDS
 	game._process(0.1)
@@ -197,7 +212,7 @@ func _test_menu_and_resume() -> void:
 	game.session.buy_coffee()
 	game._show_menu()
 	game._continue_run()
-	check(game.view == game.View.HOME and game.session.coffee_ready and game.session.food_stocked, "Home purchases restore")
+	check(game.view == game.View.HOME and game.session.coffee_ready and game.session.food_stocked, "Home inventory and purchases restore")
 	# Restore an extension before its scene exists, then register the scene later.
 	state.restore_save_sections({"future_inventory": {"items": ["key"]}, "absent_scene": {"done": true}})
 	var inventory := {"items": []}
@@ -231,6 +246,9 @@ func _test_menu_and_resume() -> void:
 	game._show_menu()
 	game._continue_run()
 	check(game.view == game.View.ENDING and game.session.campaign_completed, "Campaign victory can be reopened from menu")
+	game.work.restore_presentation({"layout_version": 2, "selected_index": 1, "choices_open": true, "drawer_expanded": false})
+	game._new_run(true)
+	check(game.work.get_node("%Drawer").expanded and game.work.selected_index == -1 and not game.work.choices_open and not game.work.popup.active, "New campaign resets a collapsed drawer and old draft/options")
 	game._run_active = false
 	game.queue_free()
 	await process_frame

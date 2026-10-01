@@ -6,7 +6,7 @@ extends RefCounted
 const NUMBERS := ["health", "reputation", "loyalty", "money", "day", "time_left",
 	"shift_length", "article_cursor", "combo_type", "combo_count", "published_today",
 	"earned_today", "total_published", "completed_shifts", "campaign_days", "campaign_money"]
-const FLAGS := ["coffee_ready", "coffee_used_today", "approval_time_applied", "food_stocked", "awaiting_acknowledgement", "campaign_completed"]
+const FLAGS := ["coffee_ready", "coffee_used_today", "approval_time_applied", "approval_stamina_applied", "food_stocked", "awaiting_acknowledgement", "campaign_completed"]
 const PHASES := ["idle", "work", "home", "ended"]
 const ENDINGS := ["none", "exhaustion", "office_fire", "arrest", "debt", "victory", "goal_missed"]
 
@@ -61,7 +61,7 @@ static func validate(sections: Dictionary) -> bool:
 			return false
 	if run.get("campaign_days", 5) < 1 or not int(run.get("combo_type", -1)) in [-1, 0, 1, 2]:
 		return false
-	if run.phase == "work" and (run.get("day", 0) < 1 or run.get("shift_length", 0) <= 0 or run.get("time_left", 0) > run.shift_length):
+	if run.phase == "work" and (run.get("day", 0) < 1 or run.get("time_left", 0) > run.shift_length):
 		return false
 	if (run.phase == "ended") != (run.get("ending", "none") != "none"):
 		return false

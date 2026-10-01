@@ -19,7 +19,8 @@ func _fresh() -> NewsroomSession:
 	# shortens mvp_balance.tres to inspect the game more quickly.
 	model.balance.shift_seconds = 180.0
 	model.balance.starting_health = 80.0
-	model.balance.coffee_bonus_seconds = 60.0
+	model.balance.coffee_health_restore = 20.0
+	model.balance.publication_health_cost = 4.0
 	model.balance.publication_limit = 10
 	model.reset(42)
 	return model
@@ -55,7 +56,8 @@ func _click_point(point: Vector2) -> void:
 	root.push_input(click, true)
 
 func _run() -> void:
-	_test_catalog()
+	if not "--untimed" in OS.get_cmdline_user_args():
+		_test_catalog()
 	_test_day_cycle()
 	_test_publication_queue()
 	_test_publication_limit()
@@ -104,32 +106,31 @@ func _test_catalog() -> void:
 func _test_day_cycle() -> void:
 	var s := _fresh()
 	s.start_shift()
-	_check(s.time_left == 180.0 and s.day == 1, "Default shift is three minutes")
+	_check(s.time_left == 0.0 and s.shift_length == 0.0 and s.day == 1, "Fresh shifts use inert zero legacy time")
 	var article_id := s.current_article().id
 	var order := s.option_order.duplicate()
 	s.tick_work(200.0)
-	_check(s.phase == NewsroomSession.Phase.HOME, "Timeout automatically enters the evening")
-	_check(is_equal_approx(s.health, 62.0), "Drain stops at the actual shift boundary")
-	_check(s.money == -10 and s.completed_shifts == 1, "Rent is charged once and modest debt is allowed")
+	_check(s.phase == NewsroomSession.Phase.WORK and s.completed_shifts == 0, "Elapsed time never ends an untimed shift")
+	_check(is_equal_approx(s.health, 60.0), "Drain uses the whole elapsed delta")
 	s.finish_shift()
-	_check(s.money == -10, "Repeated finish cannot charge rent twice")
-	_check(s.buy_food(true) and s.health == 97.0 and s.money == -35, "Dinner restores health and costs money")
-	_check(s.buy_coffee() and s.health == 97.0 and s.money == -50, "Buying coffee costs money, not health")
-	_check(not s.buy_coffee() and s.money == -50, "Coffee cannot stack or charge twice")
-	var before_sleep := s.health
+	_check(s.money == -10 and s.completed_shifts == 1, "Manual completion charges rent once")
+	s.finish_shift()
+	_check(s.money == -10, "Repeated completion cannot charge twice")
+	_check(s.buy_food(true) and s.health == 95.0 and s.money == -35, "Dinner restores stamina and costs money")
+	_check(not s.buy_coffee() and s.money == -35, "The carried first cup blocks another purchase")
 	s.start_shift()
-	_check(s.day == 2 and s.time_left == 180.0 and s.coffee_ready, "Coffee arrives as inventory without extending the shift")
-	_check(s.health == minf(s.balance.maximum_stat, before_sleep + s.balance.sleep_health), "Sleep restores stamina without exceeding the maximum")
-	_check(s.current_article().id == article_id and s.option_order == order, "Unpublished article and options survive overnight")
-	_check(not s.buy_food(true) and not s.buy_coffee(), "Shopping is restricted to the evening")
+	_check(s.day == 2 and s.time_left == 0.0 and s.coffee_ready and s.health == 100.0, "Sleep restores capped stamina and carries unused coffee")
+	_check(s.current_article().id == article_id and s.option_order == order, "Unpublished source and choices survive overnight")
+	_check(not s.buy_food(true) and not s.buy_coffee(), "Shopping is restricted to home")
+	_check(not s.drink_coffee() and s.coffee_ready, "Full stamina cannot consume coffee")
 	s.tick_work(20.0)
-	var health_before_cup := s.health
-	_check(s.drink_coffee() and s.time_left == 220.0 and s.shift_length == 240.0, "Drinking adds one minute to remaining time")
-	_check(s.health == health_before_cup - 15.0 and not s.coffee_ready and s.coffee_used_today, "Drinking spends 15 stamina and leaves a stain")
-	_check(not s.drink_coffee() and s.time_left == 220.0, "Repeated coffee click cannot stack the bonus")
+	_check(s.drink_coffee() and s.health == 100.0 and s.time_left == 0.0 and s.shift_length == 0.0, "Coffee restores capped stamina without changing time")
+	_check(not s.coffee_ready and s.coffee_used_today and not s.drink_coffee(), "A cup is consumed once per shift")
 	s.tick_work(240.0)
+	_check(s.phase == NewsroomSession.Phase.WORK and s.health == 76.0, "Work remains active past the old deadline")
+	s.finish_shift()
 	s.start_shift()
-	_check(s.time_left == 180.0, "Coffee bonus expires after one shift")
+	_check(s.time_left == 0.0 and not s.coffee_used_today, "New shift clears the stain and keeps time inert")
 
 func _test_publication_queue() -> void:
 	var s := _fresh()
@@ -145,9 +146,10 @@ func _test_publication_queue() -> void:
 	var time_during_result := s.time_left
 	var health_during_result := s.health
 	s.tick_work(180.0)
-	_check(s.phase == NewsroomSession.Phase.WORK and s.time_left == time_during_result and s.health == health_during_result, "Feedback pauses the shift clock and passive stamina drain")
+	_check(s.phase == NewsroomSession.Phase.WORK and s.time_left == time_during_result and s.health == health_during_result, "Feedback pauses passive stamina drain")
 	s.acknowledge_publication()
 	s.tick_work(180.0)
+	s.finish_shift()
 	s.start_shift()
 	_check(s.article_cursor == 1 and s.current_article().id == next_article, "The next day keeps the shuffled queue after a published story")
 	# Walk the entire deck through the public publication API without running
@@ -201,13 +203,13 @@ func _test_publication_limit() -> void:
 		s.start_shift()
 		_check(s.published_today == 0 and not s.publication_limit_reached() and s.current_article().id == next_article, "New day resets capacity and preserves the next story")
 		_check(s.publish_headline(0), "New day permits publishing again")
-	# The final feedback pauses the clock; acknowledging it closes the issue once.
+	# Final feedback pauses stamina drain; acknowledging it closes the issue once.
 	var timed := _fresh()
 	timed.balance.publication_limit = 1
 	timed.start_shift()
 	timed.publish_headline(0)
 	timed.tick_work(180.0)
-	_check(timed.phase == NewsroomSession.Phase.WORK and timed.time_left == timed.shift_length, "Full-issue feedback also pauses the timer")
+	_check(timed.phase == NewsroomSession.Phase.WORK and timed.time_left == 0.0, "Full-issue feedback remains active with zero legacy time")
 	timed.acknowledge_publication()
 	_check(timed.phase == NewsroomSession.Phase.HOME and timed.completed_shifts == 1 and timed.article_cursor == 1, "Acknowledging a full issue completes exactly once")
 
@@ -243,11 +245,11 @@ func _test_endings() -> void:
 	s.start_shift()
 	s.finish_shift()
 	s.health = 4
+	s.coffee_ready = false
 	s.buy_coffee()
 	_check(s.phase == NewsroomSession.Phase.HOME, "Coffee purchase does not cause exhaustion")
 	s.start_shift()
-	s.drink_coffee()
-	_check(s.ending == NewsroomSession.Ending.EXHAUSTION, "Drinking coffee can cause exhaustion")
+	_check(s.drink_coffee() and s.health == 34.0 and s.ending == NewsroomSession.Ending.NONE, "Coffee safely restores stamina after sleep")
 	s = _fresh()
 	s.start_shift()
 	s.finish_shift()
@@ -260,25 +262,29 @@ func _test_endings() -> void:
 func _test_coffee_inventory() -> void:
 	var s := _fresh()
 	s.money = 500
-	_check(not s.drink_coffee(), "Coffee cannot be used before a shift")
+	_check(s.coffee_ready and not s.drink_coffee(), "First cup is free but cannot be used before work")
 	s.start_shift()
-	_check(not s.drink_coffee(), "No free coffee on the first shift")
+	_check(s.drink_coffee() and s.health == 100.0, "First free cup restores twenty stamina")
+	_check(not s.drink_coffee(), "Consumed coffee cannot be used twice")
 	s.finish_shift()
-	s.buy_coffee()
-	_check(not s.drink_coffee(), "Coffee cannot be consumed at home")
+	_check(s.buy_coffee() and not s.drink_coffee(), "Replacement is purchased at home but consumed at work")
 	s.start_shift()
 	s.finish_shift()
-	_check(s.coffee_ready and not s.buy_coffee(), "An unused cup survives a shift and blocks another purchase")
+	_check(s.coffee_ready and not s.buy_coffee(), "Unused coffee carries and blocks an extra purchase")
 	s.start_shift()
-	s.time_left = 0.01
-	_check(s.drink_coffee() and is_equal_approx(s.time_left, 60.01), "Coffee works just before the deadline")
+	s.tick_work(100.0)
+	s.time_left = 0.0
+	_check(s.drink_coffee() and s.health == 100.0, "Coffee works with zero legacy time")
 	s.tick_work(70.0)
-	_check(not s.drink_coffee(), "Coffee cannot revive an expired shift")
-	_check(s.buy_coffee(), "A consumed cup can be replaced next evening")
+	_check(s.phase == NewsroomSession.Phase.WORK and not s.drink_coffee(), "Elapsed time never replenishes consumed coffee")
+	s.finish_shift()
+	_check(s.buy_coffee(), "Consumed coffee can be replaced next evening")
 	s.start_shift()
-	_check(not s.coffee_used_today and s.coffee_ready, "A new shift clears the stain, not the purchased cup")
+	_check(not s.coffee_used_today and s.coffee_ready, "New shift clears stain and keeps inventory")
+	s.publish_headline(0)
+	_check(not s.drink_coffee() and s.coffee_ready, "Pending feedback blocks coffee without consuming it")
 	s.reset(42)
-	_check(not s.coffee_ready and not s.coffee_used_today and not s.food_stocked, "Restart clears cup and food state")
+	_check(s.coffee_ready and not s.coffee_used_today and not s.food_stocked, "Restart restores free coffee and clears food and stain")
 
 func _test_combos() -> void:
 	var s := _fresh()
@@ -338,31 +344,37 @@ func _test_benefits() -> void:
 	s.start_shift()
 	var before := s.health
 	s.publish_headline(s.option_order.find(0))
-	_check(s.reputation == 76.0 and s.last_result.stamina_cost == 1.5 and s.health == before - 1.5, "Crossing the reputation threshold benefits the next article")
+	_check(s.reputation == 76.0 and s.last_result.stamina_cost == 4.0 and s.health == before - 4.0, "Crossing the reputation threshold benefits the next article")
 	s.acknowledge_publication()
 	before = s.health
 	s.publish_headline(s.option_order.find(2))
-	_check(s.last_result.stamina_cost == 0.5 and s.health == before - 0.5, "Reader support reduces publication stamina cost")
+	_check(s.last_result.stamina_cost == 2.0 and s.health == before - 2.0, "Reader support reduces publication stamina cost")
 	s.acknowledge_publication()
 	s.publish_headline(s.option_order.find(1))
-	_check(s.reputation < 75.0 and s.last_result.stamina_cost == 0.5, "An article keeps a benefit earned before its effects")
+	_check(s.reputation < 75.0 and s.last_result.stamina_cost == 2.0, "An article keeps a benefit earned before its effects")
 	s.acknowledge_publication()
 	s.publish_headline(s.option_order.find(2))
-	_check(s.last_result.stamina_cost == 1.5, "Falling below the threshold removes the next publication benefit")
+	_check(s.last_result.stamina_cost == 4.0, "Falling below the threshold removes the next publication benefit")
 
 	s = _fresh()
 	s.loyalty = 75.0
 	s.start_shift()
-	_check(s.approval_time_applied and s.shift_length == 200.0 and s.time_left == 200.0, "High loyalty adds time once when the shift starts")
+	_check(s.approval_stamina_applied and s.health == 90.0 and s.time_left == 0.0, "High loyalty grants ten stamina at shift start")
+	s.start_shift()
+	_check(s.health == 90.0, "Starting an active shift cannot repeat approval recovery")
 	s.loyalty = 10.0
 	s.tick_work(5.0)
-	_check(s.shift_length == 200.0 and s.time_left == 195.0, "Losing loyalty mid-shift does not revoke granted time")
-	s.coffee_ready = true
+	_check(s.health == 89.5, "Losing loyalty does not revoke granted stamina")
 	s.drink_coffee()
-	_check(s.shift_length == 260.0 and s.time_left == 255.0, "Approval and coffee time bonuses add together")
+	_check(s.health == 100.0 and s.time_left == 0.0, "Approval and coffee recovery clamp at maximum stamina")
 	s.finish_shift()
 	s.start_shift()
-	_check(not s.approval_time_applied and s.shift_length == 180.0, "Low loyalty does not grant time next shift")
+	_check(not s.approval_stamina_applied, "Low loyalty does not grant approval next shift")
+	s = _fresh()
+	s.health = 96.0
+	s.loyalty = 75.0
+	s.start_shift()
+	_check(s.health == 100.0 and s.approval_stamina_applied, "Approval recovery is capped")
 
 func _test_scenes() -> void:
 	var test_save_path := "user://mvp_test_%d/campaign.json" % Time.get_ticks_usec()
@@ -423,13 +435,14 @@ func _test_scenes() -> void:
 	_check(work.selected_index == -1 and not work.choices.visible, "Next source resets the draft and note tray")
 	work._open_choices(false)
 	work._select_headline(0)
-	await create_timer(0.3).timeout
+	# Desk controls become available after the overlay's 0.32-second exit.
+	await create_timer(0.4).timeout
 	var before: float = game.session.time_left
 	var health: float = game.session.health
 	_click_at(work.get_node("%Coffee/Cup"))
 	await create_timer(0.3).timeout
-	_check(not popup.active and game.session.time_left == before + 60.0, "Coffee remains clickable after choosing a headline and adds one minute")
-	_check(game.session.health == health - 15.0 and not work.get_node("%Coffee/Cup").visible and work.get_node("%Coffee/Stain").visible, "Drinking hides cup and steam, retaining the coffee ring")
+	_check(not popup.active and game.session.time_left == before, "Coffee remains clickable after choosing a draft without changing time")
+	_check(game.session.health == minf(100.0, health + 20.0) and not work.get_node("%Coffee/Cup").visible and work.get_node("%Coffee/Stain").visible, "Drinking hides cup and steam, retaining the coffee ring")
 	work._hide_choices(false)
 	game.session.combo_count = 3
 	game.session.combo_type = 0
@@ -437,7 +450,7 @@ func _test_scenes() -> void:
 	game.session.changed.emit()
 	await create_timer(0.3).timeout
 	_check(work.get_node("%ComboBurst").visible and work.get_node("%ComboBurst").position.x > 410.0, "Combo stays right of the expanded drawer")
-	_check(work.get_node("%Clock").get_theme_color("font_color") == Color("ff6051"), "Final ten seconds are red")
+	_check(work.get_node_or_null("%Clock") == null, "Desk contains no countdown")
 	await _capture("desk_06_combo")
 	game.session.combo_count = 1
 	game.session.changed.emit()

@@ -74,7 +74,7 @@ func _refresh() -> void:
 	%ReputationHelp.tooltip_text = support.formatted(support.explanation)
 	var approval: StatBenefit = session.balance.state_approval
 	var approval_text := approval.locked_text
-	if session.phase == NewsroomSession.Phase.WORK and session.approval_time_applied:
+	if session.phase == NewsroomSession.Phase.WORK and session.approval_stamina_applied:
 		approval_text = approval.applied_text
 	elif session.loyalty >= approval.threshold:
 		approval_text = approval.ready_text
@@ -87,5 +87,5 @@ func _refresh() -> void:
 func _set_meter(bar: PencilMeter, label: Label, value: float, color: Color) -> void:
 	bar.max_value = session.balance.maximum_stat
 	bar.value = value
-	label.text = "%d / %d" % [ceili(value), int(session.balance.maximum_stat)]
+	label.text = ("%.1f / %d" if bar == %HealthBar else "%d / %d") % [value if bar == %HealthBar else ceili(value), int(session.balance.maximum_stat)]
 	bar.ink_color = Color("a5462e") if value < 25.0 else color

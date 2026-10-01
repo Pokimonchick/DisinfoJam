@@ -4,47 +4,53 @@
 Completed
 
 ## Current task
-Keep both headline-choice presentations editable in the same project and select either one from the game's existing settings menu. Preserve the same note cards, article order, publication rules and campaign save format.
+Remove the shift timer, correct publication stamina spending, reset the stats drawer for new games, and replace coffee/loyalty time bonuses with approved stamina recovery.
 
 ## Context
-- The base presentation is in Scenes/newsroom_screen.tscn. The alternate backdrop, instruction banner and close button are independently editable in Scenes/headline_choice_overlay.tscn.
-- The alternate scene preserves the user's opacity setting (0.8392157) from the earlier Git branch. The same three cards and selection behavior are shared by both presentations, as previously requested.
-- Unrelated AGENTS.md, desk/asset, export, and project changes were already dirty and remain outside this milestone.
+- Campaign still has five shifts, a continuing shuffled article queue, shuffled headline choices, and a publication limit of 10.
+- User approved coffee +20 stamina and loyalty >=75 granting +10 at shift start. First coffee is free on the first shift.
+- Classic and backdrop headline-choice presentations remain editable and selectable. The old 8-bit home scene remains.
 
 ## Already done
-- Added the alternate scene and its two art assets back to the main checkout without switching branches or replacing the classic layout.
-- Added a persistent checkbox to the existing settings panel; it is available from both the main menu and pause. Changes apply to open choices immediately.
-- The alternate view closes with its own X or a click outside the notes. The classic view remains unchanged.
-- Updated the project map. The older branch codex/headline-choice-overlay remains as a historical fallback.
+- Removed the active countdown and its desk/HUD controls; finish manually or acknowledge the final publication of a full issue.
+- Publication costs 4 stamina, or 2 with reader support at reputation >=75. Passive drain remains 0.10/sec and pauses during results, pause, and narrative screens.
+- New game expands the drawer; Continue restores its saved state. Stamina displays one decimal.
+- Coffee restores up to 20 stamina, caps at 100, and cannot be wasted at full stamina or consumed during pending results. Unused coffee carries over; later cups are purchased at home.
+- Loyalty >=75 restores up to 10 stamina only on starting a shift; loading or changing loyalty during work does not regrant it.
+- Updated hints, tutorial, pause text, editor previews and project/save documentation. Publication-result rows retain the requested distinct colors.
+- Earlier close-button/art/shadow correction was committed and pushed as cc266c1. It is complete and is not the current task.
 
 ## Decisions
-- Store the selected presentation in user://settings.cfg, alongside the tooltip preference; do not put this visual preference in campaign saves.
-- Shared note positions and note art remain in the newsroom scene; only the alternate background elements are separate. Gameplay, saves, and the initial tutorial remain untouched.
+- Preserve legacy time fields and approval_time_applied as inactive save/resource data; save the new approval_stamina_applied flag separately. Save format remains version 1.
+- Preserve existing saved coffee inventory and applied results; no retroactive stamina compensation on loading older saves.
+- Keep the user's current production starting stamina, scene positions, artist sources, and export settings.
 
 ## Relevant files
-- Scenes/headline_choice_overlay.tscn, Assets/note_select/Group 17.png, Assets/note_select/image 48.png (and existing Godot-generated .import companions).
-- Scripts/newsroom_screen.gd, Scenes/settings_panel.tscn, Scripts/settings_panel.gd, Scripts/game_settings.gd, MVP_README.md.
+- Scripts/newsroom_session.gd, newsroom_balance.gd, newsroom_save_data.gd — rules, balance and save compatibility.
+- Scripts/mvp_game.gd — new-run presentation reset, tutorial and pause.
+- Scripts/newsroom_screen.gd, work_status_drawer.gd, newsroom_hud.gd, home_screen.gd — UI and hints.
+- Scenes/newsroom_screen.tscn, newsroom_hud.tscn, work_status_drawer.tscn — timer removal and editor previews.
+- Data/reader_support.tres, state_approval.tres; MVP_README.md; Docs/SAVES.md.
+- Tests/mvp_tests.gd, Tests/save_tests.gd — targeted regressions.
 
 ## Do not touch
-- Do not change the initial tutorial without a new request.
-- Preserve unrelated dirty files and untracked artist assets. Do not stage them with the home milestone.
-- Do not discard either headline-choice branch while the user is comparing presentations.
+- Preserve manual scene edits, Data/mvp_balance.tres overrides, export_presets.cfg and untracked artist originals in Assets/Assets for new version of game/new/.
+- Do not remove either headline-choice presentation or redesign the restored home scene.
+- Push only elfat to origin/elfat after three new Codex commits; inspect outgoing commits first. Ask before pushing any other branch.
 
 ## Remaining
-None for this completed task. Future independent note positions, if requested, would require a separate layout change.
+- No implementation remains for the agreed scope.
 
 ## Validation
-- Godot 4.7.2 imported the two alternate art assets and loaded both presentations.
-- Focused choice smoke check passed: classic/alternate visibility, X, outside click, note selection without publication, and settings panel state.
-- Settings persistence check passed; the pre-existing user settings file was restored byte-for-byte afterwards.
-- Rendered and inspected classic, alternate and settings-panel screenshots in the local Temp directory. The full ~450-check suite was not rerun.
-- Final diff inspection and git diff --check were used before committing the milestone.
+- Current source: headless MVP --untimed passed 155 checks (catalog audit skipped); save suite passed 56 checks using temporary slots.
+- Existing headless shader sampler diagnostic appeared; native OpenGL UI smoke completed without shader errors. Inspected desk/home screenshots for timer removal and stamina text.
+- Diff reviewed; no full catalogue suite, export build or prolonged balance playthrough was needed.
+- No live helper or background check remains. Tests and smoke did not overwrite the player's campaign save.
 
 ## Known issues / uncertainties
-- Both presentations intentionally share the three note cards and their positions. The alternate scene controls its own backdrop, banner, opacity and close button.
-- An already-open Godot editor may need to refresh imported textures or reopen the new overlay scene.
+- Balance was not tuned through an entire manual playthrough; passive drain remains as explicitly requested.
 
 ## Git state
-- Workspace: C:/Users/User/Desktop/gdg/DisinfoJam; branch elfat.
-- Previous HEAD before the choice-switch milestone: bc7c9bc. The alternate historical branch remains at 025ae25.
-- The choice switch and this corrected snapshot belong to one focused milestone commit. No push was requested.
+- Workspace: C:/Users/User/Desktop/gdg/DisinfoJam; branch elfat; prior milestone HEAD cc266c1, also last successful push to origin/elfat.
+- This snapshot accompanies the validated untimed-shift milestone. Its commit is discoverable from the current Git log.
+- Unrelated working-tree changes remain in Data/mvp_balance.tres, Scenes/headline_card.tscn, Scenes/headline_choice_overlay.tscn, manual layout hunks of Scenes/newsroom_screen.tscn, export_presets.cfg and untracked new/ art.

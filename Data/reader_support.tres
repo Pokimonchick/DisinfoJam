@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 threshold = 75.0
-amount = 1.0
+amount = 2.0
 locked_text = "ПРИ {threshold}: −{amount} К РАСХОДУ СИЛ"
 ready_text = "ОТЗЫВЫ: −{amount} К РАСХОДУ СИЛ"
 applied_text = "ОТЗЫВЫ: −{amount} К РАСХОДУ СИЛ"

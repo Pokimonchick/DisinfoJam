@@ -119,10 +119,7 @@ func _refresh_desk() -> void:
 	if session == null:
 		return
 	%Coffee.set_available(session.coffee_ready)
-	%Coffee.set_hint("Выпить: +%d сек., −%d выносливости" % [int(session.balance.coffee_bonus_seconds), int(session.balance.coffee_health_cost)])
-	var seconds := ceili(session.time_left)
-	%Clock.text = "%02d:%02d" % [seconds / 60, seconds % 60]
-	%Clock.add_theme_color_override("font_color", Color("ff6051") if session.time_left <= 10.0 else Color("fff2c5"))
+	%Coffee.set_hint("Выпить: до +%d выносливости" % int(session.balance.coffee_health_restore))
 	%ShiftLabel.text = "СМЕНА %02d" % session.day
 	_refresh_actions()
 	_refresh_combo()
@@ -133,7 +130,7 @@ func _refresh_actions() -> void:
 	%HeadlineField.disabled = blocked or _choices_animating or overlay_blocks
 	%Publish.disabled = blocked or selected_index < 0 or choices_open or _choices_animating or popup.visible or overlay_blocks
 	%FinishShift.disabled = blocked or overlay_blocks
-	%Coffee.get_node("Cup").disabled = not session.coffee_ready or overlay_blocks
+	%Coffee.get_node("Cup").disabled = blocked or not session.coffee_ready or session.coffee_used_today or session.health >= session.balance.maximum_stat or overlay_blocks
 
 func _refresh_combo() -> void:
 	if session.combo_count == _shown_combo_count and session.combo_type == _shown_combo_type:
@@ -299,6 +296,10 @@ func _close_focus() -> void:
 	)
 	view_changed.emit()
 
+func _colored_result_delta(value: int, suffix := "") -> String:
+	var color := "#3f6a3d" if value > 0 else ("#9b4033" if value < 0 else "#665945")
+	return "[color=%s][b]%+d%s[/b][/color]" % [color, value, suffix]
+
 func _show_result(result: Dictionary) -> void:
 	_hide_choices(false)
 	popup_kind = DialogKind.RESULT
@@ -308,11 +309,18 @@ func _show_result(result: Dictionary) -> void:
 			break
 	%HeadlineField.set_headline(result.headline)
 	_set_issue_number(session.published_today)
-	var changes := "[color=#78512c]%s · серия %d · ×%.2f[/color]\nДеньги: %+d $ · Репутация: %+d · Государство: %+d\nВыносливость: −%.1f\n\n%s" % [HeadlineOption.TYPE_NAMES[result.combo_type], result.combo_count, result.multiplier, result.money, result.reputation, result.loyalty, float(result.get("stamina_cost", session.balance.publication_health_cost)), result.explanation]
+	var changes := "[color=#78512c]%s · серия %d · ×%.2f[/color]\n\n" % [HeadlineOption.TYPE_NAMES[result.combo_type], result.combo_count, result.multiplier]
+	changes += "[color=#866025]Деньги:[/color] %s\n" % _colored_result_delta(int(result.money), " $")
+	changes += "[color=#2e6770]Репутация:[/color] %s\n" % _colored_result_delta(int(result.reputation))
+	changes += "[color=#685078]Лояльность:[/color] %s\n" % _colored_result_delta(int(result.loyalty))
+	var stamina_cost := float(result.get("stamina_cost", session.balance.publication_health_cost))
+	var stamina_color := "#9b4033" if stamina_cost > 0.0 else "#665945"
+	var stamina_change := "−%.1f" % stamina_cost if stamina_cost > 0.0 else "0.0"
+	changes += "[color=#6b7046]Выносливость:[/color] [color=%s][b]%s[/b][/color]\n\n%s" % [stamina_color, stamina_change, result.explanation]
 	var full_issue := session.publication_limit_reached()
 	if full_issue:
 		changes += "\n\n[color=#78512c]В текущем выпуске газеты недостаточно места для новых публикаций.[/color]"
-	popup.present(cards[maxi(selected_index, 0)], "ВЫПУСК ЗАПОЛНЕН" if full_issue else "НАПЕЧАТАНО · ВРЕМЯ ОСТАНОВЛЕНО", result.headline, changes, "Сдать выпуск и пойти домой" if full_issue else "Следующий материал", "", Vector2(640, 800))
+	popup.present(cards[maxi(selected_index, 0)], "ВЫПУСК ЗАПОЛНЕН" if full_issue else "НАПЕЧАТАНО", result.headline, changes, "Сдать выпуск и пойти домой" if full_issue else "Следующий материал", "", Vector2(640, 800))
 	_refresh_actions()
 	view_changed.emit()
 

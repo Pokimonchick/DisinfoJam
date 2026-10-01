@@ -153,7 +153,7 @@ offset_right = 354.0
 offset_bottom = 282.0
 theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
 theme_override_font_sizes/font_size = 26
-text = "100 / 100"
+text = "100.0 / 100"
 horizontal_alignment = 2
 
 [node name="HealthBar" type="ProgressBar" parent="SlidingPanel" unique_id=582706671]
@@ -215,7 +215,7 @@ offset_right = 300.0
 offset_bottom = 531.0
 theme_override_colors/font_color = Color(0.329412, 0.25098, 0.14902, 1)
 theme_override_font_sizes/font_size = 18
-text = "ПРИ 75: −1 К РАСХОДУ СИЛ"
+text = "ПРИ 75: −2 К РАСХОДУ СИЛ"
 autowrap_mode = 2
 
 [node name="ReputationHelp" type="Button" parent="SlidingPanel" unique_id=874088108]
@@ -287,7 +287,7 @@ offset_right = 300.0
 offset_bottom = 729.0
 theme_override_colors/font_color = Color(0.329412, 0.25098, 0.14902, 1)
 theme_override_font_sizes/font_size = 18
-text = "ПРИ 75: +20 С К СМЕНЕ"
+text = "ПРИ 75: +10 К СИЛАМ"
 autowrap_mode = 2
 
 [node name="LoyaltyHelp" type="Button" parent="SlidingPanel" unique_id=1647371514]

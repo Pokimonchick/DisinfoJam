@@ -27,7 +27,7 @@ shader_parameter/speed = 0.400000019
 shader_parameter/motion_pixels = Vector2(24, 12)
 
 [node name="Newsroom" type="Control" unique_id=946518030]
-editor_description = "Макет рабочего стола: фон и статья — Canvas/World; таймер, кнопки и панель показателей — Canvas. Текст и чашка здесь служат образцом для редактора."
+editor_description = "Макет рабочего стола: фон и статья — Canvas/World; номер смены, кнопки и панель показателей — Canvas. Текст и чашка здесь служат образцом для редактора."
 clip_contents = true
 layout_mode = 3
 anchors_preset = 15
@@ -347,29 +347,14 @@ editor_description = "Выдвижная панель. Внутренние эл
 z_index = 60
 layout_mode = 0
 
-[node name="Clock" type="Label" parent="Canvas" unique_id=228389101]
+[node name="ShiftLabel" type="Label" parent="Canvas" unique_id=1922238288]
 unique_name_in_owner = true
 z_index = 50
 layout_mode = 0
 offset_left = 850.0
 offset_top = 20.0
 offset_right = 1120.0
-offset_bottom = 102.0
-theme_override_colors/font_color = Color(1, 0.96, 0.77, 1)
-theme_override_colors/font_outline_color = Color(0.26, 0.13, 0.05, 1)
-theme_override_constants/outline_size = 9
-theme_override_font_sizes/font_size = 66
-text = "03:00"
-horizontal_alignment = 1
-
-[node name="ShiftLabel" type="Label" parent="Canvas" unique_id=1922238288]
-unique_name_in_owner = true
-z_index = 50
-layout_mode = 0
-offset_left = 850.0
-offset_top = 105.0
-offset_right = 1120.0
-offset_bottom = 140.0
+offset_bottom = 55.0
 theme_override_colors/font_outline_color = Color(0.26, 0.13, 0.05, 1)
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 25

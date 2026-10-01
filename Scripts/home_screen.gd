@@ -35,7 +35,7 @@ func refresh() -> void:
 	var b := session.balance
 	%Summary.text = "ДОМА  /  СМЕНА %02d     Напечатано: %d  ·  Доход: %d $  ·  Аренда: −%d $" % [session.day, session.published_today, session.earned_today, b.rent]
 	%BedCaption.text = "КРОВАТЬ · +%d сил\nСон → смена %d" % [int(b.sleep_health), session.day + 1]
-	%CoffeeCaption.text = "КОФЕ · %d $\nВзять с собой: +%d сек. на смене" % [b.coffee_price, int(b.coffee_bonus_seconds)]
+	%CoffeeCaption.text = "КОФЕ · %d $\nВзять с собой: +%d выносливости" % [b.coffee_price, int(b.coffee_health_restore)]
 	if session.coffee_ready:
 		%CoffeeCaption.text = "КОФЕ УПАКОВАН\nЧашка ждёт на рабочем столе"
 	%MealCaption.text = "ХОЛОДИЛЬНИК · %d $\nПоесть: +%d выносливости" % [b.meal_price, int(b.meal_health)]
@@ -43,7 +43,7 @@ func refresh() -> void:
 		%MealCaption.text = "ХОЛОДИЛЬНИК\nВы сыты"
 	%Snack.text = "Перекус: %d $ / +%d сил" % [b.snack_price, int(b.snack_health)]
 	%Meal.tooltip_text = "Купить еду и поесть: %d $, +%d выносливости" % [b.meal_price, int(b.meal_health)]
-	%Coffee.tooltip_text = "Одна чашка с собой. Выпить на работе: +%d сек., −%d выносливости." % [int(b.coffee_bonus_seconds), int(b.coffee_health_cost)]
+	%Coffee.tooltip_text = "Одна чашка с собой. Выпить на работе: до +%d выносливости. Невыпитый кофе остаётся с вами." % int(b.coffee_health_restore)
 	%Meal.disabled = session.health >= b.maximum_stat or _sleep_left > 0
 	%Snack.disabled = %Meal.disabled
 	%Coffee.disabled = session.coffee_ready or _sleep_left > 0
@@ -63,7 +63,7 @@ func _eat(full_meal: bool) -> void:
 
 func _coffee() -> void:
 	if _sleep_left <= 0 and session.buy_coffee():
-		%Notice.text = "Чашка упакована. На смене нажмите на кофе, когда понадобится ещё минута."
+		%Notice.text = "Чашка упакована. На смене нажмите на кофе, чтобы восстановить силы."
 
 func _sleep() -> void:
 	if session.phase != NewsroomSession.Phase.HOME or _sleep_left > 0:
