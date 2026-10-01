@@ -21,7 +21,8 @@
 | Правила смены, очереди, комбо, покупок и победы | `Scripts/newsroom_session.gd` |
 | Материалы и варианты заголовков | `Data/article_catalog.gd`, `Data/community_articles.gd`; данные и типы — `Scripts/news_article.gd`, `Scripts/headline_option.gd` |
 | Экран смены, параллакс, выбор заголовка и приближение записок | `Scenes/newsroom_screen.tscn`, `Scripts/newsroom_screen.gd`, `Scripts/desk_canvas.gd`, `Scripts/headline_field.gd`, `Scenes/desk_focus.tscn` |
-| Выдвижные показатели и кофе на столе | `Scenes/work_status_drawer.tscn`, `Scenes/desk_coffee.tscn`, их одноимённые скрипты; солнечный свет — `Shaders/desk_sunlight.gdshader` |
+| Выдвижные показатели и кофе на столе | `Scenes/work_status_drawer.tscn`, `Scenes/desk_coffee.tscn`, их одноимённые скрипты |
+| Солнечные лучи и пыль | В `Scenes/newsroom_screen.tscn` параметры задаются на узлах `Canvas/World/Sunlight` и `Canvas/World/SunDust`; пыль — `Scenes/desk_sun_dust.tscn`, `Scripts/desk_sun_dust.gd`, `Shaders/sun_dust.gdshader`, `Shaders/sun_dust_motion.gdshader` |
 | Вечер и комната | `Scenes/home_screen.tscn`, `Scripts/home_screen.gd`, `Scripts/pixel_room.gd` |
 | Порядок экранов, история, меню, автосохранение | `Scenes/mvp_game.tscn`, `Scripts/mvp_game.gd`, `Data/chapter_one.gd` |
 | Хранилище сохранений и правила расширения | `Scripts/save_repository.gd`, `Scripts/newsroom_save_data.gd`, `Scripts/game_state.gd`, `Docs/SAVES.md` |

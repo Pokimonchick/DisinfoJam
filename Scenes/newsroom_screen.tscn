@@ -20,6 +20,7 @@
 [ext_resource type="Texture2D" uid="uid://c1nyeito38cas" path="res://Assets/Assets for new version of game/Untitled (22)/image 9.png" id="tab"]
 [ext_resource type="Shader" uid="uid://cm1rhhc2mtioc" path="res://Shaders/desk_sunlight.gdshader" id="sunlight_shader"]
 [ext_resource type="Script" path="res://Scripts/desk_sunlight.gd" id="sunlight_script"]
+[ext_resource type="PackedScene" path="res://Scenes/desk_sun_dust.tscn" id="sun_dust"]
 
 [sub_resource type="ShaderMaterial" id="ShadowMaterial"]
 shader = ExtResource("shadow_shader")
@@ -301,6 +302,8 @@ offset_right = 2020.0
 offset_bottom = 1160.0
 mouse_filter = 2
 script = ExtResource("sunlight_script")
+
+[node name="SunDust" parent="Canvas/World" instance=ExtResource("sun_dust")]
 
 [node name="Choices" type="Control" parent="Canvas/World" unique_id=294016554]
 editor_description = "Записки скрыты для чистого вида стола. В режиме с фоном этот слой перекрывает остальной интерфейс. Для подгонки временно включите значок глаза в дереве сцены."
