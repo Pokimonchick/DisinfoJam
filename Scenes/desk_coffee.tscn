@@ -6,8 +6,13 @@
 [ext_resource type="Texture2D" uid="uid://bsl0g2mw5kqkg" path="res://Assets/Assets for new version of game/Untitled (22)/след от кофе.png" id="stain"]
 [ext_resource type="SpriteFrames" uid="uid://b4bcj0nduqwlv" path="res://Data/coffee_steam.tres" id="steam"]
 [ext_resource type="Texture2D" uid="uid://dpo1xqdkqk5tw" path="res://Assets/Assets for new version of game/Untitled (22)/Union.png" id="swirl"]
+[ext_resource type="Shader" path="res://Shaders/coffee_liquid.gdshader" id="liquid_shader"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_ye0lt"]
+
+[sub_resource type="ShaderMaterial" id="LiquidMaterial"]
+resource_local_to_scene = true
+shader = ExtResource("liquid_shader")
 
 [node name="DeskCoffee" type="Control" unique_id=2128497325]
 layout_mode = 3
@@ -50,14 +55,17 @@ texture = ExtResource("shadow")
 expand_mode = 1
 
 [node name="Swirl" type="TextureRect" parent="Cup" unique_id=1189917568]
+editor_description = "Движущаяся поверхность кофе. Скорость и деформация — Material / Shader Parameters. Область должна оставаться внутри тёмного круга чашки."
+material = SubResource("LiquidMaterial")
 layout_mode = 0
-offset_left = 110.0
-offset_top = 120.0
-offset_right = 206.0
-offset_bottom = 206.0
+offset_left = 55.0
+offset_top = 69.0
+offset_right = 235.0
+offset_bottom = 257.0
 mouse_filter = 2
 texture = ExtResource("swirl")
 expand_mode = 1
+texture_filter = 2
 
 [node name="Steam" type="AnimatedSprite2D" parent="Cup" unique_id=2055128434]
 modulate = Color(1, 1, 1, 0.75)

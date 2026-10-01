@@ -3,6 +3,8 @@ extends Control
 signal activated
 var available := false
 var _motion: Tween
+var _liquid_time := 0.0
+@onready var _liquid_material: ShaderMaterial = $Cup/Swirl.material as ShaderMaterial
 
 func _ready() -> void:
 	$Cup.pivot_offset = $Cup.size * 0.5
@@ -13,6 +15,13 @@ func _ready() -> void:
 	# Editor layout shows the cup; the bound session supplies gameplay inventory.
 	$Cup.hide()
 	set_available(false, false)
+
+func _process(delta: float) -> void:
+	if not available or not is_visible_in_tree():
+		return
+	# Inherited process mode freezes the surface when the desk is paused.
+	_liquid_time += delta
+	_liquid_material.set_shader_parameter("animation_time", _liquid_time)
 
 func set_available(value: bool, animate := true) -> void:
 	$Cup.disabled = not value
