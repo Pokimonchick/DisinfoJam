@@ -181,7 +181,7 @@ func _run() -> void:
 				benchmarks.append({"income": income, "seconds": seconds, "policy": policy, "wins": wins, "minimum_cash": minimum_cash if wins > 0 else 0, "maximum_cash": maximum_cash if wins > 0 else 0})
 				if is_equal_approx(income, actual.balance.publication_income_multiplier) and policy in ["facts", "balanced"]:
 					check(wins == SEEDS.size() and unique_queues, "Viable five-day complete queues: %s, %d seconds" % [policy, int(seconds)])
-				print("income=%.2f seconds=%d policy=%s wins=%d/%d winning_cash=%s" % [income, int(seconds), policy, wins, SEEDS.size(), "%d..%d" % [minimum_cash, maximum_cash] if wins > 0 else "none"])
+				print("income=%.6f seconds=%d policy=%s wins=%d/%d winning_cash=%s" % [income, int(seconds), policy, wins, SEEDS.size(), "%d..%d" % [minimum_cash, maximum_cash] if wins > 0 else "none"])
 	var main := simulate(42, "balanced", 30.0)
 	check(main.won and main.total == actual.articles.size(), "Cautious mixed play completes five days and the entire queue")
 	var seen: Dictionary = {}
@@ -215,7 +215,7 @@ func _write_report(main: Dictionary) -> void:
 		"",
 		"Автоматически получена из Data/article_catalog.gd, Data/community_articles.gd и актуального Data/mvp_balance.tres. Правила назначения новых значений: [BALANCE.md](BALANCE.md).",
 		"",
-		"В каталоге %d статьи и %d заголовков. Доход: roundi(база × комбо × %.2f); репутация и лояльность: roundi(база × комбо). Колонки ×2 показывают полный размер эффекта; фактическое изменение шкалы ограничивается диапазоном 0–100. Один и тот же тип не означает одну и ту же правдивость." % [s.articles.size(), s.articles.size() * 3, b.publication_income_multiplier],
+		"В каталоге %d статьи и %d заголовков. Доход: roundi(база × комбо × %.6f); репутация и лояльность: roundi(база × комбо). Колонки ×2 показывают полный размер эффекта; фактическое изменение шкалы ограничивается диапазоном 0–100. Один и тот же тип не означает одну и ту же правдивость." % [s.articles.size(), s.articles.size() * 3, b.publication_income_multiplier],
 		"",
 		"| Статья | Подача | Заголовок | База $ | Выплата ×1 / ×2 | Репутация ×1 / ×2 | Лояльность ×1 / ×2 | Контекст |",
 		"| --- | --- | --- | ---: | ---: | ---: | ---: | --- |",
@@ -232,7 +232,7 @@ func _write_report(main: Dictionary) -> void:
 		"",
 		"Получено через настоящие правила NewsroomSession, без подмены денег, выносливости или последствий. Все 32 статьи проходят один раз; очередь и варианты перемешаны по seed. Проверка экранов отдельно воспроизводит смешанное прохождение seed 42 через кнопки выбора, публикации, результата, покупок и кровати.",
 		"",
-		"Текущий ресурс: старт %d выносливости, %d репутации, %d лояльности, %d $; коэффициент дохода %.2f; аренда %d $ за смену; предел долга %d $. Это включает ручную настройку стартовой выносливости в ресурсе: её не заменяли значением 80 из класса." % [int(b.starting_health), int(b.starting_reputation), int(b.starting_loyalty), b.starting_money, b.publication_income_multiplier, b.rent, b.debt_limit],
+		"Текущий ресурс: старт %d выносливости, %d репутации, %d лояльности, %d $; коэффициент дохода %.6f; аренда %d $ за смену; предел долга %d $. Это включает ручную настройку стартовой выносливости в ресурсе: её не заменяли значением 80 из класса." % [int(b.starting_health), int(b.starting_reputation), int(b.starting_loyalty), b.starting_money, b.publication_income_multiplier, b.rent, b.debt_limit],
 		"",
 		"Политики используют известные эффекты заголовков и недорогой набор восстановления. Это проверка существования разумного пути; она не гарантирует победу при произвольных покупках, ошибках и времени чтения.",
 		"",
@@ -254,10 +254,10 @@ func _write_report(main: Dictionary) -> void:
 	for entry in benchmarks:
 		if is_equal_approx(entry.income, b.publication_income_multiplier):
 			report.append("| %s | %d | %d / %d | %s |" % [NAMES[entry.policy], int(entry.seconds), entry.wins, SEEDS.size(), "%d…%d $" % [entry.minimum_cash, entry.maximum_cash] if entry.wins > 0 else "Нет завершённых кампаний"])
-	report.append_array(["", "## Подбор коэффициента дохода", "", "Расходы и эффекты шкал одинаковы, отличается только выплата. При 0,45 и 0,40 запас денег велик для проверенных разумных стратегий. 0,35 оставляет небольшой запас при медленном чтении; временный долг допустим.", "", "| Коэффициент | Секунды | Стратегия | Побед / 12 | Деньги победивших |", "| ---: | ---: | --- | ---: | ---: | ---: |"])
+	report.append_array(["", "## Подбор коэффициента дохода", "", "Расходы и эффекты шкал одинаковы, отличается только выплата. Ниже приведены результаты для каждого коэффициента; временный долг допускается до установленного предела.", "", "| Коэффициент | Секунды | Стратегия | Побед / 12 | Деньги победивших |", "| ---: | ---: | --- | ---: | ---: | ---: |"])
 	for entry in benchmarks:
 		if entry.policy in ["facts", "balanced"]:
-			report.append("| %.2f | %d | %s | %d / %d | %d…%d $ |" % [entry.income, int(entry.seconds), NAMES[entry.policy], entry.wins, SEEDS.size(), entry.minimum_cash, entry.maximum_cash])
+			report.append("| %.6f | %d | %s | %d / %d | %d…%d $ |" % [entry.income, int(entry.seconds), NAMES[entry.policy], entry.wins, SEEDS.size(), entry.minimum_cash, entry.maximum_cash])
 	for outcome in runs:
 		if not is_equal_approx(outcome.income, b.publication_income_multiplier):
 			continue

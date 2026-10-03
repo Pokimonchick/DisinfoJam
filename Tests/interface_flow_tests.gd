@@ -72,7 +72,7 @@ func _test_finance_save() -> void:
 	check(NewsroomSaveData.restore(restored, snapshot), "An existing campaign with old authored effects loads")
 	for article in restored.articles:
 		if article.id == "archive":
-			check(article.headlines[1].reputation == -20 and article.headlines[1].loyalty == -11, "Future headlines in old saves receive the rebalanced effects")
+			check(article.headlines[1].reputation == -40 and article.headlines[1].loyalty == -22, "Future headlines in old saves receive the rebalanced effects")
 	check(restored.journal == session.journal and restored.money == session.money, "Rebalancing does not rewrite past publications")
 
 func _click(control: Control) -> void:

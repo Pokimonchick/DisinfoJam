@@ -36,7 +36,7 @@ const ORIGINAL_EFFECTS: Dictionary = {
 	"bloom_letter": [[8, 0], [-10, 0], [-10, -8]],
 }
 
-# Last released, softened catalogue; these fingerprints preserve edited content.
+# Previously released, softened catalogue; fingerprints preserve edited content.
 const PREVIOUS_EFFECTS: Dictionary = {
 	"black_cat": [[7, 0], [-6, 0], [-5, 9]],
 	"market_gate": [[8, 2], [-8, -4], [-5, 10]],
@@ -72,6 +72,42 @@ const PREVIOUS_EFFECTS: Dictionary = {
 	"petition": [[9, -2], [-12, -10], [-7, 15]],
 }
 
+# Contextual catalogue before the requested doubling of all negative effects.
+const CONTEXTUAL_EFFECTS: Dictionary = {
+	"black_cat": [[6, 0], [-12, -6], [-5, 9]],
+	"market_gate": [[8, 2], [-14, -7], [-5, 10]],
+	"court": [[9, -3], [-18, -10], [-6, 14]],
+	"tram": [[8, -3], [-12, -5], [-3, 8]],
+	"bakery": [[8, 0], [-12, -6], [-4, 9]],
+	"water": [[10, -6], [-20, -11], [-7, 14]],
+	"park": [[8, 1], [-12, -6], [-5, 10]],
+	"museum": [[8, 0], [-16, -7], [-5, 10]],
+	"school": [[10, -7], [-20, -10], [-7, 15]],
+	"fire_drill": [[8, 2], [-14, -7], [-4, 9]],
+	"cheese_price": [[8, 0], [-12, -6], [-5, 10]],
+	"curfew": [[9, 0], [-18, -10], [-6, 14]],
+	"library": [[8, 2], [-16, -8], [-4, 9]],
+	"festival": [[8, 1], [-12, -5], [-5, 9]],
+	"bus_photo": [[10, 2], [-20, -11], [-6, 12]],
+	"mayor_quote": [[9, 1], [-16, -8], [-5, 11]],
+	"shelter": [[8, 0], [-14, -6], [-5, 11]],
+	"archive": [[10, 2], [-20, -11], [-6, 14]],
+	"rent": [[9, -3], [-12, -6], [-5, 11]],
+	"police_bike": [[7, 3], [-14, -7], [-5, 12]],
+	"canteen": [[10, -6], [-20, -10], [-7, 14]],
+	"electricity": [[8, 0], [-12, -6], [-5, 10]],
+	"rumor_chain": [[10, 0], [-14, -7], [-6, 12]],
+	"petition": [[9, -5], [-20, -11], [-7, 15]],
+	"cats_rumor": [[-12, -6], [3, 0], [-12, -5]],
+	"cats_denial": [[8, 0], [-6, -3], [-16, -8]],
+	"cats_taxi": [[6, 0], [2, 0], [-16, -7]],
+	"rat_chef": [[-6, -3], [8, 2], [-16, -8]],
+	"rat_complaint": [[-8, -4], [8, 0], [-16, -7]],
+	"rat_resolution": [[15, 4], [7, 10], [-18, -9]],
+	"bloom_poem": [[4, 0], [-6, -3], [-16, -7]],
+	"bloom_letter": [[8, 0], [-14, -6], [-14, -8]],
+}
+
 static func apply(articles: Array[NewsArticle]) -> int:
 	var changed := 0
 	var catalog: Dictionary = {}
@@ -80,7 +116,7 @@ static func apply(articles: Array[NewsArticle]) -> int:
 	for saved in articles:
 		if not saved.provenance.is_empty() or not catalog.has(saved.id):
 			continue
-		if not ORIGINAL_EFFECTS.has(saved.id) or not PREVIOUS_EFFECTS.has(saved.id):
+		if not ORIGINAL_EFFECTS.has(saved.id) or not PREVIOUS_EFFECTS.has(saved.id) or not CONTEXTUAL_EFFECTS.has(saved.id):
 			continue
 		var current: NewsArticle = catalog[saved.id]
 		if saved.source_title != current.source_title or saved.source_text != current.source_text:
@@ -90,12 +126,13 @@ static func apply(articles: Array[NewsArticle]) -> int:
 				var authored: HeadlineOption = current.headlines[i]
 				if option.text != authored.text or option.editorial_type != authored.editorial_type or option.money != authored.money:
 					continue
-				if i >= ORIGINAL_EFFECTS[saved.id].size() or i >= PREVIOUS_EFFECTS[saved.id].size():
+				if i >= ORIGINAL_EFFECTS[saved.id].size() or i >= PREVIOUS_EFFECTS[saved.id].size() or i >= CONTEXTUAL_EFFECTS[saved.id].size():
 					continue
 				var original: Array = ORIGINAL_EFFECTS[saved.id][i]
 				var previous: Array = PREVIOUS_EFFECTS[saved.id][i]
+				var contextual: Array = CONTEXTUAL_EFFECTS[saved.id][i]
 				var effects := [option.reputation, option.loyalty]
-				if effects != original and effects != previous:
+				if effects != original and effects != previous and effects != contextual:
 					continue
 				if option.reputation != authored.reputation or option.loyalty != authored.loyalty:
 					option.reputation = authored.reputation
