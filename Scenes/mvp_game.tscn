@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/settings_panel.tscn" id="8_settings"]
 [ext_resource type="PackedScene" path="res://Scenes/interaction_tutorial.tscn" id="9_tutorial"]
 [ext_resource type="Script" path="res://Scripts/money_delta.gd" id="10_money"]
+[ext_resource type="PackedScene" path="res://Scenes/pause_panel.tscn" id="11_pause"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_fatigue"]
 resource_local_to_scene = true
@@ -318,7 +319,7 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("10_money")
 
-[node name="PausePanel" parent="." unique_id=939216753 instance=ExtResource("5")]
+[node name="PausePanel" parent="." unique_id=939216753 instance=ExtResource("11_pause")]
 z_index = 130
 layout_mode = 1
 
