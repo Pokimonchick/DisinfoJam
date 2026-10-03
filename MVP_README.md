@@ -24,6 +24,7 @@
 | Пороги и описание преимуществ от шкал | `Data/reader_support.tres`, `Data/state_approval.tres`; общий тип и подсказка — `Scripts/stat_benefit.gd`, `Scenes/stat_benefit_hint.tscn` |
 | Правила смены, очереди, комбо, покупок и победы | `Scripts/newsroom_session.gd` |
 | Материалы и варианты заголовков | `Data/article_catalog.gd`, `Data/community_articles.gd`; данные и типы — `Scripts/news_article.gd`, `Scripts/headline_option.gd` |
+| Таблица баланса и пятидневные прохождения | `Docs/BALANCE.md`, `Docs/BALANCE_TABLE.md`, `Docs/BALANCE_RUNS.md`; воспроизведение — `Tests/balance_playthrough.gd` |
 | Экран смены, параллакс, выбор заголовка и приближение записок | `Scenes/newsroom_screen.tscn`, `Scripts/newsroom_screen.gd`, `Scripts/desk_canvas.gd`, `Scripts/headline_field.gd`, `Scenes/desk_focus.tscn` |
 | Выдвижные показатели и кофе на столе | `Scenes/work_status_drawer.tscn`, `Scenes/desk_coffee.tscn`, их одноимённые скрипты |
 | Солнечные лучи и пыль | В `Scenes/newsroom_screen.tscn` параметры задаются на узлах `Canvas/World/Sunlight` и `Canvas/World/SunDust`; пыль — `Scenes/desk_sun_dust.tscn`, `Scripts/desk_sun_dust.gd`, `Shaders/sun_dust.gdshader`, `Shaders/sun_dust_motion.gdshader` |

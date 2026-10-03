@@ -1,6 +1,6 @@
 extends RefCounted
 
-# Original effects are checked before updating known authored headlines.
+# Known released effects are checked before updating authored headlines.
 const ORIGINAL_EFFECTS: Dictionary = {
 	"black_cat": [[7, 0], [-15, -4], [-9, 9]],
 	"market_gate": [[8, 2], [-16, -10], [-9, 10]],
@@ -36,6 +36,42 @@ const ORIGINAL_EFFECTS: Dictionary = {
 	"bloom_letter": [[8, 0], [-10, 0], [-10, -8]],
 }
 
+# Last released, softened catalogue; these fingerprints preserve edited content.
+const PREVIOUS_EFFECTS: Dictionary = {
+	"black_cat": [[7, 0], [-6, 0], [-5, 9]],
+	"market_gate": [[8, 2], [-8, -4], [-5, 10]],
+	"cats_rumor": [[-7, 0], [3, 0], [-6, 0]],
+	"cats_denial": [[6, 0], [-4, 0], [-10, 0]],
+	"cats_taxi": [[4, 0], [2, 0], [-10, 0]],
+	"rat_chef": [[-3, 0], [6, 0], [-8, -3]],
+	"rat_complaint": [[-4, 0], [7, 0], [-8, 0]],
+	"rat_resolution": [[15, 3], [5, 6], [-12, -4]],
+	"bloom_poem": [[4, 0], [-3, 0], [-8, 0]],
+	"bloom_letter": [[8, 0], [-7, 0], [-8, -5]],
+	"court": [[8, 0], [-12, -8], [-6, 14]],
+	"tram": [[7, 0], [-7, -3], [-3, 8]],
+	"bakery": [[8, 0], [-6, 0], [-4, 9]],
+	"water": [[9, -2], [-12, -10], [-7, 14]],
+	"park": [[7, 4], [-6, -3], [-5, 10]],
+	"museum": [[8, 1], [-8, 0], [-5, 10]],
+	"school": [[9, -3], [-12, -8], [-7, 15]],
+	"fire_drill": [[7, 3], [-8, 0], [-4, 9]],
+	"cheese_price": [[8, 0], [-8, 0], [-5, 10]],
+	"curfew": [[8, 0], [-10, -10], [-6, 14]],
+	"library": [[8, 2], [-9, -5], [-4, 9]],
+	"festival": [[7, 2], [-6, 0], [-5, 9]],
+	"bus_photo": [[9, 3], [-12, -8], [-6, 12]],
+	"mayor_quote": [[8, 3], [-8, -5], [-5, 11]],
+	"shelter": [[8, 2], [-8, 0], [-5, 11]],
+	"archive": [[9, 4], [-12, -10], [-6, 14]],
+	"rent": [[8, 0], [-8, 0], [-5, 11]],
+	"police_bike": [[7, 4], [-8, -3], [-5, 12]],
+	"canteen": [[9, -2], [-12, -10], [-7, 14]],
+	"electricity": [[8, 1], [-8, -3], [-5, 10]],
+	"rumor_chain": [[9, 0], [-8, 0], [-6, 12]],
+	"petition": [[9, -2], [-12, -10], [-7, 15]],
+}
+
 static func apply(articles: Array[NewsArticle]) -> int:
 	var changed := 0
 	var catalog: Dictionary = {}
@@ -44,16 +80,22 @@ static func apply(articles: Array[NewsArticle]) -> int:
 	for saved in articles:
 		if not saved.provenance.is_empty() or not catalog.has(saved.id):
 			continue
+		if not ORIGINAL_EFFECTS.has(saved.id) or not PREVIOUS_EFFECTS.has(saved.id):
+			continue
 		var current: NewsArticle = catalog[saved.id]
 		if saved.source_title != current.source_title or saved.source_text != current.source_text:
 			continue
 		for option in saved.headlines:
 			for i in current.headlines.size():
 				var authored: HeadlineOption = current.headlines[i]
-				var original: Array = ORIGINAL_EFFECTS[saved.id][i]
 				if option.text != authored.text or option.editorial_type != authored.editorial_type or option.money != authored.money:
 					continue
-				if option.reputation != original[0] or option.loyalty != original[1]:
+				if i >= ORIGINAL_EFFECTS[saved.id].size() or i >= PREVIOUS_EFFECTS[saved.id].size():
+					continue
+				var original: Array = ORIGINAL_EFFECTS[saved.id][i]
+				var previous: Array = PREVIOUS_EFFECTS[saved.id][i]
+				var effects := [option.reputation, option.loyalty]
+				if effects != original and effects != previous:
 					continue
 				if option.reputation != authored.reputation or option.loyalty != authored.loyalty:
 					option.reputation = authored.reputation

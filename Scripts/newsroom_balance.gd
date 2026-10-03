@@ -16,7 +16,7 @@ extends Resource
 
 @export_group("Доход")
 ## Scales catalogue payouts, including saved articles; rounding happens after combo.
-@export_range(0.0, 2.0, 0.05) var publication_income_multiplier: float = 0.45
+@export_range(0.0, 2.0, 0.05) var publication_income_multiplier: float = 0.35
 
 @export_group("Преимущества")
 @export var reader_support: StatBenefit = preload("res://Data/reader_support.tres")

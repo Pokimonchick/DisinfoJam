@@ -4,66 +4,63 @@
 Completed
 
 ## Current task
-Guided work/home tutorials, low-stamina warning, dialogue back navigation, meaningful inline stat help, household transaction feedback and a home-only finance notebook; audit and soften all authored headline penalties. All requested behavior is implemented and focused checks pass. This replaces the obsolete completed dust-task snapshot.
+Contextual rebalance of all 32 articles / 96 headlines, including stronger false-sensation penalties, loyalty costs for truthful criticism, money and combo consequences. Complete five shifts covering the whole queue and provide a reusable authoring table. The prior UI/tutorial/finance milestone is already complete in 3a3240f.
 
 ## Context
-- Five untimed shifts; continuing shuffled article queue and shuffled headline options remain.
-- Both classic/backdrop headline-choice presentations remain editable/selectable; restored 8-bit home design remains.
-- Publication costs 4 stamina, or 2 at reputation >=75; coffee restores up to 20 and the first cup is free; loyalty >=75 restores up to 10 once at shift start.
-- Integer stamina display and passive drain of 1/15 per second are included with this feature milestone; the rate is not shown in the game UI.
+- Five untimed shifts; unfinished shuffled articles continue next day and headline positions remain shuffled.
+- One recovery cycle means one work shift before home. Exact recovery in any shuffled queue is not required; reasonable play must be viable with some difficulty.
+- Publication costs 4 stamina or 2 at reputation >=75. First coffee is free; coffee restores up to 20; sleep up to 10; loyalty >=75 grants up to 10 once at shift start.
+- Actual local resource starts at 30 stamina; the class default remains 80. Manual Data/mvp_balance.tres was preserved. Reports explicitly state their starting values.
 
 ## Already done
-- Boss explains the actual desk controls with a spotlight and dimmed surroundings, including a demonstration of the real headline notes and combo display. The final step points to “Сдать выпуск”.
-- First evening uses the same spotlight system with Nikola's portrait and inner monologue. Both stages have back/skip buttons, pause gameplay and save their current step/completion.
-- Boss portrait is an existing placeholder. The user confirmed that the final portrait does not exist yet; assign it later on Tutorial > Boss Portrait in the inspector.
-- Warning at stamina <=10 appears once per shift, after publication feedback has closed. Dismiss/Esc continues work; the other button finishes the shift. Reading the warning pauses passive drain.
-- Narrative dialogue has a Back button; rereading does not replay gameplay effects.
-- All three stat questions sit beside their meters and explain purpose, influences, zero-stat endings and dynamic bonuses. Bonus captions remain below the meters.
-- Rent, meal, snack and coffee expenses emit a brief red deduction below the home balance. Rent is queued until arrival; loading never repeats the animation or cash mutation.
-- FinanceLedger records cash mutations and publication categories. The notebook lies next to the home coffee cup and opens only when clicked; Today/All days show expenses, income by category, best categories and detailed transactions. Esc closes it.
-- Saves include optional finances/guidance/warning state. Legacy saves import known publications and mark missing expenses as incomplete; history and balance are not reconstructed speculatively.
-- All 32 articles/96 headlines audited. Base penalties cap at -12 reputation/-10 loyalty; nonpolitical state effects removed. Archive accusation is now -12/-10 instead of -37/-30 because it fabricates a crime and accuses officials. Money, texts, types and combo rules preserved.
-- Exact known original article effects migrate for future options only. Past results and manual/generated article edits are preserved.
-- MVP_README.md and Docs/SAVES.md describe the new behavior and compatibility.
+- False sensational claims now lose 6–20 reputation and 3–11 loyalty before combo, with contextual explanations; loss of loyalty is weaker, roughly half rather than a fixed formula.
+- Truthful critical coverage improves reader trust but lowers loyalty. Support for authorities and some facts positive for the state restore loyalty; neutral private facts normally leave it unchanged.
+- Honest emotional/sensational headlines and accurate official responses retain positive reputation. Editorial type defines combo, not truthfulness.
+- Publication income coefficient changed 0.45 -> 0.35 in Scripts/newsroom_balance.gd. Base cash, source/headline text, IDs, types, prices, stamina rules and combo rules are preserved.
+- Loyalty help was shortened to fit and describes the new tradeoff.
+- Known original and previously softened authored effects migrate for future choices only. Past results, money and ledger remain unchanged; manual/generated edits are preserved. Unknown future article IDs/variants are skipped safely.
+- Docs/BALANCE.md explains contextual profiles, same-shift recovery, combos and economy. Docs/BALANCE_TABLE.md contains all 96 choices including base cash, payouts/effects at x1 and x2, and reasons.
+- Docs/BALANCE_RUNS.md gives 12 shuffled queues, five strategies, 30/60 active seconds per material, income coefficient comparison and seed 42 daily results / all 32 publications.
+- Tests/balance_playthrough.gd regenerates the reports with --report; --ui additionally uses real selection/publication/result/purchase/bed handlers and an isolated save slot.
+- Native mixed campaign seed 42 completed 7/7/6/6/6 articles. End cash 44, stamina 34, reputation 100, loyalty 61. All 32 articles published once.
 
 ## Decisions
-- Notebook exists only at home and never opens automatically, including during teaching; underlying interactions are blocked by modals.
-- No fabricated final boss artwork; his exported portrait can be assigned when supplied.
-- Preserve the user's manual visual tuning. Solar-ray work was explicitly ended and must not resume.
-- Focused checks only; no repeated full 450+ check suite or export for this change.
+- Loyalty is general government attitude to the newspaper; factual criticism is not automatically welcomed by authorities. Do not restore loyalty on all facts.
+- Moderate damage can be recovered within a shift using appropriate topics; compensation is not promised for every queue, especially critical facts and long negative combos.
+- Both choice presentations, restored 8-bit home, prior spotlight teaching, warning, dialogue back and home-only notebook remain.
+- Final boss portrait is still an accepted future asset. No solar-ray or dust edits.
+- Use focused checks; no full 450+ suite or export. Helpers completed; none continue writing.
 
 ## Relevant files
-- Data/interface_lessons.gd; Scenes/interaction_tutorial.tscn; Scripts/interaction_tutorial.gd; Scenes/mvp_game.tscn; Scripts/mvp_game.gd.
-- Scripts/newsroom_session.gd; Scripts/newsroom_save_data.gd; Scripts/finance_ledger.gd; Scripts/finance_notebook.gd; Scenes/finance_notebook.tscn; Scripts/money_delta.gd.
-- Scenes/home_screen.tscn; Scripts/home_screen.gd; Scripts/pixel_room.gd; Scripts/stat_descriptions.gd; newsroom_hud/work_status_drawer/stat_benefit_hint scenes and scripts.
-- Data/article_catalog.gd; Data/community_articles.gd; Data/legacy_article_balance.gd; Tests/article_balance_tests.gd; Tests/finance_ledger_tests.gd; Tests/interface_flow_tests.gd; Tests/save_tests.gd; Tests/mvp_tests.gd --effects.
-- MVP_README.md; Docs/SAVES.md.
+- Data/article_catalog.gd; Data/community_articles.gd; Data/legacy_article_balance.gd.
+- Scripts/newsroom_balance.gd; Scripts/stat_descriptions.gd; Scripts/newsroom_session.gd.
+- Docs/BALANCE.md; Docs/BALANCE_TABLE.md; Docs/BALANCE_RUNS.md; Data/ARTICLE_BALANCE_NOTES.md; MVP_README.md; Docs/SAVES.md.
+- Tests/balance_playthrough.gd; Tests/article_balance_tests.gd; Tests/interface_flow_tests.gd; Tests/mvp_tests.gd --effects.
 
 ## Do not touch
-- Preserve manual Data/mvp_balance.tres, coffee Swirl bounds, headline_card/headline_choice_overlay/newsroom_screen geometry and assets, Sunlight tuning, export_presets.cfg and untracked artist sources.
-- Scripts/desk_sunlight.gd and Shaders/desk_sunlight.gdshader have preexisting user tuning. Unrelated script/shader UIDs remain uncommitted.
-- Preserve both choice presentations, restored home design and existing sunlit dust b203303.
-- Push only elfat to origin/elfat after three new Codex commits; inspect outgoing commits, never force-push or make extra threshold commits.
+- Preserve manual Data/mvp_balance.tres, Scenes/desk_coffee.tscn Swirl bounds, headline_card/headline_choice_overlay/newsroom_screen geometry/assets, Scripts/desk_sunlight.gd, Shaders/desk_sunlight.gdshader, export_presets.cfg and untracked artist sources / unrelated UIDs.
+- Do not rewrite actual campaign/settings saves during checks.
+- Push only elfat -> origin/elfat after three new Codex commits. No force push, no artificial threshold commits.
 
 ## Remaining
-- No implementation remains in the agreed scope. Await feedback/new requests; final boss portrait is a future asset, explicitly accepted as unavailable now.
+- No implementation remains in this scope. Await player feedback or newly authored articles; then use the balance guide and regenerate the reports.
 
 ## Validation
-- Checked final working implementation before the feature commit; source/staged diffs reviewed and diff hygiene passed.
-- Native Godot 4.7.2 Compatibility: 49 interface-flow checks pass at normal window size and at 960x640, including every spotlight, save/resume, input blocking, warning, notebook and cash feedback.
-- Native captures inspected: work choices/stats/coffee, home lessons/bed, warning and notebook fit the screen and have readable text.
-- Save suite: 56 checks pass; article balance/migration: 106 checks pass; combo/endings integration: 46 checks pass via --effects. Finance ledger checks and both stat scene bindings also pass.
-- Temporary QA is under C:/Users/User/AppData/Local/Temp/disinfo-ux-*.png, disinfo-interface-render.log, disinfo-interface-compact.log, disinfo-ux-save-tests.log, disinfo-effects-tests.log and article_balance_check.log.
-- No actual campaign/settings save was written. QA processes and all three helpers finished; none continue writing.
-- No full campaign playthrough, full project suite or export was run.
+- Final numerical data: 12 seeds x five strategies x two reading tempos x three income coefficients, using actual session rules. Truthful and cautious mixed strategies complete all 32 articles in 12/12 queues at both tempos with coefficient 0.35.
+- Mixed winning cash: 44..97 at 30 seconds, 1..50 at 60 seconds; temporary debt is allowed. Pure false sensations, maximizing loyalty without trust, and fixed two false sensations daily fail.
+- Native Godot 4.7.2 Compatibility five-day campaign: 54 checks pass, with real screens and isolated saves. Day totals match simulation; home and finale captures inspected.
+- Final headless report regeneration: 10 checks pass. Article effects/migrations: 153 pass after final migration guards. Combo/endings integration: 46 pass. Native interface/save/teaching/finance integration: 49 pass.
+- Report-generator coefficient coverage and loyalty wording received minor final edits after the native run; headless final regeneration and source review cover them. No gameplay behavior was changed after the native campaign.
+- Source diffs reviewed; diff hygiene passes. No full suite or export. No actual player save was written; all QA processes finished.
+- QA files: C:/Users/User/AppData/Local/Temp/disinfo-balance-*.log, disinfo-balance-day-1..5.png, disinfo-article-final.log, disinfo-effects-final.log, disinfo-interface-balance-final.log.
 
 ## Known issues / uncertainties
-- Headless save runs report an existing native shader compiler diagnostic in unchanged note_shadow.gdshader (TEXTURE passed into a helper sampler). Native Compatibility render runs pass with no shader errors and correct shadows; this unrelated headless-only diagnostic was not changed.
-- Balance is a contextual numerical pass; further playtesting may tune the campaign economy. Combo multipliers still amplify effects by design.
+- Policies use known effects and economical purchases. They demonstrate viable paths, not guaranteed survival for arbitrary choices, extra active reading time or spending. Human playtesting is still needed to judge comfort/difficulty.
+- Only the actual starting-30 resource was used for these reported runs; changes to the resource require regeneration.
+- Existing unchanged note_shadow.gdshader can emit a headless-only compiler diagnostic when render scenes load; native Compatibility checks have no shader errors. This task did not alter shadows.
 
 ## Git state
 - Workspace C:/Users/User/Desktop/gdg/DisinfoJam; branch elfat.
-- At snapshot preparation: HEAD 07ff898 (article balance); prior b203303 (dust); origin/elfat c0931ba. This snapshot accompanies the validated UI/finance feature commit.
-- Dust plus balance are two Codex commits since the last push. The pending coherent UI/finance commit makes three and triggers the authorized push to origin/elfat.
-- Stage only intended feature files. Manual/unrelated files listed under Do not touch stay dirty; the snapshot is not permission to revert them.
-- Verify current Git rather than treating the recorded pre-commit hash or push count as live state.
+- Before this coherent balance commit: HEAD and origin/elfat are 3a3240f. No outgoing commits; this milestone makes one of three since the successful push.
+- Intended files are the balance data/scripts, three new Docs/BALANCE* files, report/test changes, documentation and this replacement of the dangerously stale prior snapshot.
+- Unrelated manual files listed above remain dirty and excluded. Recorded pre-commit hashes/counts are not live Git state; verify before later commits/pushes.
