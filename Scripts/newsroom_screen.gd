@@ -315,7 +315,7 @@ func _show_result(result: Dictionary) -> void:
 	changes += "[color=#685078]Лояльность:[/color] %s\n" % _colored_result_delta(int(result.loyalty))
 	var stamina_cost := float(result.get("stamina_cost", session.balance.publication_health_cost))
 	var stamina_color := "#9b4033" if stamina_cost > 0.0 else "#665945"
-	var stamina_change := "−%.1f" % stamina_cost if stamina_cost > 0.0 else "0.0"
+	var stamina_change := "−%d" % roundi(stamina_cost) if stamina_cost > 0.0 else "0"
 	changes += "[color=#6b7046]Выносливость:[/color] [color=%s][b]%s[/b][/color]\n\n%s" % [stamina_color, stamina_change, result.explanation]
 	var full_issue := session.publication_limit_reached()
 	if full_issue:

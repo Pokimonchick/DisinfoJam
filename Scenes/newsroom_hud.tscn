@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://Scripts/newsroom_hud.gd" id="1"]
 [ext_resource type="PackedScene" path="res://Scenes/stat_benefit_hint.tscn" id="3_benefit"]
+
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/Untitled (22)/Group 38.png" id="4_help"]
 
 [node name="HUD" type="HBoxContainer"]
 custom_minimum_size = Vector2(0, 88)
@@ -24,11 +26,28 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 
-[node name="Health" type="ProgressBar" parent="HealthGroup"]
+[node name="MeterRow" type="HBoxContainer" parent="HealthGroup"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Health" type="ProgressBar" parent="HealthGroup/MeterRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 9)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
 show_percentage = false
+
+[node name="HealthHelp" type="TextureButton" parent="HealthGroup/MeterRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+tooltip_text = "Подробнее о показателе"
+focus_mode = 0
+mouse_default_cursor_shape = 2
+texture_normal = ExtResource("4_help")
+ignore_texture_size = true
+stretch_mode = 0
 
 [node name="ReputationGroup" type="VBoxContainer" parent="."]
 layout_mode = 2
@@ -45,11 +64,28 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 
-[node name="Reputation" type="ProgressBar" parent="ReputationGroup"]
+[node name="MeterRow" type="HBoxContainer" parent="ReputationGroup"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Reputation" type="ProgressBar" parent="ReputationGroup/MeterRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 9)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
 show_percentage = false
+
+[node name="ReputationHelp" type="TextureButton" parent="ReputationGroup/MeterRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+tooltip_text = "Подробнее о показателе"
+focus_mode = 0
+mouse_default_cursor_shape = 2
+texture_normal = ExtResource("4_help")
+ignore_texture_size = true
+stretch_mode = 0
 
 [node name="ReputationHint" parent="ReputationGroup" instance=ExtResource("3_benefit")]
 unique_name_in_owner = true
@@ -70,11 +106,28 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 
-[node name="Loyalty" type="ProgressBar" parent="LoyaltyGroup"]
+[node name="MeterRow" type="HBoxContainer" parent="LoyaltyGroup"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Loyalty" type="ProgressBar" parent="LoyaltyGroup/MeterRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 9)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
 show_percentage = false
+
+[node name="LoyaltyHelp" type="TextureButton" parent="LoyaltyGroup/MeterRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+tooltip_text = "Подробнее о показателе"
+focus_mode = 0
+mouse_default_cursor_shape = 2
+texture_normal = ExtResource("4_help")
+ignore_texture_size = true
+stretch_mode = 0
 
 [node name="LoyaltyHint" parent="LoyaltyGroup" instance=ExtResource("3_benefit")]
 unique_name_in_owner = true

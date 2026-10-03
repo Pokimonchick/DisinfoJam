@@ -4,13 +4,9 @@ enum View { MENU, INTRO, TUTORIAL, WORK, HOME, ENDING, PROFILE, STORY }
 const VIEW_KEYS := ["menu", "intro", "tutorial", "work", "home", "ending", "profile", "story"]
 const CHAPTER := preload("res://Data/chapter_one.gd")
 const AUTOSAVE_SECONDS := 5.0
-
-const LESSONS: Array[Dictionary] = [
-	{"title": "Нам нужны читатели. А тебе — зарплата.", "text": "На стол приносят письмо, рапорт или другой источник. Ты выбираешь один из трёх заголовков и подтверждаешь печать. Громкие слова часто приносят больше денег. Искажения бьют по репутации, точные материалы укрепляют доверие.\n\nЗаголовки одного направления подряд дают комбо: факты, сенсации или поддержка власти. Слева на столе видны серия и множитель. Он усиливает деньги и изменения репутации и лояльности — в том числе штрафы! Другое направление или новая смена сбрасывает серию."},
-	{"title": "Три шкалы. Три причины быть осторожнее.", "text": "Выносливость убывает во время работы и с каждой публикацией. На нуле — истощение.\n\nРепутация зависит от правдивости заголовка. Если она обнулится, разгневанные читатели сожгут офис.\n\nЛояльность государству — отдельная шкала. Критика может быть правдивой и всё равно не нравиться властям. На нуле за тобой придут сотрудники госбезопасности."},
-	{"title": "Выпуск ждёт твоего решения.", "text": "Прочитай источник на столе. Нажми на зелёное поле и выбери записку с заголовком. Выбор можно заменить; последствия применяются только после нажатия «Опубликовать».\n\nУ смены нет ограничения по времени. Выносливость понемногу убывает во время работы, но при просмотре результата публикации расход приостанавливается. Цифры влияния видны только после печати.\n\nНажми «Сдать выпуск», когда захочешь закончить смену. Неподтверждённый материал останется на завтра. Esc — пауза с закрытым рабочим столом."},
-	{"title": "Не забудь поесть перед сном.", "text": "После смены спишут аренду. Дома наведи мышь на холодильник: дверца откроется. Нажми, чтобы купить еду и восстановить силы. Цена указана под холодильником. Покупки в долг разрешены до −100 $.\n\nПервая чашка кофе уже ждёт на рабочем столе бесплатно. Нажми на неё, чтобы восстановить до {coffee_restore} выносливости. Следующие чашки можно купить дома и взять с собой. Выпитый кофе оставляет след на бумаге. Невыпитая чашка останется с тобой.\n\nКровать слева завершает вечер и восстанавливает 10 выносливости. Если сил мало, сначала поешь, потом ложись спать."}
-]
+const INTERFACE_LESSONS := preload("res://Data/interface_lessons.gd")
+const FINANCE_NOTEBOOK := preload("res://Scenes/finance_notebook.tscn")
+const LOW_STAMINA_WARNING := 10.0
 
 const ENDINGS: Dictionary = {
 	NewsroomSession.Ending.EXHAUSTION: ["Последняя смена", "Выносливость закончилась. Ещё один выпуск оказался важнее ужина, и организм не выдержал. Редакция завтра откроется — уже без тебя.", 2],
@@ -36,12 +32,22 @@ var _loaded_document: Dictionary = {}
 var _story_id: String = ""
 var _story_page: int = 0
 var _seen_stories: Array[String] = []
+var _tutorial_stage := ""
+var _tutorial_step := 0
+var _work_tutorial_done := false
+var _home_tutorial_done := false
+var _stamina_warning_day := 0
+var _notebook: Control
+var _pending_deductions: Array[int] = []
+var _combo_demonstration := false
 
 @onready var work: Control = %Work
 @onready var home: Control = %Home
 @onready var pause_panel: MessagePanel = $PausePanel
 @onready var settings_panel: SettingsPanel = $SettingsPanel
 @onready var fatigue_overlay: ColorRect = $FatigueOverlay
+@onready var tutorial: Control = $Tutorial
+@onready var stamina_warning: MessagePanel = $StaminaWarning
 
 func _ready() -> void:
 	theme = preload("res://Scripts/mvp_theme.gd").create()
@@ -51,9 +57,11 @@ func _ready() -> void:
 	session.phase_changed.connect(_on_phase_changed)
 	session.changed.connect(_refresh_goal)
 	session.save_requested.connect(_queue_save)
+	session.transaction_recorded.connect(_on_transaction)
 	%HUD.bind(session)
 	work.bind(session)
 	home.bind(session)
+	home.notebook_requested.connect(_open_notebook)
 	work.view_changed.connect(_queue_save)
 	work.pause_requested.connect(_toggle_pause)
 	%NewGame.pressed.connect(_show_profile_setup)
@@ -65,6 +73,15 @@ func _ready() -> void:
 	%QuitWithoutSave.confirmed.connect(func(): get_tree().quit())
 	%NarrativePrimary.pressed.connect(_narrative_next)
 	%NarrativeSecondary.pressed.connect(_narrative_secondary)
+	%NarrativeBack.pressed.connect(_narrative_back)
+	tutorial.next_requested.connect(_tutorial_next)
+	tutorial.previous_requested.connect(_tutorial_back)
+	tutorial.skip_requested.connect(_finish_tutorial)
+	stamina_warning.primary_pressed.connect(_dismiss_stamina_warning)
+	stamina_warning.secondary_pressed.connect(_rest_after_warning)
+	stamina_warning.get_node("Dim").color.a = 0.75
+	stamina_warning.get_node("Center/Paper").add_theme_stylebox_override("panel", theme.get_stylebox("panel", "TooltipPanel"))
+	stamina_warning.body_label.custom_minimum_size.y = 128
 	%PauseButton.pressed.connect(_toggle_pause)
 	pause_panel.primary_pressed.connect(_toggle_pause)
 	pause_panel.secondary_pressed.connect(_show_menu)
@@ -75,10 +92,16 @@ func _ready() -> void:
 	_show_menu()
 
 func _process(delta: float) -> void:
-	if view == View.WORK and not paused and not transitioning:
+	if view == View.WORK and not paused and not transitioning and not _interface_blocked():
+		_check_stamina_warning()
+	if view == View.WORK and not paused and not transitioning and not _interface_blocked():
 		session.tick_work(delta)
-	elif view == View.HOME and not paused and not transitioning:
+	elif view == View.HOME and not paused and not transitioning and not _interface_blocked():
 		home.tick_home(delta)
+	if view == View.HOME and not transitioning and not paused and not _pending_deductions.is_empty():
+		for amount in _pending_deductions:
+			_show_money_delta(amount)
+		_pending_deductions.clear()
 	_update_fatigue(delta)
 	if _run_active and view in [View.WORK, View.HOME] and not paused and not transitioning:
 		_autosave_elapsed += delta
@@ -99,7 +122,7 @@ func _update_fatigue(delta: float) -> void:
 		_fatigue_time = 0.0
 		fatigue_overlay.hide()
 		return
-	if paused or transitioning:
+	if paused or transitioning or _interface_blocked():
 		fatigue_overlay.hide()
 		return
 	var threshold := maxf(0.001, session.balance.maximum_stat * session.balance.fatigue_threshold)
@@ -120,6 +143,15 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		settings_panel.close()
 		get_viewport().set_input_as_handled()
 		return
+	if event.is_action_pressed("ui_cancel") and not paused:
+		if is_instance_valid(_notebook):
+			_notebook._close()
+			get_viewport().set_input_as_handled()
+			return
+		if stamina_warning.visible:
+			_dismiss_stamina_warning()
+			get_viewport().set_input_as_handled()
+			return
 	if event.is_action_pressed("ui_cancel") and view == View.PROFILE:
 		_show_menu()
 		get_viewport().set_input_as_handled()
@@ -129,7 +161,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	# Editor-only shortcut for checking the evening.
 	if OS.is_debug_build() and event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F6:
-		if not paused and view == View.WORK:
+		if not paused and not _interface_blocked() and view == View.WORK:
 			session.finish_shift()
 
 func _new_run(skip_story: bool) -> void:
@@ -138,6 +170,13 @@ func _new_run(skip_story: bool) -> void:
 	_story_id = ""
 	_story_page = 0
 	_seen_stories.clear()
+	_tutorial_stage = ""
+	_tutorial_step = 0
+	_work_tutorial_done = skip_story
+	_home_tutorial_done = skip_story
+	_stamina_warning_day = 0
+	_pending_deductions.clear()
+	$MoneyDelta.clear()
 	session.reset()
 	session.player_name = NewsroomSession.CAMPAIGN_HERO_NAME
 	session.player_id = Crypto.new().generate_random_bytes(16).hex_encode()
@@ -161,6 +200,8 @@ func _show_story(episode_id: String, page: int = 0) -> void:
 	var entry: Dictionary = CHAPTER.EPISODES[episode_id][page]
 	_show_view(View.INTRO if episode_id == "intro" else View.STORY)
 	_set_narrative(entry.tag, entry.title, entry.body.replace("{name}", NewsroomSession.CAMPAIGN_HERO_NAME), entry.visual, entry.next, "Сразу к работе" if episode_id == "intro" else "")
+	%NarrativeBack.visible = true
+	%NarrativeBack.disabled = page == 0
 	_queue_save()
 
 func _advance_story() -> void:
@@ -183,11 +224,7 @@ func _narrative_next() -> void:
 		View.INTRO, View.STORY:
 			_advance_story()
 		View.TUTORIAL:
-			lesson += 1
-			if lesson >= LESSONS.size():
-				session.start_shift()
-			else:
-				_show_lesson()
+			_show_lesson()
 		View.ENDING:
 			_show_profile_setup()
 
@@ -197,15 +234,12 @@ func _narrative_secondary() -> void:
 	else:
 		_story_id = ""
 		_story_page = 0
+		_work_tutorial_done = true
+		_home_tutorial_done = true
 		session.start_shift()
 
 func _show_lesson() -> void:
-	_show_view(View.TUTORIAL)
-	var body: String = LESSONS[lesson].text
-	body = body.replace("{coffee_restore}", str(int(session.balance.coffee_health_restore)))
-	if lesson == 2:
-		body += "\n\nВ одном выпуске помещается до %d публикаций. Когда места больше нет, сдай выпуск и отправляйся домой. Остальные материалы останутся в очереди." % session.balance.publication_limit
-	_set_narrative("ИНСТРУКТАЖ БОССА · %d / %d" % [lesson + 1, LESSONS.size()], LESSONS[lesson].title, body, 1, "Начать смену" if lesson == LESSONS.size() - 1 else "Дальше", "Пропустить инструктаж")
+	session.start_shift()
 	_queue_save()
 
 func _on_phase_changed() -> void:
@@ -218,9 +252,13 @@ func _on_phase_changed() -> void:
 				_show_story(episode_id)
 			else:
 				_show_view(View.WORK)
+				if session.day == 1 and not _work_tutorial_done:
+					_begin_tutorial.call_deferred("work")
 		NewsroomSession.Phase.HOME:
 			_show_view(View.HOME)
 			home.open_evening()
+			if not _home_tutorial_done:
+				_begin_tutorial.call_deferred("home")
 		NewsroomSession.Phase.ENDED:
 			if session.campaign_completed and not "finale" in _seen_stories:
 				_show_story("finale")
@@ -249,7 +287,13 @@ func _show_menu() -> void:
 func _show_view(next: View) -> void:
 	view = next
 	paused = false
-	work.process_mode = Node.PROCESS_MODE_INHERIT
+	tutorial.hide()
+	stamina_warning.hide()
+	_clear_combo_demonstration()
+	if is_instance_valid(_notebook):
+		_notebook.queue_free()
+		_notebook = null
+	_update_interface_lock()
 	pause_panel.hide()
 	settings_panel.hide()
 	%Menu.visible = view == View.MENU
@@ -275,6 +319,7 @@ func _show_view(next: View) -> void:
 	)
 
 func _set_narrative(tag: String, title: String, body: String, visual: int, primary: String, secondary: String) -> void:
+	%NarrativeBack.hide()
 	%NarrativeTag.text = tag
 	%NarrativeTitle.text = title
 	%NarrativeBody.text = body
@@ -289,12 +334,14 @@ func _toggle_pause() -> void:
 	if view in [View.MENU, View.PROFILE] or transitioning:
 		return
 	paused = not paused
-	work.process_mode = Node.PROCESS_MODE_DISABLED if paused else Node.PROCESS_MODE_INHERIT
+	_update_interface_lock()
 	if paused:
 		_save_progress()
 		pause_panel.present("ПАУЗА", "Выпуск подождёт.", "Выносливость не расходуется.\n\nПрогресс сохраняется автоматически. После выхода в меню можно продолжить с этого места.", "Продолжить", "Сохранить и в меню", true)
 	else:
 		pause_panel.hide()
+		if tutorial.visible:
+			tutorial.get_node("%Next").grab_focus()
 
 
 func _open_settings() -> void:
@@ -306,6 +353,167 @@ func _on_settings_closed() -> void:
 		pause_panel.settings_button.grab_focus()
 	else:
 		%MenuSettings.grab_focus()
+
+
+func _narrative_back() -> void:
+	if view in [View.INTRO, View.STORY] and _story_page > 0:
+		_show_story(_story_id, _story_page - 1)
+
+
+func _interface_blocked() -> bool:
+	return tutorial.visible or stamina_warning.visible or is_instance_valid(_notebook)
+
+
+func _update_interface_lock() -> void:
+	var blocked := paused or _interface_blocked()
+	work.process_mode = Node.PROCESS_MODE_DISABLED if blocked else Node.PROCESS_MODE_INHERIT
+	home.process_mode = Node.PROCESS_MODE_DISABLED if blocked else Node.PROCESS_MODE_INHERIT
+	# Freeze desk parallax too; the spotlight must remain on the explained item.
+	work.get_node("Canvas").motion_enabled = not blocked
+
+
+func _begin_tutorial(stage: String) -> void:
+	if (stage == "work" and view != View.WORK) or (stage == "home" and view != View.HOME):
+		return
+	if _tutorial_stage != stage:
+		_tutorial_step = 0
+	_tutorial_stage = stage
+	if stage == "work":
+		work.get_node("%Drawer").set_expanded(true, false)
+	_present_tutorial_step()
+
+
+func _present_tutorial_step() -> void:
+	var steps: Array[Dictionary] = INTERFACE_LESSONS.work(session.balance) if _tutorial_stage == "work" else INTERFACE_LESSONS.home(session.balance)
+	_tutorial_step = clampi(_tutorial_step, 0, steps.size() - 1)
+	var step: Dictionary = steps[_tutorial_step]
+	var targets: Array[Control] = []
+	if _tutorial_stage == "work":
+		_clear_combo_demonstration()
+		work._hide_choices(false)
+		if step.target == "choices":
+			work._open_choices(false)
+			targets.assign(work.cards)
+		elif step.target in ["health", "reputation", "loyalty"]:
+			var stat: String = {"health": "Health", "reputation": "Reputation", "loyalty": "Loyalty"}[step.target]
+			var panel := "Canvas/Drawer/SlidingPanel/"
+			for suffix in ["Title", "Value", "Bar", "Help"]:
+				targets.append(work.get_node(panel + stat + suffix))
+		else:
+			var paths := {"source": "%SourceText", "headline": "%HeadlineField", "publish": "%Publish", "coffee": "%Coffee", "finish": "%FinishShift", "combo": "%ComboBurst"}
+			targets.append(work.get_node(paths[step.target]))
+			if step.target == "source":
+				targets.append(work.get_node("%SourceTitle"))
+			if step.target == "combo":
+				if work._combo_tween:
+					work._combo_tween.kill()
+				work.get_node("%Combo").text = "КОМБО ×%.2f" % session.combo_multiplier(2)
+				work.get_node("%ComboDetail").text = "ФАКТЫ · 2 ПОДРЯД · ПРИМЕР"
+				work.combo_burst.modulate.a = 1.0
+				work.combo_burst.scale = Vector2.ONE
+				work.combo_burst.show()
+				_combo_demonstration = true
+	else:
+		var paths := {"meal": "%Meal", "coffee": "%Coffee", "notebook": "%Notebook", "bed": "%Bed"}
+		targets.append(%HUD.get_node("%Money") if step.target == "money" else home.get_node(paths[step.target]))
+	var heroine := _tutorial_stage == "home"
+	tutorial.present("НИКОЛА КОКО · ПРО СЕБЯ" if heroine else "БОСС", step.text, targets, _tutorial_step, steps.size(), heroine, "Осмотреть комнату" if heroine else "Начать работу")
+	_update_interface_lock()
+	_queue_save()
+
+
+func _tutorial_next() -> void:
+	var count := INTERFACE_LESSONS.work(session.balance).size() if _tutorial_stage == "work" else INTERFACE_LESSONS.home(session.balance).size()
+	if _tutorial_step + 1 >= count:
+		_finish_tutorial()
+	else:
+		_tutorial_step += 1
+		_present_tutorial_step()
+
+
+func _tutorial_back() -> void:
+	if _tutorial_step > 0:
+		_tutorial_step -= 1
+		_present_tutorial_step()
+
+
+func _finish_tutorial() -> void:
+	if _tutorial_stage == "work":
+		_work_tutorial_done = true
+		work._hide_choices(false)
+	else:
+		_home_tutorial_done = true
+	_tutorial_stage = ""
+	_tutorial_step = 0
+	tutorial.hide()
+	_clear_combo_demonstration()
+	_update_interface_lock()
+	_queue_save()
+
+
+func _clear_combo_demonstration() -> void:
+	if _combo_demonstration:
+		_combo_demonstration = false
+		work.combo_burst.hide()
+		work._shown_combo_count = -1
+		work._shown_combo_type = -1
+		work._refresh_combo()
+
+
+func _check_stamina_warning() -> void:
+	if session.phase != NewsroomSession.Phase.WORK or session.health > LOW_STAMINA_WARNING or _stamina_warning_day == session.day:
+		return
+	# Publication feedback is its own modal. Warn after it has been read.
+	if session.awaiting_acknowledgement or work.popup.visible:
+		return
+	_stamina_warning_day = session.day
+	stamina_warning.present("ПОРА ПЕРЕДОХНУТЬ", "Силы на исходе", "Выносливости осталось мало. Сдай выпуск и вернись домой, чтобы поесть и отдохнуть.\n\nМожно закрыть это предупреждение и продолжить работу. При нуле сил наступит истощение.", "Продолжить работу", "Сдать выпуск")
+	_update_interface_lock()
+	_queue_save()
+
+
+func _dismiss_stamina_warning() -> void:
+	stamina_warning.hide()
+	_update_interface_lock()
+	_queue_save()
+
+
+func _rest_after_warning() -> void:
+	_dismiss_stamina_warning()
+	session.finish_shift()
+
+
+func _open_notebook() -> void:
+	if view != View.HOME or paused or _interface_blocked():
+		return
+	_notebook = FINANCE_NOTEBOOK.instantiate()
+	_notebook.z_index = 128
+	add_child(_notebook)
+	_notebook.open(session.finances, session.day)
+	_notebook.closed.connect(_on_notebook_closed)
+	_update_interface_lock()
+
+
+func _on_notebook_closed() -> void:
+	_notebook = null
+	_update_interface_lock()
+	home.get_node("%Notebook").grab_focus()
+
+
+func _on_transaction(entry: Dictionary) -> void:
+	if _restoring or entry.amount >= 0:
+		return
+	if entry.kind == "rent":
+		_pending_deductions.append(entry.amount)
+	elif view == View.HOME:
+		_show_money_delta.call_deferred(entry.amount)
+
+
+func _show_money_delta(amount: int) -> void:
+	if view != View.HOME:
+		return
+	var money_label: Control = %HUD.get_node("%Money")
+	$MoneyDelta.play(amount, money_label.get_global_rect())
 
 
 func _show_profile_setup() -> void:
@@ -353,7 +561,15 @@ func _continue_run() -> void:
 	_loaded_document = document
 	GameState.restore_save_sections(document.sections.get("extensions", {}))
 	var presentation: Dictionary = document.sections.get("presentation", {})
-	lesson = clampi(int(presentation.get("lesson", 0)), 0, LESSONS.size() - 1)
+	lesson = 0
+	var guidance: Dictionary = presentation.get("guidance", {})
+	_tutorial_stage = guidance.get("stage", "")
+	_tutorial_step = int(guidance.get("step", 0))
+	_work_tutorial_done = guidance.get("work_done", session.phase != NewsroomSession.Phase.IDLE)
+	_home_tutorial_done = guidance.get("home_done", session.completed_shifts > 0)
+	_stamina_warning_day = int(presentation.get("stamina_warning_day", 0))
+	_pending_deductions.clear()
+	$MoneyDelta.clear()
 	var story: Dictionary = presentation.get("story", {})
 	_seen_stories.assign(story.get("seen", []))
 	_story_id = story.get("id", "")
@@ -402,6 +618,8 @@ func _save_progress() -> bool:
 	var in_story := view in [View.INTRO, View.STORY]
 	sections["presentation"] = {"screen": VIEW_KEYS[view], "lesson": lesson,
 		"newsroom": work.capture_presentation(),
+		"guidance": {"stage": _tutorial_stage, "step": _tutorial_step, "work_done": _work_tutorial_done, "home_done": _home_tutorial_done},
+		"stamina_warning_day": _stamina_warning_day,
 		"story": {"id": _story_id if in_story else "", "page": _story_page if in_story else 0, "seen": _seen_stories.duplicate()}}
 	sections["extensions"] = GameState.capture_save_sections()
 	var document := _loaded_document.duplicate(true)
@@ -429,6 +647,20 @@ static func _validate_save(sections: Dictionary) -> bool:
 	if not presentation is Dictionary or not presentation.get("newsroom", {}) is Dictionary:
 		return false
 	if not presentation.get("lesson", 0) is int and not presentation.get("lesson", 0) is float:
+		return false
+	var warning_day: Variant = presentation.get("stamina_warning_day", 0)
+	if not NewsroomSaveData._number(warning_day) or int(warning_day) != warning_day or warning_day < 0 or warning_day > sections.run.day:
+		return false
+	var guidance: Variant = presentation.get("guidance", {})
+	if not guidance is Dictionary or not guidance.get("stage", "") in ["", "work", "home"]:
+		return false
+	for key in ["work_done", "home_done"]:
+		if guidance.has(key) and not guidance[key] is bool:
+			return false
+	var step: Variant = guidance.get("step", 0)
+	if not NewsroomSaveData._number(step) or int(step) != step or step < 0:
+		return false
+	if guidance.get("stage", "").is_empty() and step != 0:
 		return false
 	var newsroom: Dictionary = presentation.get("newsroom", {})
 	if not newsroom.get("selected_index", -1) is int and not newsroom.get("selected_index", -1) is float:

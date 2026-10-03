@@ -8,6 +8,8 @@
 [ext_resource type="Script" uid="uid://bawydys7cfi50" path="res://Scripts/placeholder_visual.gd" id="6"]
 [ext_resource type="Shader" uid="uid://cytlrl67y5fep" path="res://Shaders/fatigue.gdshader" id="7_fatigue"]
 [ext_resource type="PackedScene" path="res://Scenes/settings_panel.tscn" id="8_settings"]
+[ext_resource type="PackedScene" path="res://Scenes/interaction_tutorial.tscn" id="9_tutorial"]
+[ext_resource type="Script" path="res://Scripts/money_delta.gd" id="10_money"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_fatigue"]
 resource_local_to_scene = true
@@ -255,6 +257,14 @@ theme_override_font_sizes/normal_font_size = 22
 layout_mode = 2
 theme_override_constants/separation = 12
 
+[node name="NarrativeBack" type="Button" parent="Padding/Layout/Stage/Narrative/Layout/Text/Actions"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 55)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "Назад"
+
 [node name="NarrativePrimary" type="Button" parent="Padding/Layout/Stage/Narrative/Layout/Text/Actions" unique_id=1721445878]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 55)
@@ -288,12 +298,32 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
+[node name="Tutorial" parent="." instance=ExtResource("9_tutorial")]
+z_index = 120
+layout_mode = 1
+
+[node name="StaminaWarning" parent="." instance=ExtResource("5")]
+visible = false
+z_index = 125
+layout_mode = 1
+
+[node name="MoneyDelta" type="Control" parent="."]
+z_index = 126
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("10_money")
+
 [node name="PausePanel" parent="." unique_id=939216753 instance=ExtResource("5")]
-z_index = 100
+z_index = 130
 layout_mode = 1
 
 [node name="Fade" type="ColorRect" parent="." unique_id=468884865]
-z_index = 110
+z_index = 140
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -303,13 +333,13 @@ grow_vertical = 2
 color = Color(0.065, 0.125, 0.145, 1)
 
 [node name="SettingsPanel" parent="." instance=ExtResource("8_settings")]
-z_index = 115
+z_index = 145
 layout_mode = 1
 
 [node name="SaveNotice" type="Label" parent="."]
 unique_name_in_owner = true
 visible = false
-z_index = 105
+z_index = 135
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0

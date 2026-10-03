@@ -11,7 +11,7 @@ extends Resource
 @export_storage var shift_seconds: float = 180.0
 @export_range(1, 100, 1) var publication_limit: int = 10
 @export_storage var coffee_bonus_seconds: float = 60.0
-@export_range(0.0, 1.0) var health_drain_per_second: float = 0.10
+@export_range(0.0, 1.0) var health_drain_per_second: float = 1.0 / 15.0
 @export_range(0.0, 10.0) var publication_health_cost: float = 4.0
 
 @export_group("Доход")

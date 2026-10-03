@@ -115,6 +115,12 @@ func _draw() -> void:
 		var steam := int(_clock * 2.0) % 3
 		_block(207, 49 - steam, 1, 3, Color("d4a6bd"))
 		_block(212, 48 - steam, 1, 3, Color("d4a6bd"))
+	# The financial notebook lies beside the cup on the same table.
+	_block(226, 60, 17, 7, EDGE)
+	_block(227, 59, 15, 6, CREAM)
+	_block(229, 59, 1, 6, Color("a77586"))
+	for y in [60, 62, 64]:
+		_block(232, y, 8, 1, Color("bca1b1"))
 	# Opening the fridge is visual only; the click buys and restores stamina.
 	_block(265, 31, 37, 61, EDGE)
 	_block(267, 33, 33, 56, Color("8ba0ad"))
@@ -149,7 +155,7 @@ func _draw() -> void:
 		_block(56 + z * 4, 55 - z * 3, 4, 1, CREAM)
 	else:
 		_hero(Vector2(143, 60 + int(sin(_clock * 2.0) > 0)), false)
-	var areas := {"bed": Rect2(11, 56, 84, 40), "coffee": Rect2(199, 49, 28, 18), "fridge": Rect2(263, 29, 48, 64)}
+	var areas := {"bed": Rect2(11, 56, 84, 40), "coffee": Rect2(199, 49, 28, 18), "fridge": Rect2(263, 29, 48, 64), "notebook": Rect2(225, 58, 19, 10)}
 	if areas.has(hovered):
 		draw_rect(areas[hovered], CYAN, false, 1.0)
 

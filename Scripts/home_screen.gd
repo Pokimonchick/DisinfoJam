@@ -1,5 +1,7 @@
 extends Control
 
+signal notebook_requested
+
 var session: NewsroomSession
 var _sleep_left := 0.0
 @onready var room: Control = %RoomView
@@ -9,7 +11,8 @@ func _ready() -> void:
 	%Snack.pressed.connect(_eat.bind(false))
 	%Coffee.pressed.connect(_coffee)
 	%Bed.pressed.connect(_sleep)
-	for pair in [[%Bed, "bed"], [%Coffee, "coffee"], [%Meal, "fridge"]]:
+	%Notebook.pressed.connect(func(): notebook_requested.emit())
+	for pair in [[%Bed, "bed"], [%Coffee, "coffee"], [%Meal, "fridge"], [%Notebook, "notebook"]]:
 		var button: Button = pair[0]
 		for state in ["normal", "hover", "pressed", "disabled", "focus"]:
 			button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
@@ -48,6 +51,7 @@ func refresh() -> void:
 	%Snack.disabled = %Meal.disabled
 	%Coffee.disabled = session.coffee_ready or _sleep_left > 0
 	%Bed.disabled = _sleep_left > 0
+	%Notebook.disabled = _sleep_left > 0
 	room.food_stocked = session.food_stocked
 	room.coffee_packed = session.coffee_ready
 	room.tired = session.health < 40

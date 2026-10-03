@@ -56,6 +56,12 @@ func _click_point(point: Vector2) -> void:
 	root.push_input(click, true)
 
 func _run() -> void:
+	if "--effects" in OS.get_cmdline_user_args():
+		_test_combos()
+		_test_endings()
+		print("ARTICLE EFFECT INTEGRATION: %d checks, %d failures" % [checks, failures.size()])
+		quit(0 if failures.is_empty() else 1)
+		return
 	if not "--untimed" in OS.get_cmdline_user_args():
 		_test_catalog()
 	_test_day_cycle()
@@ -93,14 +99,14 @@ func _test_catalog() -> void:
 		_check(not ids.has(article.id), "Article IDs are unique: " + article.id)
 		ids[article.id] = true
 		_check(not article.source_text.is_empty() and article.headlines.size() == 3, "Source and three headlines: " + article.id)
-		var has_harsh_choice := false
+		var has_risky_choice := false
 		for option in article.headlines:
 			_check(not option.text.is_empty() and not option.explanation.is_empty(), "Headline and explanation exist")
 			_check(option.editorial_type in [0, 1, 2], "Headline has a valid editorial combo type")
-			has_harsh_choice = has_harsh_choice or option.reputation <= -30 or option.loyalty <= -30
-		if has_harsh_choice:
+			has_risky_choice = has_risky_choice or (option.reputation <= -10 and option.loyalty <= -8)
+		if article.high_risk:
 			dangerous += 1
-		_check(article.high_risk == has_harsh_choice, "Risk marker agrees with actual content")
+		_check(not article.high_risk or has_risky_choice, "High-risk articles retain a risky choice after rebalancing")
 	_check(dangerous == 8, "The eight original high-risk stories remain in the pool")
 
 func _test_day_cycle() -> void:
@@ -109,14 +115,14 @@ func _test_day_cycle() -> void:
 	_check(s.time_left == 0.0 and s.shift_length == 0.0 and s.day == 1, "Fresh shifts use inert zero legacy time")
 	var article_id := s.current_article().id
 	var order := s.option_order.duplicate()
-	s.tick_work(200.0)
+	s.tick_work(210.0)
 	_check(s.phase == NewsroomSession.Phase.WORK and s.completed_shifts == 0, "Elapsed time never ends an untimed shift")
-	_check(is_equal_approx(s.health, 60.0), "Drain uses the whole elapsed delta")
+	_check(is_equal_approx(s.health, 66.0), "Drain spends one stamina per fifteen seconds")
 	s.finish_shift()
 	_check(s.money == -10 and s.completed_shifts == 1, "Manual completion charges rent once")
 	s.finish_shift()
 	_check(s.money == -10, "Repeated completion cannot charge twice")
-	_check(s.buy_food(true) and s.health == 95.0 and s.money == -35, "Dinner restores stamina and costs money")
+	_check(s.buy_food(true) and s.health == 100.0 and s.money == -35, "Dinner restores capped stamina and costs money")
 	_check(not s.buy_coffee() and s.money == -35, "The carried first cup blocks another purchase")
 	s.start_shift()
 	_check(s.day == 2 and s.time_left == 0.0 and s.coffee_ready and s.health == 100.0, "Sleep restores capped stamina and carries unused coffee")
@@ -127,7 +133,7 @@ func _test_day_cycle() -> void:
 	_check(s.drink_coffee() and s.health == 100.0 and s.time_left == 0.0 and s.shift_length == 0.0, "Coffee restores capped stamina without changing time")
 	_check(not s.coffee_ready and s.coffee_used_today and not s.drink_coffee(), "A cup is consumed once per shift")
 	s.tick_work(240.0)
-	_check(s.phase == NewsroomSession.Phase.WORK and s.health == 76.0, "Work remains active past the old deadline")
+	_check(s.phase == NewsroomSession.Phase.WORK and is_equal_approx(s.health, 84.0), "Work remains active past the old deadline")
 	s.finish_shift()
 	s.start_shift()
 	_check(s.time_left == 0.0 and not s.coffee_used_today, "New shift clears the stain and keeps time inert")
@@ -231,6 +237,11 @@ func _test_endings() -> void:
 	s = _fresh()
 	s.start_shift()
 	s.loyalty = 1
+	# An explicitly political article is needed; ordinary news can have no state effect.
+	for index in s.articles.size():
+		if s.articles[index].id == "archive":
+			s.article_cursor = index
+			break
 	for i in range(3):
 		if s.option_at(i).loyalty < 0:
 			s.publish_headline(i)
@@ -363,8 +374,8 @@ func _test_benefits() -> void:
 	s.start_shift()
 	_check(s.health == 90.0, "Starting an active shift cannot repeat approval recovery")
 	s.loyalty = 10.0
-	s.tick_work(5.0)
-	_check(s.health == 89.5, "Losing loyalty does not revoke granted stamina")
+	s.tick_work(15.0)
+	_check(is_equal_approx(s.health, 89.0), "Losing loyalty does not revoke granted stamina")
 	s.drink_coffee()
 	_check(s.health == 100.0 and s.time_left == 0.0, "Approval and coffee recovery clamp at maximum stamina")
 	s.finish_shift()

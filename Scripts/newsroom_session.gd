@@ -8,6 +8,7 @@ signal phase_changed
 signal article_changed
 signal published(result: Dictionary)
 signal save_requested
+signal transaction_recorded(entry: Dictionary)
 
 enum Phase { IDLE, WORK, HOME, ENDED }
 enum Ending { NONE, EXHAUSTION, OFFICE_FIRE, ARREST, DEBT, VICTORY, GOAL_MISSED }
@@ -39,6 +40,7 @@ var earned_today: int = 0
 var total_published: int = 0
 var completed_shifts: int = 0
 var journal: Array[Dictionary] = []
+var finances := preload("res://Scripts/finance_ledger.gd").new()
 var last_shift: Dictionary = {}
 var last_result: Dictionary = {}
 var player_name: String = CAMPAIGN_HERO_NAME
@@ -87,6 +89,7 @@ func reset(seed_value: int = -1) -> void:
 	total_published = 0
 	completed_shifts = 0
 	journal.clear()
+	finances.restore({})
 	last_shift.clear()
 	last_result.clear()
 	_shuffle_options()
@@ -166,6 +169,7 @@ func publish_headline(display_index: int) -> bool:
 		"day": day,
 	}
 	money += last_result.money
+	_record_transaction("publication", last_result.money, "Публикация", combo_type, option.text)
 	reputation = clampf(reputation + last_result.reputation, 0.0, balance.maximum_stat)
 	loyalty = clampf(loyalty + last_result.loyalty, 0.0, balance.maximum_stat)
 	health = maxf(0.0, health - stamina_cost)
@@ -205,6 +209,7 @@ func finish_shift() -> void:
 	time_left = 0.0
 	awaiting_acknowledgement = false
 	money -= balance.rent
+	_record_transaction("rent", -balance.rent, "Аренда комнаты")
 	completed_shifts += 1
 	food_stocked = false
 	last_shift = {"count": published_today, "earnings": earned_today, "rent": balance.rent}
@@ -227,7 +232,9 @@ func finish_shift() -> void:
 func buy_food(full_meal: bool) -> bool:
 	if phase != Phase.HOME or health >= balance.maximum_stat:
 		return false
-	money -= balance.meal_price if full_meal else balance.snack_price
+	var price := balance.meal_price if full_meal else balance.snack_price
+	money -= price
+	_record_transaction("meal" if full_meal else "snack", -price, "Еда" if full_meal else "Перекус")
 	food_stocked = true
 	health = minf(balance.maximum_stat, health + (balance.meal_health if full_meal else balance.snack_health))
 	changed.emit()
@@ -241,6 +248,7 @@ func buy_coffee() -> bool:
 		return false
 	coffee_ready = true
 	money -= balance.coffee_price
+	_record_transaction("coffee", -balance.coffee_price, "Кофе с собой")
 	changed.emit()
 	_check_ending()
 	save_requested.emit()
@@ -262,6 +270,11 @@ func drink_coffee() -> bool:
 func combo_multiplier(count: int = -1) -> float:
 	var length := combo_count if count < 0 else count
 	return minf(balance.combo_max_multiplier, 1.0 + maxi(0, length - 1) * balance.combo_step)
+
+
+func _record_transaction(kind: String, amount: int, label: String, editorial_type: int = -1, headline: String = "") -> void:
+	finances.record(day, kind, amount, label, editorial_type, headline)
+	transaction_recorded.emit(finances.entries.back().duplicate())
 
 
 func publication_stamina_cost() -> float:

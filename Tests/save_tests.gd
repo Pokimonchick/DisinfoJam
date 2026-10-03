@@ -90,20 +90,20 @@ func _test_benefit_save() -> void:
 	var restored := fresh()
 	check(NewsroomSaveData.validate(snapshot), "Fresh work with zero legacy time validates")
 	check(NewsroomSaveData.restore(restored, snapshot), "Restore a shift with approval recovery")
-	check(restored.approval_stamina_applied and restored.health == saved_health and restored.time_left == 0.0, "Restoring does not regrant approval stamina")
-	check(NewsroomSaveData.restore(restored, snapshot) and restored.health == saved_health, "Repeated loading never duplicates approval recovery")
+	check(restored.approval_stamina_applied and is_equal_approx(restored.health, saved_health) and restored.time_left == 0.0, "Restoring does not regrant approval stamina")
+	check(NewsroomSaveData.restore(restored, snapshot) and is_equal_approx(restored.health, saved_health), "Repeated loading never duplicates approval recovery")
 	snapshot.run.erase("approval_stamina_applied")
 	snapshot.run.erase("approval_time_applied")
-	check(NewsroomSaveData.restore(restored, snapshot) and not restored.approval_stamina_applied and not restored.approval_time_applied and restored.health == saved_health, "Old saves default approval flags without recovery")
-	restored.tick_work(200.0)
-	check(restored.phase == NewsroomSession.Phase.WORK and is_equal_approx(restored.health, saved_health - 20.0), "Old zero-time saves keep draining without automatically finishing")
+	check(NewsroomSaveData.restore(restored, snapshot) and not restored.approval_stamina_applied and not restored.approval_time_applied and is_equal_approx(restored.health, saved_health), "Old saves default approval flags without recovery")
+	restored.tick_work(210.0)
+	check(restored.phase == NewsroomSession.Phase.WORK and is_equal_approx(restored.health, saved_health - 14.0), "Old zero-time saves keep draining without automatically finishing")
 	check(restored.publish_headline(0), "Old zero-time saves remain publishable")
 	snapshot.run.time_left = 195.0
 	snapshot.run.shift_length = 200.0
 	snapshot.run.approval_time_applied = true
 	check(NewsroomSaveData.restore(restored, snapshot) and restored.time_left == 195.0 and restored.shift_length == 200.0 and restored.approval_time_applied, "Old saves preserve legacy time values and flags")
-	restored.tick_work(220.0)
-	check(restored.phase == NewsroomSession.Phase.WORK and restored.time_left == 195.0 and restored.health == saved_health - 22.0, "Legacy countdown and approval flag never control gameplay")
+	restored.tick_work(225.0)
+	check(restored.phase == NewsroomSession.Phase.WORK and restored.time_left == 195.0 and is_equal_approx(restored.health, saved_health - 15.0), "Legacy countdown and approval flag never control gameplay")
 
 func _test_files() -> void:
 	var repository := SaveRepository.new(test_path)
@@ -174,11 +174,15 @@ func _test_menu_and_resume() -> void:
 	game._show_menu()
 	game._continue_run()
 	check(game.view == game.View.INTRO, "Continue restores the prologue")
-	game.lesson = 2
 	game._show_lesson()
+	await process_frame
+	game._tutorial_next()
+	game._tutorial_next()
 	game._show_menu()
 	game._continue_run()
-	check(game.view == game.View.TUTORIAL and game.lesson == 2, "Continue restores the tutorial page")
+	await process_frame
+	check(game.view == game.View.WORK and game.tutorial.visible and game._tutorial_step == 2, "Continue restores guided teaching on the actual desk")
+	game._finish_tutorial()
 	game.session.start_shift()
 	game.session.shift_length = 180.0
 	game.session.time_left = 42.5

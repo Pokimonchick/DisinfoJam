@@ -16,6 +16,9 @@ func refresh() -> void:
 	_set_meter(%Health, %HealthValue, session.health, Color("b6c995"))
 	_set_meter(%Reputation, %ReputationValue, session.reputation, Color("79bec1"))
 	_set_meter(%Loyalty, %LoyaltyValue, session.loyalty, Color("c4a3d3"))
+	%HealthHelp.tooltip_text = preload("res://Scripts/stat_descriptions.gd").text_for("health", session.balance)
+	%ReputationHelp.tooltip_text = preload("res://Scripts/stat_descriptions.gd").text_for("reputation", session.balance)
+	%LoyaltyHelp.tooltip_text = preload("res://Scripts/stat_descriptions.gd").text_for("loyalty", session.balance)
 	%ReputationHint.present(session.balance.reader_support,
 		StatBenefitHint.State.READY if session.reputation >= session.balance.reader_support.threshold else StatBenefitHint.State.LOCKED)
 	var approval_state := StatBenefitHint.State.LOCKED
@@ -32,6 +35,6 @@ func refresh() -> void:
 func _set_meter(bar: ProgressBar, label: Label, value: float, color: Color) -> void:
 	bar.max_value = session.balance.maximum_stat
 	bar.value = value
-	label.text = ("%.1f / %d" if bar == %Health else "%d / %d") % [value if bar == %Health else ceili(value), int(session.balance.maximum_stat)]
+	label.text = "%d / %d" % [ceili(value), int(session.balance.maximum_stat)]
 	var fill := bar.get_theme_stylebox("fill") as StyleBoxFlat
 	fill.bg_color = Color("e18c65") if value < 25 else color

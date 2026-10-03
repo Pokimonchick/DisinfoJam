@@ -12,4 +12,3 @@ func present(benefit: StatBenefit, state: State) -> void:
 		template = benefit.applied_text
 	%Caption.text = benefit.formatted(template)
 	%Caption.add_theme_color_override("font_color", Color("eee4cc") if state != State.LOCKED else Color("8d9797"))
-	%Help.tooltip_text = benefit.formatted(benefit.explanation)

@@ -14,7 +14,7 @@ static func capture(session: NewsroomSession) -> Dictionary:
 	var run := {"phase": PHASES[session.phase], "ending": ENDINGS[session.ending],
 		"mode": session.mode, "id": session.run_id, "option_order": session.option_order.duplicate(),
 		"journal": session.journal.duplicate(true), "last_result": session.last_result.duplicate(true),
-		"last_shift": session.last_shift.duplicate(true)}
+		"last_shift": session.last_shift.duplicate(true), "finances": session.finances.to_data()}
 	for key in NUMBERS + FLAGS:
 		run[key] = session.get(key)
 	var rows: Array = []
@@ -34,6 +34,8 @@ static func validate(sections: Dictionary) -> bool:
 	var profile: Dictionary = sections.profile
 	var run: Dictionary = sections.run
 	var content: Dictionary = sections.content
+	if not preload("res://Scripts/finance_ledger.gd").validate_data(run.get("finances", {})):
+		return false
 	for key in ["health", "reputation", "loyalty", "money", "day", "time_left", "shift_length", "article_cursor", "completed_shifts"]:
 		if not run.has(key):
 			return false
@@ -133,9 +135,11 @@ static func restore(session: NewsroomSession, sections: Dictionary) -> bool:
 	session.journal.assign(run.get("journal", []).duplicate(true))
 	session.last_result = run.get("last_result", {}).duplicate(true)
 	session.last_shift = run.get("last_shift", {}).duplicate(true)
+	session.finances.restore(run.get("finances", {}), session.journal, session.completed_shifts)
 	session.articles.clear()
 	for row in sections.content.articles:
 		session.articles.append(NewsArticle.from_row(row))
+	preload("res://Data/legacy_article_balance.gd").apply(session.articles)
 	# JSON numbers cannot represent all 64-bit RNG states exactly. Store as strings.
 	session._rng.seed = int(sections.content.get("rng_seed", "0"))
 	session._rng.state = int(sections.content.get("rng_state", "0"))
