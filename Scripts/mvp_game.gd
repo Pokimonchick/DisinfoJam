@@ -286,6 +286,13 @@ func _show_menu() -> void:
 
 func _show_view(next: View) -> void:
 	view = next
+	match view:
+		View.WORK:
+			$Audio/WorkMusic.play()
+		View.HOME:
+			$Audio/HomeMusic.play()
+		_:
+			AudioManager.stop_music()
 	paused = false
 	tutorial.hide()
 	stamina_warning.hide()

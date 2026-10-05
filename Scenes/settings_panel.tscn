@@ -41,7 +41,7 @@ theme_override_constants/separation = 20
 layout_mode = 2
 theme_override_colors/font_color = Color(0.91, 0.74, 0.41, 1)
 theme_override_font_sizes/font_size = 16
-text = "ИНТЕРФЕЙС"
+text = "ИНТЕРФЕЙС И ЗВУК"
 
 [node name="Title" type="Label" parent="Center/Paper/Layout"]
 layout_mode = 2
@@ -62,6 +62,58 @@ custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 text = "Выбор заголовка: с фоном"
+
+[node name="Sound" type="VBoxContainer" parent="Center/Paper/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Music" type="HBoxContainer" parent="Center/Paper/Layout/Sound"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Label" type="Label" parent="Center/Paper/Layout/Sound/Music"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+text = "Музыка"
+
+[node name="MusicVolume" type="HSlider" parent="Center/Paper/Layout/Sound/Music"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 2
+value = 100.0
+
+[node name="MusicPercent" type="Label" parent="Center/Paper/Layout/Sound/Music"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(62, 0)
+layout_mode = 2
+text = "100%"
+horizontal_alignment = 2
+
+[node name="Effects" type="HBoxContainer" parent="Center/Paper/Layout/Sound"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Label" type="Label" parent="Center/Paper/Layout/Sound/Effects"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+text = "Звуки (SFX)"
+
+[node name="SfxVolume" type="HSlider" parent="Center/Paper/Layout/Sound/Effects"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 2
+value = 100.0
+
+[node name="SfxPercent" type="Label" parent="Center/Paper/Layout/Sound/Effects"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(62, 0)
+layout_mode = 2
+text = "100%"
+horizontal_alignment = 2
 
 [node name="Close" type="Button" parent="Center/Paper/Layout"]
 unique_name_in_owner = true

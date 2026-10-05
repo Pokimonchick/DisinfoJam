@@ -15,10 +15,15 @@ run/main_scene="res://Scenes/mvp_game.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[audio]
+
+default_bus_layout="res://Data/audio_bus_layout.tres"
+
 [autoload]
 
 GameState="*res://Scripts/game_state.gd"
 GameSettings="*res://Scripts/game_settings.gd"
+AudioManager="*res://Scenes/audio_manager.tscn"
 CursorTooltip="*res://Scripts/cursor_tooltip.gd"
 
 [display]

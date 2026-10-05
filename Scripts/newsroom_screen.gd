@@ -19,6 +19,10 @@ const NUMBER_ART: Array[Texture2D] = [
 
 enum DialogKind { NONE, RESULT }
 
+@export_group("Audio")
+@export var headline_appear_sound: AudioStream = preload("res://Assets/Sounds/paper.mp3")
+@export_range(-40.0, 6.0, 0.5) var headline_appear_volume_db: float = 0.0
+
 var session: NewsroomSession
 # Selected is the article's draft, not a published headline.
 var selected_index := -1
@@ -222,6 +226,7 @@ func _open_choices(animate := true) -> void:
 		if animate:
 			_choice_tween.tween_property(slot, "position", target, 0.45).set_delay(order * 0.055)
 			_choice_tween.tween_property(slot, "modulate:a", 1.0, 0.26).set_delay(order * 0.055)
+			_choice_tween.tween_callback(_play_headline_appear_sound).set_delay(order * 0.055)
 	if animate:
 		_choice_tween.chain().tween_callback(func():
 			_choices_animating = false
@@ -233,6 +238,10 @@ func _open_choices(animate := true) -> void:
 		_choice_tween.kill()
 	_refresh_actions()
 	view_changed.emit()
+
+func _play_headline_appear_sound() -> void:
+	if choices_open and is_visible_in_tree():
+		AudioManager.play_sfx(headline_appear_sound, headline_appear_volume_db)
 
 func _hide_choices(animate := true) -> void:
 	if _choice_tween:

@@ -16,6 +16,8 @@
 
 Дома рядом с кофе лежит финансовый блокнот. Он открывается только нажатием и показывает расходы, доходы по направлениям публикаций и список операций за день либо всё прохождение. Аренда, еда, перекус и кофе записываются при реальном списании; красная сумма у баланса ненадолго показывает расход.
 
+На рабочем столе играет `Work_background.mp3`, дома — `at_home.mp3`, с зацикливанием и плавной сменой музыки. Каждая появляющаяся записка заголовка отдельно проигрывает `paper.mp3`. В настройках меню и паузы есть отдельная громкость музыки и SFX; значения сохраняются между запусками. Для новых звуков можно добавлять экземпляры `Scenes/audio_cue.tscn` и назначать файл в инспекторе; устройство менеджера описано в `Docs/AUDIO.md`.
+
 ## Где искать
 
 | Задача | Файлы |
@@ -31,6 +33,7 @@
 | Обучение с подсветкой и предупреждение | `Data/interface_lessons.gd`, `Scenes/interaction_tutorial.tscn`, `Scripts/interaction_tutorial.gd`; управление — `Scripts/mvp_game.gd` |
 | Значение шкал | `Scripts/stat_descriptions.gd`, `Scenes/work_status_drawer.tscn`, `Scenes/newsroom_hud.tscn` |
 | Финансовый блокнот и анимация списаний | `Scripts/finance_ledger.gd`, `Scenes/finance_notebook.tscn`, `Scripts/finance_notebook.gd`, `Scripts/money_delta.gd` |
+| Музыка, эффекты и громкость | `Scenes/audio_manager.tscn`, `Scripts/audio_manager.gd`, `Scenes/audio_cue.tscn`, `Scripts/game_settings.gd`, `Docs/AUDIO.md` |
 | Вечер и комната | `Scenes/home_screen.tscn`, `Scripts/home_screen.gd`, `Scripts/pixel_room.gd` |
 | Порядок экранов, история, меню, автосохранение | `Scenes/mvp_game.tscn`, `Scripts/mvp_game.gd`, `Data/chapter_one.gd` |
 | Хранилище сохранений и правила расширения | `Scripts/save_repository.gd`, `Scripts/newsroom_save_data.gd`, `Scripts/game_state.gd`, `Docs/SAVES.md` |
