@@ -13,6 +13,8 @@ signal skip_requested
 
 var _targets: Array[Control] = []
 var _highlight := Rect2()
+var _redraw_size := Vector2(-1.0, -1.0)
+var _redraw_dim_opacity := -1.0
 @onready var _panel: PanelContainer = $Paper
 
 func _ready() -> void:
@@ -32,12 +34,14 @@ func present(speaker: String, body: String, targets: Array[Control], step: int, 
 	show()
 	%Next.grab_focus()
 	_position_paper()
+	queue_redraw()
 
 func _process(_delta: float) -> void:
 	if visible:
 		_position_paper()
 
 func _position_paper() -> void:
+	var previous_highlight := _highlight
 	var first := true
 	var to_local := get_global_transform_with_canvas().affine_inverse()
 	for target in _targets:
@@ -71,7 +75,10 @@ func _position_paper() -> void:
 			overlap = area
 			best = candidate
 	_panel.position = best
-	queue_redraw()
+	if _highlight != previous_highlight or size != _redraw_size or dim_opacity != _redraw_dim_opacity:
+		_redraw_size = size
+		_redraw_dim_opacity = dim_opacity
+		queue_redraw()
 
 func _draw() -> void:
 	var shade := Color(0.06, 0.045, 0.025, dim_opacity)

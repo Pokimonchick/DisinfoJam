@@ -28,7 +28,9 @@ func refresh() -> void:
 		approval_state = StatBenefitHint.State.READY
 	%LoyaltyHint.present(session.balance.state_approval, approval_state)
 	%Money.text = "%d $" % session.money
-	%Money.add_theme_color_override("font_color", Color("ed987e") if session.money < 0 else Color("e8bd68"))
+	var money_color := Color("ed987e") if session.money < 0 else Color("e8bd68")
+	if %Money.get_theme_color("font_color") != money_color:
+		%Money.add_theme_color_override("font_color", money_color)
 	%Day.text = "СМЕНА %02d" % session.day
 	%Period.text = "РАБОТА" if session.phase == NewsroomSession.Phase.WORK else ("ФИНАЛ" if session.phase == NewsroomSession.Phase.ENDED else "ВЕЧЕР")
 
@@ -37,4 +39,6 @@ func _set_meter(bar: ProgressBar, label: Label, value: float, color: Color) -> v
 	bar.value = value
 	label.text = "%d / %d" % [ceili(value), int(session.balance.maximum_stat)]
 	var fill := bar.get_theme_stylebox("fill") as StyleBoxFlat
-	fill.bg_color = Color("e18c65") if value < 25 else color
+	var fill_color := Color("e18c65") if value < 25 else color
+	if fill.bg_color != fill_color:
+		fill.bg_color = fill_color

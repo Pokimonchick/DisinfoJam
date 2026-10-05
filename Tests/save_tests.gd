@@ -24,8 +24,11 @@ func fresh() -> NewsroomSession:
 
 func _run() -> void:
 	_test_snapshots()
+	_test_invalid_restore()
+	_test_legacy_explanations()
 	_test_benefit_save()
 	_test_files()
+	_test_presentation_validation()
 	_test_campaign()
 	await _test_menu_and_resume()
 	print("SAVE TESTS: %d checks, %d failures" % [checks, failures.size()])
@@ -80,6 +83,67 @@ func _test_snapshots() -> void:
 	var extended := SaveRepository.merge_sections({"run": {"future_feature": 17}}, snapshot)
 	check(extended.run.future_feature == 17, "Unknown fields survive saving")
 
+func _test_invalid_restore() -> void:
+	var session := fresh()
+	session.start_shift()
+	session.publish_headline(0)
+	var snapshot := NewsroomSaveData.capture(session)
+	var restored := fresh()
+	restored.start_shift()
+	restored.tick_work(6.0)
+	var unchanged := NewsroomSaveData.capture(restored)
+	var legacy := snapshot.duplicate(true)
+	legacy.run.erase("finances")
+	for field in ["day", "money", "combo_type"]:
+		for value in [{}, [], "bad integer", 1.5, INF, NAN, 9223372036854775808.0]:
+			var invalid := legacy.duplicate(true)
+			invalid.run.journal[0][field] = value
+			check(not NewsroomSaveData.restore(restored, invalid) and NewsroomSaveData.capture(restored) == unchanged,
+				"Invalid legacy %s rejects before changing the session: %s" % [field, str(value)])
+	for type in [-2, 3]:
+		var invalid := legacy.duplicate(true)
+		invalid.run.journal[0].combo_type = type
+		check(not NewsroomSaveData.restore(restored, invalid) and NewsroomSaveData.capture(restored) == unchanged,
+			"Invalid legacy editorial type rejects before changing the session: %d" % type)
+	for value in [{}, [], "bad cost", INF, NAN, -1.0]:
+		var invalid := snapshot.duplicate(true)
+		invalid.run.last_result.stamina_cost = value
+		check(not NewsroomSaveData.restore(restored, invalid) and NewsroomSaveData.capture(restored) == unchanged,
+			"Invalid optional result stamina rejects before changing the session: %s" % str(value))
+	var old_result := snapshot.duplicate(true)
+	old_result.run.last_result.erase("stamina_cost")
+	check(NewsroomSaveData.restore(restored, old_result), "Old results without stamina cost remain compatible")
+	legacy.run.journal = [{}]
+	check(NewsroomSaveData.restore(restored, legacy), "Missing legacy journal fields retain defaults")
+	check(restored.finances.entries[0].day == 1 and restored.finances.entries[0].amount == 0 and restored.finances.entries[0].editorial_type == -1,
+		"Legacy journal defaults import without invented income")
+	legacy.run.journal = [{"day": 1.0, "money": 7.0, "combo_type": 2.0}]
+	check(NewsroomSaveData.restore(restored, legacy) and restored.finances.summary().income == 7,
+		"Integral JSON floats remain valid in legacy finance history")
+
+func _test_legacy_explanations() -> void:
+	var session := fresh()
+	var archive_index := -1
+	for i in session.articles.size():
+		if session.articles[i].id == "archive":
+			archive_index = i
+	var option: HeadlineOption = session.articles[archive_index].headlines[1]
+	var authored_effects := [option.reputation, option.loyalty]
+	var authored_explanation := option.explanation
+	var custom_explanation := "Ручное пояснение редактора должно сохраниться."
+	option.reputation = -37
+	option.loyalty = -30
+	option.explanation = custom_explanation
+	var snapshot: Dictionary = JSON.parse_string(JSON.stringify(NewsroomSaveData.capture(session)))
+	var restored := fresh()
+	check(NewsroomSaveData.restore(restored, snapshot), "Legacy effects with a manually edited explanation load")
+	var migrated: HeadlineOption = restored.articles[archive_index].headlines[1]
+	check([migrated.reputation, migrated.loyalty] == authored_effects and migrated.explanation == custom_explanation,
+		"Legacy migration updates effects while preserving manual explanations")
+	snapshot.content.articles[archive_index].options[1][4] = ""
+	check(NewsroomSaveData.restore(restored, snapshot) and restored.articles[archive_index].headlines[1].explanation == authored_explanation,
+		"Legacy migration fills an empty explanation with the authored text")
+
 func _test_benefit_save() -> void:
 	var session := fresh()
 	session.loyalty = session.balance.state_approval.threshold
@@ -113,6 +177,18 @@ func _test_files() -> void:
 	document.sections.run.money = 77
 	check(repository.write_document(document), "Atomically replace existing save")
 	check(repository.load_document().sections.run.money == 77, "Load latest save")
+	var primary_before := FileAccess.get_file_as_string(test_path)
+	var backup_before := FileAccess.get_file_as_string(test_path + ".bak")
+	var temporary := FileAccess.open(test_path + ".tmp", FileAccess.WRITE)
+	temporary.store_string("untouched temporary file")
+	temporary.close()
+	var oversized := document.duplicate(true)
+	# Cyrillic text stays under the character limit but exceeds the UTF-8 byte limit.
+	oversized.sections.content["future_generated_text"] = "я".repeat(SaveRepository.MAX_FILE_BYTES >> 1)
+	check(not repository.write_document(oversized) and repository.error_message.contains("размер"), "Oversized UTF-8 save rejects before writing")
+	check(FileAccess.get_file_as_string(test_path) == primary_before and FileAccess.get_file_as_string(test_path + ".bak") == backup_before,
+		"Oversized save preserves the valid primary and backup exactly")
+	check(FileAccess.get_file_as_string(test_path + ".tmp") == "untouched temporary file", "Oversized save preserves an existing temporary file")
 	var file := FileAccess.open(test_path, FileAccess.WRITE)
 	file.store_string("{broken")
 	file.close()
@@ -132,6 +208,28 @@ func _test_files() -> void:
 	file.store_string(JSON.stringify({"format_version": 0, "legacy_sections": document.sections}))
 	file.close()
 	check(repository.load_document().get("format_version", 0) == 1, "Registered format migration runs")
+
+func _test_presentation_validation() -> void:
+	var repository := SaveRepository.new(test_path)
+	var controller_script = load("res://Scripts/mvp_game.gd")
+	repository.validator = controller_script._validate_save
+	var document := {"sections": NewsroomSaveData.capture(fresh())}
+	check(repository.write_document(document), "Old saves without presentation fields remain valid")
+	for newsroom in [{}, {"layout_version": 1, "selected_index": -1}, {"layout_version": 2.0, "selected_index": 2.0}]:
+		document.sections["presentation"] = {"newsroom": newsroom}
+		check(repository.write_document(document) and not repository.load_document().is_empty(),
+			"Default, old and current newsroom layouts survive repository validation: %s" % str(newsroom))
+	var primary_before := FileAccess.get_file_as_string(test_path)
+	for field in ["layout_version", "selected_index"]:
+		var invalid_values: Array = [{}, 1.5, INF, NAN]
+		invalid_values.append(0 if field == "layout_version" else -2)
+		if field == "selected_index":
+			invalid_values.append(3)
+		for value in invalid_values:
+			var invalid := document.duplicate(true)
+			invalid.sections.presentation.newsroom[field] = value
+			check(not repository.write_document(invalid) and FileAccess.get_file_as_string(test_path) == primary_before,
+				"Invalid newsroom %s rejects without replacing the save: %s" % [field, str(value)])
 
 func _test_campaign() -> void:
 	var session := fresh()

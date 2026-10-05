@@ -11,4 +11,6 @@ func present(benefit: StatBenefit, state: State) -> void:
 	elif state == State.APPLIED:
 		template = benefit.applied_text
 	%Caption.text = benefit.formatted(template)
-	%Caption.add_theme_color_override("font_color", Color("eee4cc") if state != State.LOCKED else Color("8d9797"))
+	var caption_color := Color("eee4cc") if state != State.LOCKED else Color("8d9797")
+	if %Caption.get_theme_color("font_color") != caption_color:
+		%Caption.add_theme_color_override("font_color", caption_color)

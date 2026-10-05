@@ -4,6 +4,8 @@ extends ProgressBar
 
 @export var ink_color := Color("80653c"):
 	set(new_color):
+		if ink_color == new_color:
+			return
 		ink_color = new_color
 		queue_redraw()
 

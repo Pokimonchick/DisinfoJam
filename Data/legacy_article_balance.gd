@@ -137,7 +137,9 @@ static func apply(articles: Array[NewsArticle]) -> int:
 				if option.reputation != authored.reputation or option.loyalty != authored.loyalty:
 					option.reputation = authored.reputation
 					option.loyalty = authored.loyalty
-					option.explanation = authored.explanation
+					# Saved explanations may contain manual edits; keep nonempty text.
+					if option.explanation.is_empty():
+						option.explanation = authored.explanation
 					changed += 1
 				break
 	return changed

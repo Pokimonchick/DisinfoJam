@@ -85,6 +85,13 @@ static func validate(sections: Dictionary) -> bool:
 	for entry in run.get("journal", []):
 		if not entry is Dictionary:
 			return false
+		# Legacy finance import converts these fields before recording entries.
+		if not run.get("finances", {}).has("entries"):
+			for key in ["day", "money", "combo_type"]:
+				if entry.has(key) and not preload("res://Scripts/finance_ledger.gd")._is_integer(entry[key]):
+					return false
+			if entry.get("combo_type", -1) < -1 or entry.get("combo_type", -1) > 2:
+				return false
 	var result: Dictionary = run.get("last_result", {})
 	if run.get("awaiting_acknowledgement", false) and result.is_empty():
 		return false
@@ -95,6 +102,8 @@ static func validate(sections: Dictionary) -> bool:
 		for key in ["combo_type", "combo_count", "multiplier", "money", "reputation", "loyalty"]:
 			if not _number(result.get(key)):
 				return false
+		if result.has("stamina_cost") and (not _number(result.stamina_cost) or result.stamina_cost < 0):
+			return false
 		if int(result.combo_type) != result.combo_type or not int(result.combo_type) in [0, 1, 2]:
 			return false
 	if not content.get("articles") is Array or content.articles.is_empty():

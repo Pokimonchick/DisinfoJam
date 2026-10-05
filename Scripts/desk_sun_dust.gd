@@ -2,7 +2,7 @@
 extends Node2D
 
 const LIGHT_PARAMETERS := [
-	"light_color", "strength", "speed", "sway", "reach", "source_glow",
+	"light_color", "speed", "sway", "reach", "source_glow",
 	"direction", "ray_width", "ray_spacing", "width_variation", "shimmer",
 	"light_position", "rect_size", "animation_time",
 ]
@@ -111,6 +111,7 @@ const LIGHT_PARAMETERS := [
 
 var _layers: Array[GPUParticles2D] = []
 var _draw_material: ShaderMaterial
+var _synced_light_parameters: Dictionary = {}
 
 func _ready() -> void:
 	_layers = [$FarDust, $NearDust]
@@ -124,13 +125,14 @@ func _notification(what: int) -> void:
 		_sync_running()
 
 func _process(_delta: float) -> void:
-	_sync_light()
+	if is_visible_in_tree():
+		_sync_light()
 
 func _sync_running() -> void:
 	var running := is_inside_tree() and is_visible_in_tree() and can_process()
 	running = running and (not Engine.is_editor_hint() or preview_animation)
 	for layer in _layers:
-		layer.speed_scale = drift_speed if running else 0.0
+		layer.speed_scale = drift_speed if running and layer.visible else 0.0
 
 func _sync_settings() -> void:
 	if _layers.is_empty():
@@ -172,17 +174,23 @@ func _sync_light() -> void:
 		return
 	var sunlight := get_node_or_null(sunlight_path) as ColorRect
 	if sunlight == null or not sunlight.is_visible_in_tree() or not sunlight.material is ShaderMaterial:
-		_draw_material.set_shader_parameter("strength", 0.0)
+		_set_light_parameter("strength", 0.0)
 		return
 	var light_material := sunlight.material as ShaderMaterial
 	for parameter in LIGHT_PARAMETERS:
 		var value: Variant = light_material.get_shader_parameter(parameter)
 		if value != null:
-			_draw_material.set_shader_parameter(parameter, value)
+			_set_light_parameter(parameter, value)
 	var strength := float(light_material.get_shader_parameter("strength"))
-	_draw_material.set_shader_parameter("strength", strength * sunlight.modulate.a * sunlight.self_modulate.a)
+	_set_light_parameter("strength", strength * sunlight.modulate.a * sunlight.self_modulate.a)
 	# Particle MODEL_MATRIX uses world coordinates, including the desk's scale/parallax.
 	var inverse := sunlight.get_global_transform().affine_inverse()
-	_draw_material.set_shader_parameter("light_inverse_x", inverse.x)
-	_draw_material.set_shader_parameter("light_inverse_y", inverse.y)
-	_draw_material.set_shader_parameter("light_inverse_origin", inverse.origin)
+	_set_light_parameter("light_inverse_x", inverse.x)
+	_set_light_parameter("light_inverse_y", inverse.y)
+	_set_light_parameter("light_inverse_origin", inverse.origin)
+
+func _set_light_parameter(parameter: String, value: Variant) -> void:
+	if _synced_light_parameters.has(parameter) and _synced_light_parameters[parameter] == value:
+		return
+	_synced_light_parameters[parameter] = value
+	_draw_material.set_shader_parameter(parameter, value)

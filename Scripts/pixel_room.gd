@@ -4,6 +4,8 @@ extends Control
 # Scenery and the scene's normalized hit areas share a 320 x 112 pixel grid.
 var hovered := "":
 	set(value):
+		if hovered == value:
+			return
 		hovered = value
 		queue_redraw()
 var food_stocked := false
@@ -24,8 +26,11 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	if is_visible_in_tree():
+		var previous_frame := int(_clock * 2.0) % 3
+		var previous_bob := sin(_clock * 2.0) > 0.0
 		_clock += delta
-		queue_redraw()
+		if int(_clock * 2.0) % 3 != previous_frame or (sin(_clock * 2.0) > 0.0) != previous_bob:
+			queue_redraw()
 
 func _block(x: float, y: float, w: float, h: float, color: Color) -> void:
 	draw_rect(Rect2(x, y, w, h), color)

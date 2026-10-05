@@ -11,27 +11,27 @@ void vertex() {
 	item_alpha = COLOR.a;
 }
 
-float silhouette(sampler2D mask_texture, vec2 uv) {
+float silhouette(float alpha, vec2 uv) {
 	if (any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) {
 		return 0.0;
 	}
-	return texture(mask_texture, uv).a;
+	return alpha;
 }
 
 void fragment() {
 	vec2 blur = TEXTURE_PIXEL_SIZE * blur_pixels;
-	float mask = silhouette(TEXTURE, UV) * 0.25;
+	float mask = silhouette(texture(TEXTURE, UV).a, UV) * 0.25;
 	mask += (
-		silhouette(TEXTURE, UV + vec2(blur.x, 0.0)) +
-		silhouette(TEXTURE, UV - vec2(blur.x, 0.0)) +
-		silhouette(TEXTURE, UV + vec2(0.0, blur.y)) +
-		silhouette(TEXTURE, UV - vec2(0.0, blur.y))
+		silhouette(texture(TEXTURE, UV + vec2(blur.x, 0.0)).a, UV + vec2(blur.x, 0.0)) +
+		silhouette(texture(TEXTURE, UV - vec2(blur.x, 0.0)).a, UV - vec2(blur.x, 0.0)) +
+		silhouette(texture(TEXTURE, UV + vec2(0.0, blur.y)).a, UV + vec2(0.0, blur.y)) +
+		silhouette(texture(TEXTURE, UV - vec2(0.0, blur.y)).a, UV - vec2(0.0, blur.y))
 	) * 0.125;
 	mask += (
-		silhouette(TEXTURE, UV + blur) +
-		silhouette(TEXTURE, UV - blur) +
-		silhouette(TEXTURE, UV + vec2(blur.x, -blur.y)) +
-		silhouette(TEXTURE, UV + vec2(-blur.x, blur.y))
+		silhouette(texture(TEXTURE, UV + blur).a, UV + blur) +
+		silhouette(texture(TEXTURE, UV - blur).a, UV - blur) +
+		silhouette(texture(TEXTURE, UV + vec2(blur.x, -blur.y)).a, UV + vec2(blur.x, -blur.y)) +
+		silhouette(texture(TEXTURE, UV + vec2(-blur.x, blur.y)).a, UV + vec2(-blur.x, blur.y))
 	) * 0.0625;
 	// Multiply requires white outside the silhouette; alpha alone does not mask it.
 	// Apply inherited opacity here so the shadow fades with the whole card.

@@ -82,7 +82,9 @@ func _refresh() -> void:
 	%LoyaltyHint.text = approval.formatted(approval_text)
 	%LoyaltyHelp.tooltip_text = preload("res://Scripts/stat_descriptions.gd").text_for("loyalty", session.balance)
 	%MoneyValue.text = "%d $" % session.money
-	%MoneyValue.add_theme_color_override("font_color", Color("ff9f82") if session.money < 0 else Color("f8e9c7"))
+	var money_color := Color("ff9f82") if session.money < 0 else Color("f8e9c7")
+	if %MoneyValue.get_theme_color("font_color") != money_color:
+		%MoneyValue.add_theme_color_override("font_color", money_color)
 
 
 func _set_meter(bar: PencilMeter, label: Label, value: float, color: Color) -> void:

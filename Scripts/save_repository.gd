@@ -43,6 +43,10 @@ func write_document(document: Dictionary) -> bool:
 	if not _valid(payload):
 		error_message = "Данные прохождения не удалось сохранить."
 		return false
+	var serialized := JSON.stringify(payload, "\t").to_utf8_buffer()
+	if serialized.size() > MAX_FILE_BYTES:
+		error_message = "Сохранение превышает допустимый размер файла."
+		return false
 	var absolute := ProjectSettings.globalize_path(path)
 	if DirAccess.make_dir_recursive_absolute(absolute.get_base_dir()) != OK:
 		error_message = "Не удалось создать папку сохранений."
@@ -51,7 +55,7 @@ func write_document(document: Dictionary) -> bool:
 	if file == null:
 		error_message = "Не удалось открыть файл сохранения для записи."
 		return false
-	file.store_string(JSON.stringify(payload, "\t"))
+	file.store_buffer(serialized)
 	file.flush()
 	var write_error := file.get_error()
 	file.close()

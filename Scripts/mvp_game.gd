@@ -130,6 +130,8 @@ func _update_fatigue(delta: float) -> void:
 	_fatigue_amount = move_toward(_fatigue_amount, target, delta * 0.8)
 	_fatigue_time += delta
 	fatigue_overlay.visible = _fatigue_amount > 0.001
+	if not fatigue_overlay.visible:
+		return
 	var effect := fatigue_overlay.material as ShaderMaterial
 	effect.set_shader_parameter("intensity", _fatigue_amount)
 	effect.set_shader_parameter("effect_time", _fatigue_time)
@@ -670,7 +672,11 @@ static func _validate_save(sections: Dictionary) -> bool:
 	if guidance.get("stage", "").is_empty() and step != 0:
 		return false
 	var newsroom: Dictionary = presentation.get("newsroom", {})
-	if not newsroom.get("selected_index", -1) is int and not newsroom.get("selected_index", -1) is float:
+	var selected_index: Variant = newsroom.get("selected_index", -1)
+	if not NewsroomSaveData._number(selected_index) or int(selected_index) != selected_index or selected_index < -1 or selected_index > 2:
+		return false
+	var layout_version: Variant = newsroom.get("layout_version", 1)
+	if not NewsroomSaveData._number(layout_version) or int(layout_version) != layout_version or layout_version < 1:
 		return false
 	if newsroom.has("preview_index"):
 		var preview: Variant = newsroom.preview_index
