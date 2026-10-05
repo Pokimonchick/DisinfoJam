@@ -20,7 +20,7 @@ const NUMBER_ART: Array[Texture2D] = [
 enum DialogKind { NONE, RESULT }
 
 @export_group("Audio")
-@export var headline_appear_sound: AudioStream = preload("res://Assets/Sounds/paper.mp3")
+@export var headline_appear_sound: AudioStream = preload("res://Assets/Sounds/paper - Part_1.wav")
 @export_range(-40.0, 6.0, 0.5) var headline_appear_volume_db: float = 0.0
 
 var session: NewsroomSession

@@ -2,7 +2,10 @@
 
 `AudioManager` is a single autoload of `Scenes/audio_manager.tscn`. Do not
 instantiate additional managers in gameplay scenes. Music and SFX use separate
-buses from `Data/audio_bus_layout.tres`; Master remains the final output.
+buses from `Data/audio_bus_layout.tres`, configured by
+`audio/buses/default_bus_layout`; Master remains the final output. The manager
+creates missing Music/SFX buses before routing players, so settings also work
+when an editor session has not yet loaded the configured layout.
 
 ## Add a sound to a scene
 
@@ -40,7 +43,7 @@ restart on completion. Re-requesting the same track does not reset playback.
   out for other screens. Pause, settings and publication results keep it playing.
 - `Scripts/newsroom_screen.gd` exposes **Audio / Headline Appear Sound** and
   **Headline Appear Volume Db** on the newsroom root. An animated note plays
-  `paper.mp3` at its own tween delay (0, 0.055, 0.11 seconds). Cancelling the tween
+  `paper - Part_1.wav` at its own tween delay (0, 0.055, 0.11 seconds). Cancelling the tween
   cancels pending sounds; restoring or rearranging visible choices is silent.
 - The manager root exposes **Sfx Voice Count**, **Crossfade Seconds**,
   **Music Gain Db** and **Sfx Gain Db**. These are authoring values: initial

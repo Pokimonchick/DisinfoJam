@@ -18,6 +18,8 @@ var _music_tween: Tween
 
 
 func _ready() -> void:
+	_ensure_bus(&"Music")
+	_ensure_bus(&"SFX")
 	_music_players.assign([$MusicA, $MusicB])
 	for index in maxi(sfx_voice_count, 1):
 		var player := AudioStreamPlayer.new()
@@ -26,9 +28,19 @@ func _ready() -> void:
 		$SFX.add_child(player)
 		_sfx_players.append(player)
 	for player in _music_players:
+		player.bus = &"Music"
 		player.finished.connect(_on_music_finished.bind(player))
 	GameSettings.audio_changed.connect(_apply_volumes)
 	_apply_volumes()
+
+
+func _ensure_bus(bus: StringName) -> void:
+	if AudioServer.get_bus_index(bus) >= 0:
+		return
+	AudioServer.add_bus()
+	var index := AudioServer.get_bus_count() - 1
+	AudioServer.set_bus_name(index, bus)
+	AudioServer.set_bus_send(index, &"Master")
 
 
 func play_music(stream: AudioStream, volume_db: float = 0.0, loop: bool = true) -> void:
