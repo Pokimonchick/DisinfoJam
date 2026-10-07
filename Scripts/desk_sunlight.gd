@@ -48,17 +48,22 @@ extends ColorRect
 
 @export_group("Анимация")
 ## Скорость движения и изменения яркости. Ноль останавливает анимацию.
-@export_range(0.0, 2.0, 0.01) var speed := 0.32:
+@export_range(0.0, 2.0, 0.01) var speed := 0.55:
 	set(value):
 		speed = value
 		_sync_material()
 ## Размах покачивания отдельных лучей в градусах.
-@export_range(0.0, 10.0, 0.1) var sway_degrees := 1.031324:
+@export_range(0.0, 15.0, 0.1) var sway_degrees := 3.5:
 	set(value):
 		sway_degrees = value
 		_sync_material()
-## Глубина плавного изменения яркости; 0 — постоянная яркость лучей.
-@export_range(0.0, 0.5, 0.01) var shimmer := 0.24:
+## Насколько меняется ширина отдельных лучей во время движения.
+@export_range(0.0, 1.0, 0.01) var width_variation := 0.55:
+	set(value):
+		width_variation = value
+		_sync_material()
+## Глубина проявления и затухания лучей; 1 — каждый луч полностью затухает.
+@export_range(0.0, 1.0, 0.01) var shimmer := 0.70:
 	set(value):
 		shimmer = value
 		_sync_material()
@@ -86,6 +91,7 @@ func _sync_material() -> void:
 	shader_material.set_shader_parameter("ray_spacing", ray_spacing)
 	shader_material.set_shader_parameter("speed", speed)
 	shader_material.set_shader_parameter("sway", deg_to_rad(sway_degrees))
+	shader_material.set_shader_parameter("width_variation", width_variation)
 	shader_material.set_shader_parameter("shimmer", shimmer)
 	shader_material.set_shader_parameter("animation_time", _animation_time)
 

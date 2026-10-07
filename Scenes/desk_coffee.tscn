@@ -2,17 +2,21 @@
 
 [ext_resource type="Script" uid="uid://dbi6mg7068h2w" path="res://Scripts/desk_coffee.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://di3e7a1p2t5rf" path="res://Assets/Assets for new version of game/Untitled (22)/Group 8 (2) 2.png" id="cup"]
+[ext_resource type="Shader" uid="uid://djtvpcnqsuiw5" path="res://Shaders/coffee_liquid.gdshader" id="liquid_shader"]
 [ext_resource type="Texture2D" uid="uid://b065meaphbqr" path="res://Assets/Assets for new version of game/Untitled (22)/Group 9 (2) 2.png" id="shadow"]
 [ext_resource type="Texture2D" uid="uid://bsl0g2mw5kqkg" path="res://Assets/Assets for new version of game/Untitled (22)/след от кофе.png" id="stain"]
 [ext_resource type="SpriteFrames" uid="uid://b4bcj0nduqwlv" path="res://Data/coffee_steam.tres" id="steam"]
 [ext_resource type="Texture2D" uid="uid://dpo1xqdkqk5tw" path="res://Assets/Assets for new version of game/Untitled (22)/Union.png" id="swirl"]
-[ext_resource type="Shader" path="res://Shaders/coffee_liquid.gdshader" id="liquid_shader"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_ye0lt"]
 
 [sub_resource type="ShaderMaterial" id="LiquidMaterial"]
 resource_local_to_scene = true
 shader = ExtResource("liquid_shader")
+shader_parameter/animation_time = 0.0
+shader_parameter/speed = 0.55
+shader_parameter/ripple_strength = 0.055
+shader_parameter/opacity = 0.85
 
 [node name="DeskCoffee" type="Control" unique_id=2128497325]
 layout_mode = 3
@@ -56,16 +60,16 @@ expand_mode = 1
 
 [node name="Swirl" type="TextureRect" parent="Cup" unique_id=1189917568]
 editor_description = "Движущаяся поверхность кофе. Скорость и деформация — Material / Shader Parameters. Область должна оставаться внутри тёмного круга чашки."
+texture_filter = 2
 material = SubResource("LiquidMaterial")
 layout_mode = 0
-offset_left = 55.0
-offset_top = 69.0
-offset_right = 235.0
-offset_bottom = 257.0
+offset_left = 70.0
+offset_top = 84.66667
+offset_right = 220.0
+offset_bottom = 241.33333
 mouse_filter = 2
 texture = ExtResource("swirl")
 expand_mode = 1
-texture_filter = 2
 
 [node name="Steam" type="AnimatedSprite2D" parent="Cup" unique_id=2055128434]
 modulate = Color(1, 1, 1, 0.75)

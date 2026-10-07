@@ -47,7 +47,8 @@ restart on completion. Re-requesting the same track does not reset playback.
   cancels pending sounds; restoring or rearranging visible choices is silent.
 - The manager root exposes **Sfx Voice Count**, **Crossfade Seconds**,
   **Music Gain Db** and **Sfx Gain Db**. These are authoring values: initial
-  music/SFX bus gains are -12/-8 dB before player volume settings.
+  music/SFX bus gains are 0/-8 dB before player volume settings. At 100% music
+  volume, a cue with 0 dB gain plays at the source track's original level.
 
 ## Player settings
 

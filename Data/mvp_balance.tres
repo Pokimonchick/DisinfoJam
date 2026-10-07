@@ -1,9 +1,11 @@
 [gd_resource type="Resource" script_class="NewsroomBalance" format=3 uid="uid://cf3yob5hgaqa4"]
 
 [ext_resource type="Script" uid="uid://ceojlqo0bj3it" path="res://Scripts/newsroom_balance.gd" id="1_balance"]
+[ext_resource type="Resource" path="res://Data/reader_support.tres" id="1_raqgr"]
+[ext_resource type="Resource" path="res://Data/state_approval.tres" id="3_ufeoc"]
 
 [resource]
 script = ExtResource("1_balance")
-shift_seconds = 60.0
+shift_seconds = 300.0
 fatigue_strength = 0.6
 starting_health = 30.0

@@ -2,7 +2,7 @@ extends Node
 
 @export_range(2, 32, 1) var sfx_voice_count: int = 8
 @export_range(0.0, 3.0, 0.05) var crossfade_seconds: float = 0.6
-@export_range(-40.0, 0.0, 0.5) var music_gain_db: float = -12.0
+@export_range(-40.0, 0.0, 0.5) var music_gain_db: float = 0.0
 @export_range(-40.0, 0.0, 0.5) var sfx_gain_db: float = -8.0
 
 var _music_players: Array[AudioStreamPlayer] = []

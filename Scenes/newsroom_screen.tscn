@@ -3,7 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://b2ckjlq44yvtf" path="res://Assets/Assets for new version of game/Untitled (22)/Rectangle 2.png" id="10_jn5ig"]
 [ext_resource type="Texture2D" uid="uid://dqhrqr8q1jc1k" path="res://Assets/Assets for new version of game/Untitled (22)/Group 40.png" id="background"]
 [ext_resource type="Script" uid="uid://ecv0clswbbqy" path="res://Scripts/desk_canvas.gd" id="canvas"]
-[ext_resource type="PackedScene" path="res://Scenes/headline_card.tscn" id="card"]
+[ext_resource type="PackedScene" uid="uid://barsv3k01iwum" path="res://Scenes/headline_card.tscn" id="card"]
 [ext_resource type="PackedScene" uid="uid://bxjea0aa6grf7" path="res://Scenes/desk_coffee.tscn" id="coffee"]
 [ext_resource type="PackedScene" uid="uid://dtnau3fa6rg8e" path="res://Scenes/work_status_drawer.tscn" id="drawer"]
 [ext_resource type="Script" uid="uid://73r7ohmpmk1r" path="res://Scripts/headline_field.gd" id="field"]
@@ -17,10 +17,10 @@
 [ext_resource type="Shader" uid="uid://bgolf23saair2" path="res://Shaders/desk_art_shadows.gdshader" id="shadow_shader"]
 [ext_resource type="Script" uid="uid://2d7f24dnyoe6" path="res://Scripts/headline_sheet.gd" id="sheet"]
 [ext_resource type="Texture2D" uid="uid://bj4gn2ijhx0lt" path="res://Assets/Assets for new version of game/Untitled (22)/Rectangle 8.png" id="source_rule"]
-[ext_resource type="Texture2D" uid="uid://c1nyeito38cas" path="res://Assets/Assets for new version of game/Untitled (22)/image 9.png" id="tab"]
+[ext_resource type="Script" uid="uid://biu2vgjwc8ae4" path="res://Scripts/desk_sunlight.gd" id="sunlight_script"]
 [ext_resource type="Shader" uid="uid://cm1rhhc2mtioc" path="res://Shaders/desk_sunlight.gdshader" id="sunlight_shader"]
-[ext_resource type="Script" path="res://Scripts/desk_sunlight.gd" id="sunlight_script"]
 [ext_resource type="PackedScene" path="res://Scenes/desk_sun_dust.tscn" id="sun_dust"]
+[ext_resource type="Texture2D" uid="uid://c1nyeito38cas" path="res://Assets/Assets for new version of game/Untitled (22)/image 9.png" id="tab"]
 
 [sub_resource type="ShaderMaterial" id="ShadowMaterial"]
 shader = ExtResource("shadow_shader")
@@ -32,6 +32,20 @@ shader_parameter/motion_pixels = Vector2(24, 12)
 [sub_resource type="ShaderMaterial" id="SunlightMaterial"]
 resource_local_to_scene = true
 shader = ExtResource("sunlight_shader")
+shader_parameter/light_color = Color(1, 0.9490196, 0.6901961, 1)
+shader_parameter/strength = 0.29
+shader_parameter/speed = 0.5
+shader_parameter/sway = 0.10297442586766545
+shader_parameter/reach = 1190.0
+shader_parameter/source_glow = 1.0
+shader_parameter/direction = -0.2792526803190927
+shader_parameter/ray_width = 1.0
+shader_parameter/ray_spacing = 0.45
+shader_parameter/width_variation = 0.47
+shader_parameter/shimmer = 0.18
+shader_parameter/light_position = Vector2(0.975, -0.035)
+shader_parameter/rect_size = Vector2(2120, 1240)
+shader_parameter/animation_time = 902.3908620000954
 
 [node name="Newsroom" type="Control" unique_id=946518030]
 editor_description = "Макет рабочего стола: фон и статья — Canvas/World; номер смены, кнопки и панель показателей — Canvas. Текст и чашка здесь служат образцом для редактора."
@@ -226,21 +240,21 @@ expand_mode = 1
 
 [node name="TextureRect" type="TextureRect" parent="Canvas/World" unique_id=74265062]
 layout_mode = 0
-offset_left = 843.00024
-offset_top = 418.50012
-offset_right = 1650.0002
-offset_bottom = 424.50012
+offset_left = 841.50024
+offset_top = 391.50012
+offset_right = 1648.5002
+offset_bottom = 452.50012
 rotation = -0.040751588
 scale = Vector2(0.9939842, 0.9539912)
 texture = ExtResource("10_jn5ig")
 
 [node name="SourceRule" type="TextureRect" parent="Canvas/World" unique_id=1653462195]
 layout_mode = 0
-offset_left = 570.0
-offset_top = 444.0
-offset_right = 1644.0
-offset_bottom = 446.0
-rotation = -0.018016709
+offset_left = 568.4999
+offset_top = 392.99994
+offset_right = 1642.4999
+offset_bottom = 492.2033
+rotation = -0.016311185
 mouse_filter = 2
 texture = ExtResource("source_rule")
 expand_mode = 1
@@ -287,23 +301,43 @@ scale = Vector2(1.2400092, 1.2400092)
 editor_description = "Тени художницы. Положение и масштаб можно поправить прямо в сцене; шейдер задаёт силу и скорость движения."
 z_index = 10
 material = SubResource("ShadowMaterial")
-position = Vector2(882, 625.49994)
-scale = Vector2(0.9270072, 0.8657718)
+position = Vector2(967.4999, 586.8751)
+scale = Vector2(0.97323596, 0.8673448)
 texture = ExtResource("shadows")
 
-[node name="Sunlight" type="ColorRect" parent="Canvas/World"]
+[node name="Sunlight" type="ColorRect" parent="Canvas/World" unique_id=856941673]
 editor_description = "Солнечные лучи. Настройки наверху инспектора: источник, яркость, цвет, форма и анимация. Source Position — координаты в пикселях относительно этого узла. Preview Animation включает движение в редакторе."
 z_index = 11
 material = SubResource("SunlightMaterial")
 layout_mode = 0
-offset_left = -100.0
-offset_top = -80.0
-offset_right = 2020.0
-offset_bottom = 1160.0
+offset_left = 227.99997
+offset_top = -147.0
+offset_right = 2348.0
+offset_bottom = 1093.0
 mouse_filter = 2
 script = ExtResource("sunlight_script")
+brightness = 0.29
+light_color = Color(1, 0.9490196, 0.6901961, 1)
+reach = 1190.0
+source_glow = 1.0
+direction_degrees = -16.0
+ray_spacing = 0.45
+speed = 0.5
+sway_degrees = 5.9
+width_variation = 0.47
+shimmer = 0.18
+preview_animation = true
 
-[node name="SunDust" parent="Canvas/World" instance=ExtResource("sun_dust")]
+[node name="SunDust" parent="Canvas/World" unique_id=1979724103 instance=ExtResource("sun_dust")]
+particle_count = 200
+size_range = Vector2(3, 9)
+opacity = 0.63
+brightness = 1.0
+softness = 1.0
+dust_color = Color(1, 0.98039216, 0.6509804, 1)
+direction_spread_degrees = 250.0
+light_gain = 5.0
+visibility_floor = 0.19
 
 [node name="Choices" type="Control" parent="Canvas/World" unique_id=294016554]
 editor_description = "Записки скрыты для чистого вида стола. В режиме с фоном этот слой перекрывает остальной интерфейс. Для подгонки временно включите значок глаза в дереве сцены."
@@ -315,6 +349,7 @@ offset_bottom = 1080.0
 mouse_filter = 2
 
 [node name="Slot1" type="Control" parent="Canvas/World/Choices" unique_id=1267791085]
+visible = false
 anchors_preset = 0
 offset_left = 500.0
 offset_top = 340.0

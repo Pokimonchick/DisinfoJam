@@ -1,21 +1,21 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://barsv3k01iwum"]
 
-[ext_resource type="Texture2D" path="res://Assets/note_select/note.png" id="2_note"]
-[ext_resource type="Texture2D" path="res://Assets/note_select/selected_note.png" id="3_selected"]
-[ext_resource type="Shader" path="res://Shaders/note_shadow.gdshader" id="4_shadow"]
+[ext_resource type="Texture2D" uid="uid://bwvuyw35gnbc3" path="res://Assets/note_select/note.png" id="2_note"]
+[ext_resource type="Texture2D" uid="uid://di6ks7usih0g3" path="res://Assets/note_select/selected_note.png" id="3_selected"]
+[ext_resource type="Shader" uid="uid://biom2l0t78bf7" path="res://Shaders/note_shadow.gdshader" id="4_shadow"]
 
 [sub_resource type="ShaderMaterial" id="NoteShadow"]
 shader = ExtResource("4_shadow")
-shader_parameter/shadow_strength = 0.26
-shader_parameter/blur_pixels = 3.0
+shader_parameter/shadow_color = Color(0.32, 0.27, 0.2, 1)
+shader_parameter/shadow_strength = 0.670000031825
+shader_parameter/blur_pixels = 2.50000011875
 
-[node name="HeadlineCard" type="Button"]
+[node name="HeadlineCard" type="Button" unique_id=628238862]
 custom_minimum_size = Vector2(0, 270)
-layout_mode = 2
 size_flags_horizontal = 3
 mouse_default_cursor_shape = 2
 
-[node name="Shadow" type="TextureRect" parent="."]
+[node name="Shadow" type="TextureRect" parent="." unique_id=1568487358]
 editor_description = "Тень по альфа-силуэту записки. Интенсивность и размытие — Material / Shader Parameters; смещение — Layout."
 material = SubResource("NoteShadow")
 layout_mode = 0
@@ -27,19 +27,19 @@ mouse_filter = 2
 texture = ExtResource("2_note")
 expand_mode = 1
 
-[node name="SelectedShadow" type="TextureRect" parent="."]
+[node name="SelectedShadow" type="TextureRect" parent="." unique_id=1971261940]
 visible = false
 material = SubResource("NoteShadow")
 layout_mode = 0
-offset_left = -56.0
-offset_top = -39.0
-offset_right = 438.0
-offset_bottom = 506.0
+offset_left = -59.0
+offset_top = -45.0
+offset_right = 435.0
+offset_bottom = 500.0
 mouse_filter = 2
 texture = ExtResource("3_selected")
 expand_mode = 1
 
-[node name="Note" type="TextureRect" parent="."]
+[node name="Note" type="TextureRect" parent="." unique_id=1885488559]
 layout_mode = 0
 offset_left = -28.0
 offset_top = -15.0
@@ -49,7 +49,7 @@ mouse_filter = 2
 texture = ExtResource("2_note")
 expand_mode = 1
 
-[node name="SelectedNote" type="TextureRect" parent="."]
+[node name="SelectedNote" type="TextureRect" parent="." unique_id=421879647]
 visible = false
 layout_mode = 0
 offset_left = -66.0
@@ -60,7 +60,7 @@ mouse_filter = 2
 texture = ExtResource("3_selected")
 expand_mode = 1
 
-[node name="Content" type="VBoxContainer" parent="."]
+[node name="Content" type="VBoxContainer" parent="." unique_id=1312500062]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -69,13 +69,14 @@ offset_left = 45.0
 offset_top = 116.0
 offset_right = -45.0
 offset_bottom = -60.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 theme_override_constants/separation = 18
 
-[node name="Headline" type="Label" parent="Content"]
+[node name="Headline" type="Label" parent="Content" unique_id=2144429253]
 layout_mode = 2
 size_flags_vertical = 3
-mouse_filter = 2
 theme_override_colors/font_color = Color(0.09, 0.17, 0.19, 1)
 theme_override_font_sizes/font_size = 32
 text = "Заголовок будущей статьи"
@@ -83,9 +84,8 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="Hint" type="Label" parent="Content"]
+[node name="Hint" type="Label" parent="Content" unique_id=698753928]
 layout_mode = 2
-mouse_filter = 2
 theme_override_colors/font_color = Color(0.25, 0.33, 0.34, 1)
 theme_override_font_sizes/font_size = 18
 text = "ВЫБРАТЬ ЗАГОЛОВОК  →"
