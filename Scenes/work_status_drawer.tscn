@@ -1,0 +1,405 @@
+[gd_scene format=3 uid="uid://dtnau3fa6rg8e"]
+
+[ext_resource type="Script" uid="uid://by4p37yn26t4c" path="res://Scripts/work_status_drawer.gd" id="1_drawer"]
+[ext_resource type="Texture2D" uid="uid://d4muajjn1n2ot" path="res://Assets/Assets for new version of game/Untitled (22)/Group 37.png" id="2_frame"]
+[ext_resource type="Texture2D" uid="uid://bqk74lonehlwv" path="res://Assets/Assets for new version of game/Untitled (22)/Group 36.png" id="3_paper"]
+[ext_resource type="Texture2D" uid="uid://bhelvl6gkdt5y" path="res://Assets/Assets for new version of game/Untitled (22)/Group 35.png" id="4_strap"]
+[ext_resource type="Texture2D" uid="uid://clgxtyug71y8o" path="res://Assets/Assets for new version of game/Untitled (22)/Group 27 (1) 2.png" id="5_clip"]
+[ext_resource type="Texture2D" uid="uid://cxp7tiavf3r3n" path="res://Assets/Assets for new version of game/Untitled (22)/image 30.png" id="6_tab"]
+[ext_resource type="Texture2D" uid="uid://d3en4e2iouj0q" path="res://Assets/Assets for new version of game/Untitled (22)/Arrow 3.png" id="7_arrow"]
+[ext_resource type="Texture2D" uid="uid://b8lk2an53p42w" path="res://Assets/Assets for new version of game/Untitled (22)/Group 38.png" id="8_help"]
+[ext_resource type="Script" uid="uid://c5iynoxvvikfr" path="res://Scripts/pencil_meter.gd" id="9_pencil_meter"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_eagcc"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_nyhhg"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_b8ynm"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_yofgt"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_r64ts"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_w1yn8"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_balance"]
+bg_color = Color(0.204, 0.161, 0.122, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.698, 0.541, 0.322, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+shadow_color = Color(0.12, 0.08, 0.04, 0.4)
+shadow_size = 4
+
+[node name="WorkStatusDrawer" type="Control" unique_id=163510095]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 500.0
+offset_bottom = 1080.0
+mouse_filter = 2
+script = ExtResource("1_drawer")
+
+[node name="SlidingPanel" type="Control" parent="." unique_id=633260878]
+unique_name_in_owner = true
+anchors_preset = 0
+offset_top = -2.0
+offset_right = 500.0
+offset_bottom = 1078.0
+mouse_filter = 2
+
+[node name="Frame" type="TextureRect" parent="SlidingPanel" unique_id=1164972521]
+layout_mode = 0
+offset_right = 410.0
+offset_bottom = 1080.0
+mouse_filter = 2
+texture = ExtResource("2_frame")
+expand_mode = 1
+
+[node name="Paper" type="TextureRect" parent="SlidingPanel" unique_id=338490123]
+layout_mode = 0
+offset_left = 21.0
+offset_top = 26.0
+offset_right = 386.0
+offset_bottom = 1052.0
+mouse_filter = 2
+texture = ExtResource("3_paper")
+expand_mode = 1
+
+[node name="Strap" type="TextureRect" parent="SlidingPanel" unique_id=1165659361]
+layout_mode = 0
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 206.0
+offset_bottom = 199.0
+mouse_filter = 2
+texture = ExtResource("4_strap")
+expand_mode = 1
+
+[node name="Clip" type="TextureRect" parent="SlidingPanel" unique_id=2031382295]
+layout_mode = 0
+offset_left = 151.0
+offset_right = 253.0
+offset_bottom = 78.0
+mouse_filter = 2
+texture = ExtResource("5_clip")
+expand_mode = 1
+
+[node name="Folio" type="Label" parent="SlidingPanel" unique_id=1775956423]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 82.0
+offset_right = 354.0
+offset_bottom = 112.0
+theme_override_colors/font_color = Color(0.55, 0.36, 0.13, 1)
+theme_override_font_sizes/font_size = 16
+text = "КАРТОЧКА РЕДАКТОРА"
+horizontal_alignment = 1
+
+[node name="Shift" type="Label" parent="SlidingPanel" unique_id=554214313]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 49.0
+offset_top = 116.0
+offset_right = 357.0
+offset_bottom = 156.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 31
+text = "СМЕНА 01"
+horizontal_alignment = 1
+
+[node name="Player" type="Label" parent="SlidingPanel" unique_id=260932149]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 49.0
+offset_top = 162.0
+offset_right = 357.0
+offset_bottom = 199.0
+theme_override_colors/font_color = Color(0.329412, 0.25098, 0.14902, 1)
+theme_override_font_sizes/font_size = 22
+text = "Редактор"
+horizontal_alignment = 1
+text_overrun_behavior = 3
+
+[node name="Rule" type="ColorRect" parent="SlidingPanel" unique_id=741414623]
+layout_mode = 0
+offset_left = 52.0
+offset_top = 215.0
+offset_right = 354.0
+offset_bottom = 217.0
+mouse_filter = 2
+color = Color(0.584314, 0.435294, 0.243137, 0.7)
+
+[node name="HealthTitle" type="Label" parent="SlidingPanel" unique_id=495693021]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 245.0
+offset_right = 280.0
+offset_bottom = 278.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 22
+text = "ВЫНОСЛИВОСТЬ"
+
+[node name="HealthValue" type="Label" parent="SlidingPanel" unique_id=1071360477]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 226.0
+offset_top = 244.0
+offset_right = 354.0
+offset_bottom = 282.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 26
+text = "100 / 100"
+horizontal_alignment = 2
+
+[node name="HealthBar" type="ProgressBar" parent="SlidingPanel" unique_id=582706671]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 50.0
+offset_top = 291.0
+offset_right = 295.0
+offset_bottom = 351.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxEmpty_eagcc")
+theme_override_styles/fill = SubResource("StyleBoxEmpty_nyhhg")
+value = 70.0
+show_percentage = false
+script = ExtResource("9_pencil_meter")
+
+[node name="HealthHelp" type="TextureButton" parent="SlidingPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 307.0
+offset_top = 291.0
+offset_right = 367.0
+offset_bottom = 351.0
+tooltip_text = "Подробнее о выносливости"
+focus_mode = 0
+mouse_default_cursor_shape = 2
+texture_normal = ExtResource("8_help")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="ReputationTitle" type="Label" parent="SlidingPanel" unique_id=958320419]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 366.0
+offset_right = 355.0
+offset_bottom = 398.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 21
+text = "РЕПУТАЦИЯ КОМПАНИИ"
+
+[node name="ReputationValue" type="Label" parent="SlidingPanel" unique_id=1882840824]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 228.0
+offset_top = 398.0
+offset_right = 355.0
+offset_bottom = 435.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 27
+text = "50 / 100"
+horizontal_alignment = 2
+
+[node name="ReputationBar" type="ProgressBar" parent="SlidingPanel" unique_id=544960821]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 50.0
+offset_top = 437.0
+offset_right = 295.0
+offset_bottom = 497.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxEmpty_b8ynm")
+theme_override_styles/fill = SubResource("StyleBoxEmpty_yofgt")
+value = 65.0
+show_percentage = false
+script = ExtResource("9_pencil_meter")
+
+[node name="ReputationHint" type="Label" parent="SlidingPanel" unique_id=1681986409]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 50.0
+offset_top = 473.0
+offset_right = 300.0
+offset_bottom = 531.0
+theme_override_colors/font_color = Color(0.329412, 0.25098, 0.14902, 1)
+theme_override_font_sizes/font_size = 18
+text = "ПРИ 75: −2 К РАСХОДУ СИЛ"
+autowrap_mode = 2
+
+[node name="ReputationHelp" type="Button" parent="SlidingPanel" unique_id=874088108]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 307.0
+offset_top = 437.0
+offset_right = 367.0
+offset_bottom = 497.0
+tooltip_text = "Подробнее о показателе"
+focus_mode = 0
+flat = true
+
+[node name="Icon" type="TextureRect" parent="SlidingPanel/ReputationHelp" unique_id=1432475438]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -1.0
+offset_bottom = -1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("8_help")
+expand_mode = 1
+
+[node name="LoyaltyTitle" type="Label" parent="SlidingPanel" unique_id=1498227772]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 558.0
+offset_right = 355.0
+offset_bottom = 590.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 21
+text = "ЛОЯЛЬНОСТЬ ГОСУДАРСТВУ"
+
+[node name="LoyaltyValue" type="Label" parent="SlidingPanel" unique_id=785926688]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 228.0
+offset_top = 593.0
+offset_right = 355.0
+offset_bottom = 630.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 27
+text = "50 / 100"
+horizontal_alignment = 2
+
+[node name="LoyaltyBar" type="ProgressBar" parent="SlidingPanel" unique_id=1324650800]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 50.0
+offset_top = 632.0
+offset_right = 295.0
+offset_bottom = 692.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxEmpty_r64ts")
+theme_override_styles/fill = SubResource("StyleBoxEmpty_w1yn8")
+value = 65.0
+show_percentage = false
+script = ExtResource("9_pencil_meter")
+
+[node name="LoyaltyHint" type="Label" parent="SlidingPanel" unique_id=159017579]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 50.0
+offset_top = 671.0
+offset_right = 300.0
+offset_bottom = 729.0
+theme_override_colors/font_color = Color(0.329412, 0.25098, 0.14902, 1)
+theme_override_font_sizes/font_size = 18
+text = "ПРИ 75: +10 К СИЛАМ"
+autowrap_mode = 2
+
+[node name="LoyaltyHelp" type="Button" parent="SlidingPanel" unique_id=1647371514]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 307.0
+offset_top = 632.0
+offset_right = 367.0
+offset_bottom = 692.0
+tooltip_text = "Подробнее о показателе"
+focus_mode = 0
+flat = true
+
+[node name="Icon" type="TextureRect" parent="SlidingPanel/LoyaltyHelp" unique_id=1617343858]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("8_help")
+expand_mode = 1
+
+[node name="BalanceCard" type="Panel" parent="SlidingPanel" unique_id=2107403312]
+layout_mode = 0
+offset_left = 42.0
+offset_top = 784.0
+offset_right = 366.0
+offset_bottom = 920.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_balance")
+
+[node name="MoneyTitle" type="Label" parent="SlidingPanel" unique_id=1545158402]
+layout_mode = 0
+offset_left = 61.0
+offset_top = 800.0
+offset_right = 347.0
+offset_bottom = 838.0
+theme_override_colors/font_color = Color(0.886, 0.706, 0.424, 1)
+theme_override_font_sizes/font_size = 20
+text = "БАЛАНС"
+
+[node name="MoneyValue" type="Label" parent="SlidingPanel" unique_id=2044053456]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 61.0
+offset_top = 837.0
+offset_right = 347.0
+offset_bottom = 907.0
+theme_override_colors/font_color = Color(0.973, 0.914, 0.78, 1)
+theme_override_font_sizes/font_size = 43
+text = "0 $"
+
+[node name="Tab" type="TextureRect" parent="SlidingPanel" unique_id=782465842]
+z_index = -1
+layout_mode = 0
+offset_left = 391.0
+offset_top = 55.0
+offset_right = 483.0
+offset_bottom = 135.0
+mouse_filter = 2
+texture = ExtResource("6_tab")
+expand_mode = 1
+
+[node name="TabButton" type="Button" parent="SlidingPanel" unique_id=940405796]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 398.0
+offset_top = 57.0
+offset_right = 482.0
+offset_bottom = 129.0
+tooltip_text = "Открыть показатели"
+focus_mode = 0
+flat = true
+
+[node name="Arrow" type="TextureRect" parent="SlidingPanel/TabButton" unique_id=1895946885]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 24.0
+offset_top = 22.0
+offset_right = 59.0
+offset_bottom = 52.0
+mouse_filter = 2
+texture = ExtResource("7_arrow")
+expand_mode = 1
+
+[node name="DeskHelp" type="TextureButton" parent="SlidingPanel" unique_id=1968025772]
+layout_mode = 0
+offset_left = 306.0
+offset_top = 33.0
+offset_right = 376.0
+offset_bottom = 103.0
+tooltip_text = "Прочитайте источник на столе.
+Нажмите на зелёное поле, чтобы выбрать заголовок.
+Выбор можно заменить; деньги и последствия
+начисляются только после нажатия «Опубликовать»."
+mouse_default_cursor_shape = 2
+texture_normal = ExtResource("8_help")
+ignore_texture_size = true
+stretch_mode = 0

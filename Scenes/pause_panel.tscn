@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" uid="uid://tmr0o4wmncm6" path="res://Scenes/message_panel.tscn" id="1_panel"]
+[ext_resource type="Shader" path="res://Shaders/pause_blur.gdshader" id="2_blur"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_pause_blur"]
+resource_local_to_scene = true
+shader = ExtResource("2_blur")
+shader_parameter/blur_amount = 3.0
+shader_parameter/dim_color = Color(0.08, 0.06, 0.04, 0.34)
+
+[node name="PausePanel" instance=ExtResource("1_panel")]
+
+[node name="BackdropCopy" type="BackBufferCopy" parent="." index="0"]
+copy_mode = 2
+
+[node name="Dim" parent="." index="1"]
+material = SubResource("ShaderMaterial_pause_blur")
+color = Color(1, 1, 1, 1)

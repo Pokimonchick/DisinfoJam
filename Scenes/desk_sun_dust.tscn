@@ -1,0 +1,54 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://Scripts/desk_sun_dust.gd" id="script"]
+[ext_resource type="Shader" path="res://Shaders/sun_dust_motion.gdshader" id="motion"]
+[ext_resource type="Shader" path="res://Shaders/sun_dust.gdshader" id="draw"]
+
+[sub_resource type="Gradient" id="DustGradient"]
+offsets = PackedFloat32Array(0, 0.45, 1)
+colors = PackedColorArray(1, 1, 1, 0.9, 1, 1, 1, 0.25, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="DustTexture"]
+gradient = SubResource("DustGradient")
+width = 32
+height = 32
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="ShaderMaterial" id="DustDraw"]
+resource_local_to_scene = true
+shader = ExtResource("draw")
+
+[sub_resource type="ShaderMaterial" id="FarMotion"]
+resource_local_to_scene = true
+shader = ExtResource("motion")
+
+[sub_resource type="ShaderMaterial" id="NearMotion"]
+resource_local_to_scene = true
+shader = ExtResource("motion")
+
+[node name="SunDust" type="Node2D"]
+editor_description = "Пыль в солнечных лучах. Настройки наверху инспектора: вид и свечение, движение, глубина, область и зависимость от света. Настраивайте этот узел внутри newsroom_screen.tscn; параметры Sunlight считываются автоматически."
+z_index = 12
+script = ExtResource("script")
+
+[node name="FarDust" type="GPUParticles2D" parent="."]
+material = SubResource("DustDraw")
+amount = 126
+lifetime = 35.0
+preprocess = 35.0
+local_coords = true
+visibility_rect = Rect2(-20, -400, 2360, 1880)
+process_material = SubResource("FarMotion")
+texture = SubResource("DustTexture")
+
+[node name="NearDust" type="GPUParticles2D" parent="."]
+material = SubResource("DustDraw")
+amount = 54
+lifetime = 28.0
+preprocess = 28.0
+local_coords = true
+visibility_rect = Rect2(-20, -400, 2360, 1880)
+process_material = SubResource("NearMotion")
+texture = SubResource("DustTexture")

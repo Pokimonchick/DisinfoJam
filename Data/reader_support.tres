@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="StatBenefit" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/stat_benefit.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+threshold = 75.0
+amount = 2.0
+locked_text = "ПРИ {threshold}: −{amount} К РАСХОДУ СИЛ"
+ready_text = "ОТЗЫВЫ: −{amount} К РАСХОДУ СИЛ"
+applied_text = "ОТЗЫВЫ: −{amount} К РАСХОДУ СИЛ"
+explanation = "Положительные отзывы читателей воодушевляют.\nПока репутация не ниже {threshold}, каждая публикация тратит на {amount} выносливости меньше."

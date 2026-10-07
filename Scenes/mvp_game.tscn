@@ -1,0 +1,378 @@
+[gd_scene format=3 uid="uid://dj4bttlj5pnbn"]
+
+[ext_resource type="Script" uid="uid://16t4ryrufqtk" path="res://Scripts/mvp_game.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/newsroom_hud.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://Scenes/newsroom_screen.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://Scenes/home_screen.tscn" id="4"]
+[ext_resource type="PackedScene" uid="uid://tmr0o4wmncm6" path="res://Scenes/message_panel.tscn" id="5"]
+[ext_resource type="Script" uid="uid://bawydys7cfi50" path="res://Scripts/placeholder_visual.gd" id="6"]
+[ext_resource type="Shader" uid="uid://cytlrl67y5fep" path="res://Shaders/fatigue.gdshader" id="7_fatigue"]
+[ext_resource type="PackedScene" path="res://Scenes/settings_panel.tscn" id="8_settings"]
+[ext_resource type="PackedScene" path="res://Scenes/interaction_tutorial.tscn" id="9_tutorial"]
+[ext_resource type="Script" path="res://Scripts/money_delta.gd" id="10_money"]
+[ext_resource type="PackedScene" path="res://Scenes/pause_panel.tscn" id="11_pause"]
+[ext_resource type="PackedScene" path="res://Scenes/audio_cue.tscn" id="12_audio"]
+[ext_resource type="AudioStream" path="res://Assets/Sounds/Work_background.mp3" id="13_work_music"]
+[ext_resource type="AudioStream" path="res://Assets/Sounds/at_home.mp3" id="14_home_music"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fatigue"]
+resource_local_to_scene = true
+shader = ExtResource("7_fatigue")
+shader_parameter/intensity = 0.0
+shader_parameter/effect_time = 0.0
+
+[node name="MVPGame" type="Control" unique_id=662573569]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Audio" type="Node" parent="."]
+
+[node name="WorkMusic" parent="Audio" instance=ExtResource("12_audio")]
+stream = ExtResource("13_work_music")
+category = 1
+
+[node name="HomeMusic" parent="Audio" instance=ExtResource("12_audio")]
+stream = ExtResource("14_home_music")
+category = 1
+
+[node name="Background" type="ColorRect" parent="." unique_id=1553257283]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.065, 0.125, 0.145, 1)
+
+[node name="Padding" type="MarginContainer" parent="." unique_id=2099981179]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 22
+
+[node name="Layout" type="VBoxContainer" parent="Padding" unique_id=1095076912]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Header" type="HBoxContainer" parent="Padding/Layout" unique_id=1043595966]
+custom_minimum_size = Vector2(0, 45)
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Location" type="Label" parent="Padding/Layout/Header" unique_id=1124819445]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 15
+horizontal_alignment = 2
+
+[node name="CampaignGoal" type="Label" parent="Padding/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+
+[node name="PauseButton" type="Button" parent="Padding/Layout/Header" unique_id=1412060397]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 16
+text = "Пауза · Esc"
+
+[node name="HUD" parent="Padding/Layout" unique_id=1075277104 instance=ExtResource("2")]
+unique_name_in_owner = true
+
+[node name="Stage" type="Control" parent="Padding/Layout" unique_id=331086246]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Menu" type="CenterContainer" parent="Padding/Layout/Stage" unique_id=844596861]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Card" type="HBoxContainer" parent="Padding/Layout/Stage/Menu" unique_id=1220970866]
+layout_mode = 2
+theme_override_constants/separation = 50
+
+[node name="Visual" type="Control" parent="Padding/Layout/Stage/Menu/Card" unique_id=1415983995]
+custom_minimum_size = Vector2(280, 320)
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("6")
+
+[node name="Text" type="VBoxContainer" parent="Padding/Layout/Stage/Menu/Card" unique_id=163955573]
+custom_minimum_size = Vector2(610, 0)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Kicker" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=1587473370]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.74, 0.41, 1)
+theme_override_font_sizes/font_size = 16
+text = "ГЛАВА I · АМНЕЗИЯ · ДЕМО"
+
+[node name="Title" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=402366423]
+layout_mode = 2
+theme_override_font_sizes/font_size = 64
+text = "ДО ПЕЧАТИ"
+
+[node name="Description" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=1236143359]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Пройди первую рабочую неделю.
+Выбирай заголовки и позаботься о себе.
+В старых текстах осталось что-то знакомое."
+
+[node name="ContinueGame" type="Button" parent="Padding/Layout/Stage/Menu/Card/Text"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "ПРОДОЛЖИТЬ"
+
+[node name="SaveSummary" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+autowrap_mode = 3
+
+[node name="NewGame" type="Button" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=1856127047]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "НАЧАТЬ НОВУЮ ИСТОРИЮ"
+
+[node name="MenuSettings" type="Button" parent="Padding/Layout/Stage/Menu/Card/Text"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "НАСТРОЙКИ"
+
+[node name="Quit" type="Button" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=2057678127]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "Выйти"
+
+[node name="Hint" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=578268836]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Мышь — выбор  ·  Esc — пауза  ·  F11 — экран
+Прогресс сохраняется автоматически."
+autowrap_mode = 3
+
+[node name="ProfileSetup" type="CenterContainer" parent="Padding/Layout/Stage"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Padding/Layout/Stage/ProfileSetup"]
+custom_minimum_size = Vector2(610, 0)
+layout_mode = 2
+
+[node name="Form" type="VBoxContainer" parent="Padding/Layout/Stage/ProfileSetup/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Title" type="Label" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Новая история"
+
+[node name="Label" type="Label" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
+layout_mode = 2
+text = "История Николы Коко начинается с первого рабочего дня."
+
+[node name="NewRunWarning" type="Label" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+autowrap_mode = 3
+
+[node name="StartStory" type="Button" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+text = "Начать историю"
+
+[node name="CancelStory" type="Button" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Назад"
+
+[node name="Narrative" type="PanelContainer" parent="Padding/Layout/Stage" unique_id=1176842582]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Layout" type="HBoxContainer" parent="Padding/Layout/Stage/Narrative" unique_id=287667656]
+layout_mode = 2
+theme_override_constants/separation = 36
+
+[node name="NarrativeVisual" type="Control" parent="Padding/Layout/Stage/Narrative/Layout" unique_id=1383027181]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(255, 0)
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("6")
+
+[node name="Text" type="VBoxContainer" parent="Padding/Layout/Stage/Narrative/Layout" unique_id=786988081]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 18
+
+[node name="NarrativeTag" type="Label" parent="Padding/Layout/Stage/Narrative/Layout/Text" unique_id=1776798645]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.74, 0.41, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="NarrativeTitle" type="Label" parent="Padding/Layout/Stage/Narrative/Layout/Text" unique_id=1510054816]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+autowrap_mode = 3
+
+[node name="NarrativeBody" type="RichTextLabel" parent="Padding/Layout/Stage/Narrative/Layout/Text" unique_id=1728767463]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/normal_font_size = 22
+
+[node name="Actions" type="HBoxContainer" parent="Padding/Layout/Stage/Narrative/Layout/Text" unique_id=990910718]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="NarrativeBack" type="Button" parent="Padding/Layout/Stage/Narrative/Layout/Text/Actions"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 55)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "Назад"
+
+[node name="NarrativePrimary" type="Button" parent="Padding/Layout/Stage/Narrative/Layout/Text/Actions" unique_id=1721445878]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 55)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 2
+
+[node name="NarrativeSecondary" type="Button" parent="Padding/Layout/Stage/Narrative/Layout/Text/Actions" unique_id=194769613]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 18
+
+[node name="Work" parent="." unique_id=346840475 instance=ExtResource("3")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="Home" parent="Padding/Layout/Stage" unique_id=2004351375 instance=ExtResource("4")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="FatigueOverlay" type="ColorRect" parent="." unique_id=1861628764]
+visible = false
+z_index = 90
+material = SubResource("ShaderMaterial_fatigue")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Tutorial" parent="." instance=ExtResource("9_tutorial")]
+z_index = 120
+layout_mode = 1
+
+[node name="StaminaWarning" parent="." instance=ExtResource("5")]
+visible = false
+z_index = 125
+layout_mode = 1
+
+[node name="MoneyDelta" type="Control" parent="."]
+z_index = 126
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("10_money")
+
+[node name="PausePanel" parent="." unique_id=939216753 instance=ExtResource("11_pause")]
+z_index = 130
+layout_mode = 1
+
+[node name="Fade" type="ColorRect" parent="." unique_id=468884865]
+z_index = 140
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.065, 0.125, 0.145, 1)
+
+[node name="SettingsPanel" parent="." instance=ExtResource("8_settings")]
+z_index = 145
+layout_mode = 1
+
+[node name="SaveNotice" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+z_index = 135
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = -40.0
+offset_right = -28.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.67, 0.5, 1)
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
+
+[node name="QuitWithoutSave" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "Не удалось сохранить"
+dialog_text = "Прогресс после последнего сохранения будет потерян. Выйти без сохранения?"
+ok_button_text = "Выйти без сохранения"
+cancel_button_text = "Остаться в игре"

@@ -1,0 +1,206 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://b4bcj0nduqwlv"]
+
+[ext_resource type="Texture2D" uid="uid://baa63gfsbsshw" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00171.png" id="1_k3l13"]
+[ext_resource type="Texture2D" uid="uid://cv7biwm2jv3v8" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00172.png" id="2_6ito8"]
+[ext_resource type="Texture2D" uid="uid://bw2h6nx4orclf" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00173.png" id="3_avn55"]
+[ext_resource type="Texture2D" uid="uid://bxvwfytu5gpl4" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00174.png" id="4_7g7r6"]
+[ext_resource type="Texture2D" uid="uid://truhiol5ajcw" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00175.png" id="5_ph160"]
+[ext_resource type="Texture2D" uid="uid://b4ekbts0u6fig" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00176.png" id="6_drf3n"]
+[ext_resource type="Texture2D" uid="uid://mguqcmg3ievx" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00177.png" id="7_qe56m"]
+[ext_resource type="Texture2D" uid="uid://p7qandaymk3h" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00178.png" id="8_4a6t0"]
+[ext_resource type="Texture2D" uid="uid://d12etsssyncvy" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00179.png" id="9_1of71"]
+[ext_resource type="Texture2D" uid="uid://taocwwyfemf8" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00180.png" id="10_ytn31"]
+[ext_resource type="Texture2D" uid="uid://cf3g5b5o5y7he" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00181.png" id="11_5n0wp"]
+[ext_resource type="Texture2D" uid="uid://bv54mjsa5okxa" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00182.png" id="12_e3hjg"]
+[ext_resource type="Texture2D" uid="uid://dod8556fmjm0d" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00183.png" id="13_g4gvx"]
+[ext_resource type="Texture2D" uid="uid://chx01a66qmy1y" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00184.png" id="14_8gg22"]
+[ext_resource type="Texture2D" uid="uid://c1p1b5tnlt843" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00185.png" id="15_4gfjl"]
+[ext_resource type="Texture2D" uid="uid://bk5uuvwd1gix1" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00186.png" id="16_kqbcj"]
+[ext_resource type="Texture2D" uid="uid://baxbkl0mhmfhm" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00187.png" id="17_yiw68"]
+[ext_resource type="Texture2D" uid="uid://chm0yft0ndgxx" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00188.png" id="18_v4mhb"]
+[ext_resource type="Texture2D" uid="uid://bsyo6t0d4dv3y" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00189.png" id="19_ya0or"]
+[ext_resource type="Texture2D" uid="uid://dpwwe0vanyo7m" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00190.png" id="20_ra6gk"]
+[ext_resource type="Texture2D" uid="uid://b7v4cu5f33pk6" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00191.png" id="21_tg8b1"]
+[ext_resource type="Texture2D" uid="uid://fi4myhg64q10" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00192.png" id="22_ab7mk"]
+[ext_resource type="Texture2D" uid="uid://c6o0wfhm8pem1" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00193.png" id="23_7dwim"]
+[ext_resource type="Texture2D" uid="uid://q2joi13p0l6p" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00194.png" id="24_h1gmy"]
+[ext_resource type="Texture2D" uid="uid://bm2l7i7x5eeok" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00195.png" id="25_l23sv"]
+[ext_resource type="Texture2D" uid="uid://c27tkydqpq1qp" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00196.png" id="26_xe13l"]
+[ext_resource type="Texture2D" uid="uid://c2l0y3yyhfi3k" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00197.png" id="27_0nixj"]
+[ext_resource type="Texture2D" uid="uid://p82cq7q6f8bp" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00198.png" id="28_7f73y"]
+[ext_resource type="Texture2D" uid="uid://d4fjd0h1ya6vb" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00199.png" id="29_xyn3s"]
+[ext_resource type="Texture2D" uid="uid://383ry8c3io71" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00200.png" id="30_lho8s"]
+[ext_resource type="Texture2D" uid="uid://cj28pj3pnvcyl" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00201.png" id="31_fde80"]
+[ext_resource type="Texture2D" uid="uid://dte23usepdd0q" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00202.png" id="32_7lf5r"]
+[ext_resource type="Texture2D" uid="uid://sylpf0khq3q3" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00203.png" id="33_hjmie"]
+[ext_resource type="Texture2D" uid="uid://chy080awicgmv" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00204.png" id="34_y0hgm"]
+[ext_resource type="Texture2D" uid="uid://rx6qvb0y4ubr" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00205.png" id="35_3b8gu"]
+[ext_resource type="Texture2D" uid="uid://dq2xehhdfukj4" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00206.png" id="36_3inkf"]
+[ext_resource type="Texture2D" uid="uid://b6njh43a4tncp" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00207.png" id="37_a613u"]
+[ext_resource type="Texture2D" uid="uid://bf8k5g4e6kctp" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00208.png" id="38_87khm"]
+[ext_resource type="Texture2D" uid="uid://cfg1m0lc7laj2" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00209.png" id="39_5ywyg"]
+[ext_resource type="Texture2D" uid="uid://ro24idlgh1yq" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00210.png" id="40_nl76g"]
+[ext_resource type="Texture2D" uid="uid://4xruwe0kpf4s" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00211.png" id="41_q25nj"]
+[ext_resource type="Texture2D" uid="uid://dap4dxogethsd" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00212.png" id="42_r2r2v"]
+[ext_resource type="Texture2D" uid="uid://bfhv0g7j7axob" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00213.png" id="43_1e6ux"]
+[ext_resource type="Texture2D" uid="uid://gtuhlkq4nc2y" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00214.png" id="44_4bfpn"]
+[ext_resource type="Texture2D" uid="uid://dhhjbwssacb1y" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00215.png" id="45_qmoyi"]
+[ext_resource type="Texture2D" uid="uid://x0c56p0y4oku" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00216.png" id="46_ijgsn"]
+[ext_resource type="Texture2D" uid="uid://obuq37jhsgsq" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00217.png" id="47_rn0y6"]
+[ext_resource type="Texture2D" uid="uid://co0wvfi0kgrr8" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00218.png" id="48_fkyc1"]
+[ext_resource type="Texture2D" uid="uid://js16632f262" path="res://Assets/Assets for new version of game/wape_anim/Comp 1/wape_anim_00219.png" id="49_7q7r6"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_k3l13")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_6ito8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_avn55")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_7g7r6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_ph160")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_drf3n")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_qe56m")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_4a6t0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_1of71")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_ytn31")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_5n0wp")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_e3hjg")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_g4gvx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("14_8gg22")
+}, {
+"duration": 1.0,
+"texture": ExtResource("15_4gfjl")
+}, {
+"duration": 1.0,
+"texture": ExtResource("16_kqbcj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("17_yiw68")
+}, {
+"duration": 1.0,
+"texture": ExtResource("18_v4mhb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("19_ya0or")
+}, {
+"duration": 1.0,
+"texture": ExtResource("20_ra6gk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("21_tg8b1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("22_ab7mk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("23_7dwim")
+}, {
+"duration": 1.0,
+"texture": ExtResource("24_h1gmy")
+}, {
+"duration": 1.0,
+"texture": ExtResource("25_l23sv")
+}, {
+"duration": 1.0,
+"texture": ExtResource("26_xe13l")
+}, {
+"duration": 1.0,
+"texture": ExtResource("27_0nixj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("28_7f73y")
+}, {
+"duration": 1.0,
+"texture": ExtResource("29_xyn3s")
+}, {
+"duration": 1.0,
+"texture": ExtResource("30_lho8s")
+}, {
+"duration": 1.0,
+"texture": ExtResource("31_fde80")
+}, {
+"duration": 1.0,
+"texture": ExtResource("32_7lf5r")
+}, {
+"duration": 1.0,
+"texture": ExtResource("33_hjmie")
+}, {
+"duration": 1.0,
+"texture": ExtResource("34_y0hgm")
+}, {
+"duration": 1.0,
+"texture": ExtResource("35_3b8gu")
+}, {
+"duration": 1.0,
+"texture": ExtResource("36_3inkf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("37_a613u")
+}, {
+"duration": 1.0,
+"texture": ExtResource("38_87khm")
+}, {
+"duration": 1.0,
+"texture": ExtResource("39_5ywyg")
+}, {
+"duration": 1.0,
+"texture": ExtResource("40_nl76g")
+}, {
+"duration": 1.0,
+"texture": ExtResource("41_q25nj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("42_r2r2v")
+}, {
+"duration": 1.0,
+"texture": ExtResource("43_1e6ux")
+}, {
+"duration": 1.0,
+"texture": ExtResource("44_4bfpn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("45_qmoyi")
+}, {
+"duration": 1.0,
+"texture": ExtResource("46_ijgsn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("47_rn0y6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("48_fkyc1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("49_7q7r6")
+}],
+"loop": 1,
+"name": &"default",
+"speed": 26.0
+}]

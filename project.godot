@@ -11,13 +11,35 @@ config_version=5
 [application]
 
 config/name="DisinfoJam"
+run/main_scene="res://Scenes/mvp_game.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[audio]
+
+buses/default_bus_layout="res://Data/audio_bus_layout.tres"
+
+[autoload]
+
+GameState="*res://Scripts/game_state.gd"
+GameSettings="*res://Scripts/game_settings.gd"
+AudioManager="*res://Scenes/audio_manager.tscn"
+CursorTooltip="*res://Scripts/cursor_tooltip.gd"
+
 [display]
 
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/mode=3
+window/size/window_width_override=1920
+window/size/window_height_override=1080
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[gui]
+
+timers/tooltip_delay_sec=3600.0
+theme/custom_font="res://Assets/Fonts/Neucha/Neucha.ttf"
 
 [physics]
 

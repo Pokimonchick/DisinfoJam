@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="StatBenefit" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/stat_benefit.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+threshold = 75.0
+amount = 10.0
+locked_text = "ПРИ {threshold}: +{amount} К СИЛАМ"
+ready_text = "СЛЕДУЮЩАЯ СМЕНА: +{amount} СИЛ"
+applied_text = "В НАЧАЛЕ СМЕНЫ: +{amount} СИЛ"
+explanation = "Меньше проверок — меньше тревоги перед работой.\nЕсли лояльность не ниже {threshold} в начале смены, восстанавливается до {amount} выносливости. Бонус начисляется один раз, при начале смены. Изменение лояльности в течение смены не отнимает и не добавляет силы."

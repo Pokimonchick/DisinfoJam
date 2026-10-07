@@ -1,0 +1,446 @@
+[gd_scene format=3 uid="uid://ws5o62gvxocv"]
+
+[ext_resource type="Texture2D" uid="uid://b2ckjlq44yvtf" path="res://Assets/Assets for new version of game/Untitled (22)/Rectangle 2.png" id="10_jn5ig"]
+[ext_resource type="Texture2D" uid="uid://dqhrqr8q1jc1k" path="res://Assets/Assets for new version of game/Untitled (22)/Group 40.png" id="background"]
+[ext_resource type="Script" uid="uid://ecv0clswbbqy" path="res://Scripts/desk_canvas.gd" id="canvas"]
+[ext_resource type="PackedScene" uid="uid://barsv3k01iwum" path="res://Scenes/headline_card.tscn" id="card"]
+[ext_resource type="PackedScene" uid="uid://bxjea0aa6grf7" path="res://Scenes/desk_coffee.tscn" id="coffee"]
+[ext_resource type="PackedScene" uid="uid://dtnau3fa6rg8e" path="res://Scenes/work_status_drawer.tscn" id="drawer"]
+[ext_resource type="Script" uid="uid://73r7ohmpmk1r" path="res://Scripts/headline_field.gd" id="field"]
+[ext_resource type="PackedScene" path="res://Scenes/desk_focus.tscn" id="focus"]
+[ext_resource type="Texture2D" uid="uid://c7yjqlfnhfet3" path="res://Assets/Assets for new version of game/Untitled (22)/image 21.png" id="green"]
+[ext_resource type="Texture2D" uid="uid://bu2dmgm2cn2f1" path="res://Assets/Assets for new version of game/Untitled (22)/image 10.png" id="issue_preview"]
+[ext_resource type="Texture2D" uid="uid://wekcwnm15qxn" path="res://Assets/Assets for new version of game/Untitled (22)/карандаш.png" id="pencil"]
+[ext_resource type="Texture2D" uid="uid://lp4wtcxdtpyj" path="res://Assets/Assets for new version of game/Untitled (22)/Group 39.png" id="replace"]
+[ext_resource type="Script" uid="uid://csgtd8s588yvk" path="res://Scripts/newsroom_screen.gd" id="screen"]
+[ext_resource type="Texture2D" uid="uid://dfs4ynivrt11o" path="res://Assets/Assets for new version of game/Untitled (22)/тени.png" id="shadows"]
+[ext_resource type="Shader" uid="uid://bgolf23saair2" path="res://Shaders/desk_art_shadows.gdshader" id="shadow_shader"]
+[ext_resource type="Script" uid="uid://2d7f24dnyoe6" path="res://Scripts/headline_sheet.gd" id="sheet"]
+[ext_resource type="Texture2D" uid="uid://bj4gn2ijhx0lt" path="res://Assets/Assets for new version of game/Untitled (22)/Rectangle 8.png" id="source_rule"]
+[ext_resource type="Script" uid="uid://biu2vgjwc8ae4" path="res://Scripts/desk_sunlight.gd" id="sunlight_script"]
+[ext_resource type="Shader" uid="uid://cm1rhhc2mtioc" path="res://Shaders/desk_sunlight.gdshader" id="sunlight_shader"]
+[ext_resource type="PackedScene" path="res://Scenes/desk_sun_dust.tscn" id="sun_dust"]
+[ext_resource type="Texture2D" uid="uid://c1nyeito38cas" path="res://Assets/Assets for new version of game/Untitled (22)/image 9.png" id="tab"]
+
+[sub_resource type="ShaderMaterial" id="ShadowMaterial"]
+shader = ExtResource("shadow_shader")
+shader_parameter/shadow_strength = 1.0
+shader_parameter/blur_pixels = 3.0
+shader_parameter/speed = 0.400000019
+shader_parameter/motion_pixels = Vector2(24, 12)
+
+[sub_resource type="ShaderMaterial" id="SunlightMaterial"]
+resource_local_to_scene = true
+shader = ExtResource("sunlight_shader")
+shader_parameter/light_color = Color(1, 0.9490196, 0.6901961, 1)
+shader_parameter/strength = 0.29
+shader_parameter/speed = 0.5
+shader_parameter/sway = 0.10297442586766545
+shader_parameter/reach = 1190.0
+shader_parameter/source_glow = 1.0
+shader_parameter/direction = -0.2792526803190927
+shader_parameter/ray_width = 1.0
+shader_parameter/ray_spacing = 0.45
+shader_parameter/width_variation = 0.47
+shader_parameter/shimmer = 0.18
+shader_parameter/light_position = Vector2(0.975, -0.035)
+shader_parameter/rect_size = Vector2(2120, 1240)
+shader_parameter/animation_time = 902.3908620000954
+
+[node name="Newsroom" type="Control" unique_id=946518030]
+editor_description = "Макет рабочего стола: фон и статья — Canvas/World; номер смены, кнопки и панель показателей — Canvas. Текст и чашка здесь служат образцом для редактора."
+clip_contents = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("screen")
+
+[node name="Backdrop" type="ColorRect" parent="." unique_id=758379835]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.25, 0.16, 0.08, 1)
+
+[node name="Canvas" type="Control" parent="." unique_id=743476426]
+anchors_preset = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+scale = Vector2(0.6666667, 0.6666667)
+mouse_filter = 2
+script = ExtResource("canvas")
+
+[node name="ComboBurst" type="Control" parent="Canvas" unique_id=1879608632]
+unique_name_in_owner = true
+z_index = 100
+anchors_preset = 0
+offset_left = 1398.0
+offset_top = 844.5
+offset_right = 2028.0
+offset_bottom = 994.5
+rotation = -0.025
+mouse_filter = 2
+
+[node name="Combo" type="Label" parent="Canvas/ComboBurst" unique_id=2099433543]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 580.0
+offset_bottom = 62.0
+theme_override_colors/font_color = Color(1, 0.81, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0.25, 0.14, 0.05, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 48
+
+[node name="ComboDetail" type="Label" parent="Canvas/ComboBurst" unique_id=958220605]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 11.887573
+offset_top = 67.498535
+offset_right = 596.8876
+offset_bottom = 104.498535
+theme_override_colors/font_color = Color(1, 0.97, 0.8, 1)
+theme_override_colors/font_outline_color = Color(0.25, 0.14, 0.05, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 25
+
+[node name="EffectHint" type="Label" parent="Canvas/ComboBurst" unique_id=635431427]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 103.0
+offset_right = 597.0
+offset_bottom = 135.0
+theme_override_colors/font_color = Color(1, 0.93, 0.64, 1)
+theme_override_colors/font_outline_color = Color(0.25, 0.14, 0.05, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 23
+text = "Награды и штрафы усилены"
+
+[node name="World" type="Control" parent="Canvas" unique_id=1689433800]
+anchors_preset = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+
+[node name="Background" type="TextureRect" parent="Canvas/World" unique_id=654090620]
+editor_description = "Фон стола. Оставляйте запас по краям для параллакса."
+layout_mode = 0
+offset_left = -147.0
+offset_top = -160.0
+offset_right = 2273.0
+offset_bottom = 1280.0
+rotation = 2.3350352e-05
+mouse_filter = 2
+texture = ExtResource("background")
+expand_mode = 1
+
+[node name="ArticleNumber" type="Label" parent="Canvas/World" unique_id=45265870]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 637.0
+offset_top = 235.0
+offset_right = 822.0
+offset_bottom = 402.0
+rotation = -0.04
+theme_override_colors/font_color = Color(0.4, 0.43, 0.19, 1)
+theme_override_font_sizes/font_size = 145
+text = "01"
+
+[node name="NumberArt" type="TextureRect" parent="Canvas/World/ArticleNumber" unique_id=479795966]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -12.650525
+offset_top = 28.516922
+offset_right = -12.650528
+offset_bottom = 28.516922
+grow_horizontal = 2
+grow_vertical = 2
+rotation = 0.013333229
+mouse_filter = 2
+texture = ExtResource("issue_preview")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HeadlineTab" type="TextureRect" parent="Canvas/World" unique_id=861962323]
+layout_mode = 0
+offset_left = 820.50006
+offset_top = 212.99997
+offset_right = 1025.5001
+offset_bottom = 280.99997
+rotation = -0.023
+mouse_filter = 2
+texture = ExtResource("tab")
+expand_mode = 1
+
+[node name="TabText" type="Label" parent="Canvas/World/HeadlineTab" unique_id=2002108739]
+layout_mode = 0
+offset_left = 59.455215
+offset_top = 24.373785
+offset_right = 229.45522
+offset_bottom = 64.37379
+rotation = -0.018513002
+theme_override_colors/font_color = Color(1, 0.93, 0.7, 1)
+theme_override_font_sizes/font_size = 26
+text = "HEADLINE"
+
+[node name="HeadlineField" type="TextureButton" parent="Canvas/World" unique_id=501928383]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 835.5
+offset_top = 247.49994
+offset_right = 1649.5
+offset_bottom = 411.49994
+rotation = -0.022
+mouse_default_cursor_shape = 2
+texture_normal = ExtResource("green")
+ignore_texture_size = true
+stretch_mode = 0
+script = ExtResource("field")
+
+[node name="Text" type="Label" parent="Canvas/World/HeadlineField" unique_id=83633961]
+layout_mode = 0
+offset_left = 33.634766
+offset_top = 22.066319
+offset_right = 604.2112
+offset_bottom = 124.90633
+rotation = -0.02395486
+scale = Vector2(1.24, 1.24)
+theme_override_colors/font_color = Color(1, 0.97, 0.78, 1)
+theme_override_font_sizes/font_size = 32
+text = "Выбрать заголовок…"
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Replace" type="TextureRect" parent="Canvas/World/HeadlineField" unique_id=906302221]
+layout_mode = 0
+offset_left = 736.59784
+offset_top = -41.806274
+offset_right = 841.7311
+offset_bottom = 58.755936
+mouse_filter = 2
+texture = ExtResource("replace")
+expand_mode = 1
+
+[node name="Pencil" type="TextureRect" parent="Canvas/World/HeadlineField" unique_id=255429714]
+layout_mode = 0
+offset_left = 698.9166
+offset_top = 41.270134
+offset_right = 757.5916
+offset_bottom = 94.07764
+mouse_filter = 2
+texture = ExtResource("pencil")
+expand_mode = 1
+
+[node name="TextureRect" type="TextureRect" parent="Canvas/World" unique_id=74265062]
+layout_mode = 0
+offset_left = 841.50024
+offset_top = 391.50012
+offset_right = 1648.5002
+offset_bottom = 452.50012
+rotation = -0.040751588
+scale = Vector2(0.9939842, 0.9539912)
+texture = ExtResource("10_jn5ig")
+
+[node name="SourceRule" type="TextureRect" parent="Canvas/World" unique_id=1653462195]
+layout_mode = 0
+offset_left = 568.4999
+offset_top = 392.99994
+offset_right = 1642.4999
+offset_bottom = 492.2033
+rotation = -0.016311185
+mouse_filter = 2
+texture = ExtResource("source_rule")
+expand_mode = 1
+
+[node name="SourceTitle" type="Label" parent="Canvas/World" unique_id=315316668]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 645.0
+offset_top = 465.0
+offset_right = 1610.0
+offset_bottom = 512.0
+rotation = -0.022
+theme_override_colors/font_color = Color(0.36, 0.27, 0.12, 1)
+theme_override_font_sizes/font_size = 24
+text = "Письмо жительницы · квартал Фонарей"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="SourceText" type="RichTextLabel" parent="Canvas/World" unique_id=25535816]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 624.0
+offset_top = 505.5
+offset_right = 1614.0
+offset_bottom = 872.5
+rotation = -0.022
+mouse_filter = 1
+theme_override_colors/default_color = Color(0.19, 0.17, 0.09, 1)
+theme_override_font_sizes/normal_font_size = 28
+text = "Каждый вечер я вижу одного чёрного кота у своего подъезда. Мне кажется, он за мной следит! Соседка говорит, что кот ждёт хозяйку из ночной смены. К полиции я пока не обращалась. Пожалуйста, выясните, что происходит."
+
+[node name="Coffee" parent="Canvas/World" unique_id=1348446098 instance=ExtResource("coffee")]
+unique_name_in_owner = true
+editor_description = "Чашка и кофейный след. Откройте вложенную сцену desk_coffee.tscn для правки частей чашки."
+z_index = 6
+layout_mode = 0
+offset_left = 1644.0
+offset_top = 309.00012
+offset_right = 1994.0
+offset_bottom = 624.0
+scale = Vector2(1.2400092, 1.2400092)
+
+[node name="Shadows" type="Sprite2D" parent="Canvas/World" unique_id=863982697]
+editor_description = "Тени художницы. Положение и масштаб можно поправить прямо в сцене; шейдер задаёт силу и скорость движения."
+z_index = 10
+material = SubResource("ShadowMaterial")
+position = Vector2(967.4999, 586.8751)
+scale = Vector2(0.97323596, 0.8673448)
+texture = ExtResource("shadows")
+
+[node name="Sunlight" type="ColorRect" parent="Canvas/World" unique_id=856941673]
+editor_description = "Солнечные лучи. Настройки наверху инспектора: источник, яркость, цвет, форма и анимация. Source Position — координаты в пикселях относительно этого узла. Preview Animation включает движение в редакторе."
+z_index = 11
+material = SubResource("SunlightMaterial")
+layout_mode = 0
+offset_left = 227.99997
+offset_top = -147.0
+offset_right = 2348.0
+offset_bottom = 1093.0
+mouse_filter = 2
+script = ExtResource("sunlight_script")
+brightness = 0.29
+light_color = Color(1, 0.9490196, 0.6901961, 1)
+reach = 1190.0
+source_glow = 1.0
+direction_degrees = -16.0
+ray_spacing = 0.45
+speed = 0.5
+sway_degrees = 5.9
+width_variation = 0.47
+shimmer = 0.18
+preview_animation = true
+
+[node name="SunDust" parent="Canvas/World" unique_id=1979724103 instance=ExtResource("sun_dust")]
+particle_count = 200
+size_range = Vector2(3, 9)
+opacity = 0.63
+brightness = 1.0
+softness = 1.0
+dust_color = Color(1, 0.98039216, 0.6509804, 1)
+direction_spread_degrees = 250.0
+light_gain = 5.0
+visibility_floor = 0.19
+
+[node name="Choices" type="Control" parent="Canvas/World" unique_id=294016554]
+editor_description = "Записки скрыты для чистого вида стола. В режиме с фоном этот слой перекрывает остальной интерфейс. Для подгонки временно включите значок глаза в дереве сцены."
+visible = false
+z_index = 30
+anchors_preset = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+
+[node name="Slot1" type="Control" parent="Canvas/World/Choices" unique_id=1267791085]
+visible = false
+anchors_preset = 0
+offset_left = 500.0
+offset_top = 340.0
+offset_right = 855.0
+offset_bottom = 790.0
+mouse_filter = 2
+
+[node name="Headline1" parent="Canvas/World/Choices/Slot1" unique_id=1594824999 instance=ExtResource("card")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 355.0
+offset_bottom = 450.0
+rotation = -0.025
+script = ExtResource("sheet")
+
+[node name="Slot2" type="Control" parent="Canvas/World/Choices" unique_id=1036587174]
+anchors_preset = 0
+offset_left = 915.0
+offset_top = 340.0
+offset_right = 1270.0
+offset_bottom = 790.0
+mouse_filter = 2
+
+[node name="Headline2" parent="Canvas/World/Choices/Slot2" unique_id=773589440 instance=ExtResource("card")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 355.0
+offset_bottom = 450.0
+rotation = 0.013
+script = ExtResource("sheet")
+
+[node name="Slot3" type="Control" parent="Canvas/World/Choices" unique_id=1893310937]
+anchors_preset = 0
+offset_left = 1330.0
+offset_top = 340.0
+offset_right = 1685.0
+offset_bottom = 790.0
+mouse_filter = 2
+
+[node name="Headline3" parent="Canvas/World/Choices/Slot3" unique_id=503878492 instance=ExtResource("card")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 355.0
+offset_bottom = 450.0
+rotation = 0.027
+script = ExtResource("sheet")
+
+[node name="Drawer" parent="Canvas" unique_id=381584864 instance=ExtResource("drawer")]
+unique_name_in_owner = true
+editor_description = "Выдвижная панель. Внутренние элементы редактируются в work_status_drawer.tscn."
+z_index = 60
+layout_mode = 0
+
+[node name="ShiftLabel" type="Label" parent="Canvas" unique_id=1922238288]
+unique_name_in_owner = true
+z_index = 50
+layout_mode = 0
+offset_left = 850.0
+offset_top = 20.0
+offset_right = 1120.0
+offset_bottom = 55.0
+theme_override_colors/font_outline_color = Color(0.26, 0.13, 0.05, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 25
+text = "СМЕНА 01"
+horizontal_alignment = 1
+
+[node name="FinishShift" type="Button" parent="Canvas" unique_id=1131359857]
+unique_name_in_owner = true
+z_index = 50
+layout_mode = 0
+offset_left = 1650.0
+offset_top = 99.0
+offset_right = 1890.0
+offset_bottom = 156.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 24
+text = "Сдать выпуск"
+
+[node name="Publish" type="Button" parent="Canvas" unique_id=2046694352]
+unique_name_in_owner = true
+z_index = 50
+layout_mode = 0
+offset_left = 781.5
+offset_top = 964.5001
+offset_right = 1211.5
+offset_bottom = 1050.5001
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 36
+disabled = true
+text = "Опубликовать"
+
+[node name="DeskFocus" parent="Canvas" unique_id=83320363 instance=ExtResource("focus")]
+layout_mode = 0
