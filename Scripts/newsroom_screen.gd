@@ -39,6 +39,8 @@ var _combo_tween: Tween
 @onready var popup: DeskFocus = $Canvas/DeskFocus
 @onready var combo_burst: Control = %ComboBurst
 @onready var choices: Control = $Canvas/World/Choices
+@onready var stamp: DeskStamp = %Stamp
+@onready var stamp_area: StampArea = %StampArea
 
 func _ready() -> void:
 	_choice_overlay = CHOICE_OVERLAY.instantiate() as Control
@@ -53,14 +55,15 @@ func _ready() -> void:
 	%HeadlineField.pressed.connect(_toggle_choices)
 	%Coffee.activated.connect(_drink_coffee)
 	%FinishShift.pressed.connect(_finish_shift)
-	%Publish.pressed.connect(_publish_selected)
+	stamp.stamped.connect(_publish_selected)
+	stamp.interaction_changed.connect(_refresh_actions)
 	%Drawer.toggled.connect(func(_expanded: bool): view_changed.emit())
 	popup.primary_pressed.connect(_on_primary)
 	popup.secondary_pressed.connect(_close_focus)
 	popup.close_pressed.connect(_close_focus)
 
 func _process(_delta: float) -> void:
-	$Canvas.motion_enabled = not popup.visible and not (choices.visible and GameSettings.choice_overlay_enabled)
+	$Canvas.motion_enabled = not popup.visible and not stamp.dragging and not stamp.busy and not (choices.visible and GameSettings.choice_overlay_enabled)
 
 func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree() or not event is InputEventMouseButton:
@@ -99,7 +102,7 @@ func _update_choice_overlay() -> void:
 	var overlay_blocks := choices.visible and GameSettings.choice_overlay_enabled
 	%Drawer.visible = not overlay_blocks
 	%FinishShift.visible = not overlay_blocks
-	%Publish.visible = not overlay_blocks
+	stamp.visible = not overlay_blocks
 	if session != null:
 		_refresh_actions()
 
@@ -129,12 +132,16 @@ func _refresh_desk() -> void:
 	_refresh_combo()
 
 func _refresh_actions() -> void:
+	if session == null:
+		return
 	var blocked := session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached()
 	var overlay_blocks := choices.visible and GameSettings.choice_overlay_enabled
 	%HeadlineField.disabled = blocked or _choices_animating or overlay_blocks
-	%Publish.disabled = blocked or selected_index < 0 or choices_open or _choices_animating or popup.visible or overlay_blocks
-	%FinishShift.disabled = blocked or overlay_blocks
-	%Coffee.get_node("Cup").disabled = blocked or not session.coffee_ready or session.coffee_used_today or session.health >= session.balance.maximum_stat or overlay_blocks
+	var can_publish := not (blocked or selected_index < 0 or choices_open or _choices_animating or popup.visible or overlay_blocks)
+	stamp.set_enabled(can_publish)
+	stamp_area.set_available(can_publish)
+	%FinishShift.disabled = blocked or overlay_blocks or stamp.dragging or stamp.busy
+	%Coffee.get_node("Cup").disabled = blocked or not session.coffee_ready or session.coffee_used_today or session.health >= session.balance.maximum_stat or overlay_blocks or stamp.dragging or stamp.busy
 
 func _refresh_combo() -> void:
 	if session.combo_count == _shown_combo_count and session.combo_type == _shown_combo_type:
@@ -181,6 +188,8 @@ func show_article() -> void:
 	if session.phase != NewsroomSession.Phase.WORK:
 		return
 	selected_index = -1
+	stamp.cancel_interaction()
+	stamp_area.reset()
 	popup.reset()
 	popup_kind = DialogKind.NONE
 	_hide_choices(false)
@@ -289,7 +298,7 @@ func _on_primary() -> void:
 		_close_focus()
 
 func _publish_selected() -> void:
-	if selected_index < 0 or choices_open or _choices_animating or popup.visible:
+	if not can_process() or not is_visible_in_tree() or selected_index < 0 or choices_open or _choices_animating or popup.visible:
 		return
 	session.publish_headline(selected_index)
 
@@ -343,6 +352,7 @@ func restore_presentation(data: Dictionary) -> void:
 	%Drawer.set_expanded(bool(data.get("drawer_expanded", true)), false)
 	selected_index = clampi(int(data.get("selected_index", -1)), -1, 2)
 	if session.awaiting_acknowledgement:
+		stamp_area.restore_result()
 		_show_result(session.last_result)
 		return
 	var dialog := str(data.get("dialog", "none"))

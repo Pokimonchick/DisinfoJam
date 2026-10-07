@@ -1,0 +1,148 @@
+[gd_scene load_steps=17 format=3]
+
+[ext_resource type="Shader" path="res://Shaders/stamp_wood.gdshader" id="1_wood"]
+
+[sub_resource type="ShaderMaterial" id="WoodBody"]
+shader = ExtResource("1_wood")
+shader_parameter/wood_color = Color(0.415686, 0.262745, 0.156863, 1)
+shader_parameter/grain_direction = Vector3(1, 0, 0.25)
+shader_parameter/flow_direction = Vector3(0, 0.7, 1)
+shader_parameter/grain_strength = 0.12
+
+[sub_resource type="ShaderMaterial" id="WoodEdge"]
+shader = ExtResource("1_wood")
+shader_parameter/wood_color = Color(0.584314, 0.392157, 0.223529, 1)
+shader_parameter/grain_direction = Vector3(1, 0, 0.25)
+shader_parameter/flow_direction = Vector3(0, 0.7, 1)
+shader_parameter/grain_strength = 0.09
+
+[sub_resource type="ShaderMaterial" id="WoodHandle"]
+shader = ExtResource("1_wood")
+shader_parameter/wood_color = Color(0.305882, 0.176471, 0.105882, 1)
+shader_parameter/grain_direction = Vector3(1, 0, 0.25)
+shader_parameter/flow_direction = Vector3(0, 0.7, 1)
+shader_parameter/grain_strength = 0.07
+
+[sub_resource type="ShaderMaterial" id="WoodGrip"]
+shader = ExtResource("1_wood")
+shader_parameter/wood_color = Color(0.631373, 0.423529, 0.25098, 1)
+shader_parameter/grain_direction = Vector3(1, 0, 0.25)
+shader_parameter/flow_direction = Vector3(0, 0.7, 1)
+shader_parameter/grain_strength = 0.05
+
+[sub_resource type="StandardMaterial3D" id="RubberMaterial"]
+albedo_color = Color(0.156863, 0.12549, 0.0980392, 1)
+roughness = 0.95
+metallic_specular = 0.10
+
+[sub_resource type="CylinderMesh" id="RubberMesh"]
+material = SubResource("RubberMaterial")
+top_radius = 0.75
+bottom_radius = 0.75
+height = 0.06
+radial_segments = 64
+
+[sub_resource type="CylinderMesh" id="LowerEdgeMesh"]
+material = SubResource("WoodEdge")
+top_radius = 0.815
+bottom_radius = 0.77
+height = 0.044
+radial_segments = 64
+
+[sub_resource type="CylinderMesh" id="BaseBodyMesh"]
+material = SubResource("WoodBody")
+top_radius = 0.815
+bottom_radius = 0.815
+height = 0.132
+radial_segments = 64
+
+[sub_resource type="CylinderMesh" id="UpperEdgeMesh"]
+material = SubResource("WoodEdge")
+top_radius = 0.76
+bottom_radius = 0.815
+height = 0.048
+radial_segments = 64
+
+[sub_resource type="CylinderMesh" id="TopInsetMesh"]
+material = SubResource("WoodBody")
+top_radius = 0.755
+bottom_radius = 0.76
+height = 0.014
+radial_segments = 64
+
+[sub_resource type="CylinderMesh" id="HandleSeatMesh"]
+material = SubResource("WoodEdge")
+top_radius = 0.23
+bottom_radius = 0.30
+height = 0.06
+radial_segments = 64
+
+[sub_resource type="CylinderMesh" id="HandleFootMesh"]
+material = SubResource("WoodHandle")
+top_radius = 0.135
+bottom_radius = 0.23
+height = 0.11
+radial_segments = 64
+
+[sub_resource type="CylinderMesh" id="HandleStemMesh"]
+material = SubResource("WoodHandle")
+top_radius = 0.14
+bottom_radius = 0.135
+height = 0.16
+radial_segments = 64
+
+[sub_resource type="CylinderMesh" id="HandleNeckMesh"]
+material = SubResource("WoodHandle")
+top_radius = 0.24
+bottom_radius = 0.14
+height = 0.12
+radial_segments = 64
+
+[sub_resource type="SphereMesh" id="HandleGripMesh"]
+material = SubResource("WoodGrip")
+radius = 0.31
+height = 0.59
+radial_segments = 48
+rings = 24
+
+[node name="DeskStampModel" type="Node3D"]
+
+[node name="RubberUnderside" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.03, 0)
+mesh = SubResource("RubberMesh")
+
+[node name="LowerWoodEdge" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.082, 0)
+mesh = SubResource("LowerEdgeMesh")
+
+[node name="WoodBase" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.17, 0)
+mesh = SubResource("BaseBodyMesh")
+
+[node name="UpperWoodEdge" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.26, 0)
+mesh = SubResource("UpperEdgeMesh")
+
+[node name="WoodTop" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.291, 0)
+mesh = SubResource("TopInsetMesh")
+
+[node name="HandleSeat" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.32, 0)
+mesh = SubResource("HandleSeatMesh")
+
+[node name="HandleFoot" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.405, 0)
+mesh = SubResource("HandleFootMesh")
+
+[node name="HandleStem" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.54, 0)
+mesh = SubResource("HandleStemMesh")
+
+[node name="HandleNeck" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.68, 0)
+mesh = SubResource("HandleNeckMesh")
+
+[node name="HandleGrip" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.88, 0)
+mesh = SubResource("HandleGripMesh")

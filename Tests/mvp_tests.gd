@@ -404,7 +404,7 @@ func _test_scenes() -> void:
 	var drawer: Control = work.get_node("%Drawer")
 	_check(work.size == root.get_visible_rect().size and not game.get_node("Padding").visible, "Work desk fills the viewport without the old header")
 	_check(work.get_node("%SourceText").text == game.session.current_article().source_text and not popup.active, "Source is readable directly on the desk")
-	_check(not work.choices.visible and work.get_node("%Publish").disabled, "A new article waits for a headline")
+	_check(not work.choices.visible and not work.stamp.enabled, "A new article waits for a headline")
 	_check(drawer.expanded, "Stats are visible when starting the new desk")
 	drawer.set_expanded(true)
 	game.session.coffee_ready = true
@@ -424,7 +424,7 @@ func _test_scenes() -> void:
 	work.cards[0].pressed.emit()
 	await create_timer(0.4).timeout
 	_check(not popup.active and work.selected_index == 0 and game.session.total_published == 0 and not work.choices.visible, "Clicking a note sets a draft directly without payment")
-	_check(work.get_node("%HeadlineField/Text").text == game.session.option_at(0).text and not work.get_node("%Publish").disabled, "Draft appears in the green field and enables publication")
+	_check(work.get_node("%HeadlineField/Text").text == game.session.option_at(0).text and work.stamp.enabled, "Draft appears in the green field and enables publication")
 	await _capture("desk_03_draft")
 	work.get_node("%HeadlineField").pressed.emit()
 	await create_timer(0.65).timeout
@@ -432,12 +432,17 @@ func _test_scenes() -> void:
 	work.cards[1].pressed.emit()
 	await create_timer(0.4).timeout
 	_check(work.selected_index == 1 and game.session.total_published == 0, "Replacing a draft still does not publish")
-	work.get_node("%Publish").pressed.emit()
-	_check(game.session.total_published == 1 and popup.active and work.popup_kind == work.DialogKind.RESULT, "Separate publication button applies effects and shows result")
+	var grip: Vector2 = work.stamp.get_global_transform_with_canvas() * Vector2(144, 105)
+	var contact: Vector2 = work.stamp_area.get_global_transform_with_canvas() * (work.stamp_area.size * 0.5)
+	work.stamp.begin_drag(grip)
+	work.stamp.move_drag(grip + contact - work.stamp.contact_position())
+	work.stamp.finish_drag()
+	await create_timer(0.25).timeout
+	_check(game.session.total_published == 1 and popup.active and work.popup_kind == work.DialogKind.RESULT, "Stamp contact applies effects and shows result")
 	await create_timer(0.3).timeout
 	_check(is_equal_approx(popup.size.x / popup.size.y, work.cards[1].size.x / work.cards[1].size.y), "Printed result zoom preserves the note's aspect ratio")
 	var paid: int = game.session.money
-	work.get_node("%Publish").pressed.emit()
+	work._publish_selected()
 	_check(game.session.money == paid and game.session.total_published == 1, "Repeated publication cannot award twice")
 	await create_timer(0.3).timeout
 	await _capture("desk_05_result")

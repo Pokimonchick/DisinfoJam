@@ -375,6 +375,8 @@ func _interface_blocked() -> bool:
 
 func _update_interface_lock() -> void:
 	var blocked := paused or _interface_blocked()
+	if blocked:
+		work.stamp.cancel_interaction()
 	work.process_mode = Node.PROCESS_MODE_DISABLED if blocked else Node.PROCESS_MODE_INHERIT
 	home.process_mode = Node.PROCESS_MODE_DISABLED if blocked else Node.PROCESS_MODE_INHERIT
 	# Freeze desk parallax too; the spotlight must remain on the explained item.
@@ -409,8 +411,10 @@ func _present_tutorial_step() -> void:
 			for suffix in ["Title", "Value", "Bar", "Help"]:
 				targets.append(work.get_node(panel + stat + suffix))
 		else:
-			var paths := {"source": "%SourceText", "headline": "%HeadlineField", "publish": "%Publish", "coffee": "%Coffee", "finish": "%FinishShift", "combo": "%ComboBurst"}
+			var paths := {"source": "%SourceText", "headline": "%HeadlineField", "publish": "%Stamp", "coffee": "%Coffee", "finish": "%FinishShift", "combo": "%ComboBurst"}
 			targets.append(work.get_node(paths[step.target]))
+			if step.target == "publish":
+				targets.append(work.get_node("%StampArea"))
 			if step.target == "source":
 				targets.append(work.get_node("%SourceTitle"))
 			if step.target == "combo":

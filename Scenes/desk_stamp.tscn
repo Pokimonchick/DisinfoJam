@@ -1,0 +1,68 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://Scripts/desk_stamp.gd" id="stamp"]
+[ext_resource type="PackedScene" path="res://Scenes/desk_stamp_model.tscn" id="model"]
+[ext_resource type="Shader" path="res://Shaders/note_shadow.gdshader" id="shadow"]
+
+[sub_resource type="ViewportTexture" id="StampTexture"]
+viewport_path = NodePath("Render")
+
+[sub_resource type="ShaderMaterial" id="ShadowMaterial"]
+resource_local_to_scene = true
+shader = ExtResource("shadow")
+shader_parameter/shadow_strength = 0.28
+shader_parameter/blur_pixels = 5.0
+
+[sub_resource type="Environment" id="Environment"]
+ambient_light_source = 3
+ambient_light_color = Color(1, 0.88, 0.72, 1)
+ambient_light_energy = 0.65
+
+[sub_resource type="World3D" id="StampWorld"]
+resource_local_to_scene = true
+environment = SubResource("Environment")
+
+[node name="Stamp" type="Control"]
+editor_description = "Круглый 3D-штамп. Положение, ракурс, свет, подъём, скорость удара и тень настраиваются в инспекторе. Model Scene можно заменить моделью с подошвой на y=0."
+offset_right = 288.0
+offset_bottom = 288.0
+mouse_default_cursor_shape = 2
+script = ExtResource("stamp")
+model_scene = ExtResource("model")
+
+[node name="Shadow" type="TextureRect" parent="."]
+material = SubResource("ShadowMaterial")
+offset_right = 288.0
+offset_bottom = 288.0
+mouse_filter = 2
+texture = SubResource("StampTexture")
+expand_mode = 1
+
+[node name="Image" type="TextureRect" parent="."]
+offset_right = 288.0
+offset_bottom = 288.0
+mouse_filter = 2
+texture = SubResource("StampTexture")
+expand_mode = 1
+
+[node name="Render" type="SubViewport" parent="."]
+transparent_bg = true
+world_3d = SubResource("StampWorld")
+gui_disable_input = true
+size = Vector2i(640, 640)
+msaa_3d = 1
+render_target_update_mode = 1
+
+[node name="Camera" type="Camera3D" parent="Render"]
+position = Vector3(0, 4.5, 0.15)
+current = true
+fov = 32.0
+
+[node name="Sun" type="DirectionalLight3D" parent="Render"]
+light_color = Color(1, 0.91, 0.73, 1)
+light_energy = 1.0
+shadow_enabled = true
+directional_shadow_mode = 0
+directional_shadow_max_distance = 10.0
+
+[node name="ModelRoot" type="Node3D" parent="Render"]
