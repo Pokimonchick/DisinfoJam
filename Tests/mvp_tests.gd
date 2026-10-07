@@ -438,8 +438,10 @@ func _test_scenes() -> void:
 	work.stamp.move_drag(grip + contact - work.stamp.contact_position())
 	work.stamp.finish_drag()
 	await create_timer(0.25).timeout
-	_check(game.session.total_published == 1 and popup.active and work.popup_kind == work.DialogKind.RESULT, "Stamp contact applies effects and shows result")
-	await create_timer(0.3).timeout
+	_check(game.session.total_published == 1 and not popup.active, "Stamp contact applies effects before showing the result")
+	await work.stamp.returned_to_rest
+	await create_timer(work.result_delay_seconds + popup.opening_seconds + 0.1).timeout
+	_check(popup.active and work.popup_kind == work.DialogKind.RESULT, "The result opens after the stamp returns and the delay finishes")
 	_check(is_equal_approx(popup.size.x / popup.size.y, work.cards[1].size.x / work.cards[1].size.y), "Printed result zoom preserves the note's aspect ratio")
 	var paid: int = game.session.money
 	work._publish_selected()

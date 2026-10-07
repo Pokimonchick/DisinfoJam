@@ -2,7 +2,7 @@
 class_name StampArea
 extends Control
 
-@export var imprint_size := Vector2(160, 160):
+@export var imprint_size := Vector2(224, 224):
 	set(value):
 		imprint_size = value.max(Vector2(8, 8))
 		if is_node_ready():

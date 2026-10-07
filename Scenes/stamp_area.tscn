@@ -17,8 +17,8 @@ script = ExtResource("area")
 [node name="Preview" type="TextureRect" parent="."]
 visible = false
 material = SubResource("InkMaterial")
-offset_right = 160.0
-offset_bottom = 160.0
+offset_right = 224.0
+offset_bottom = 224.0
 mouse_filter = 2
 modulate = Color(1, 1, 1, 0.22)
 texture = ExtResource("imprint")
@@ -27,8 +27,8 @@ expand_mode = 1
 [node name="Imprint" type="TextureRect" parent="."]
 visible = false
 material = SubResource("InkMaterial")
-offset_right = 160.0
-offset_bottom = 160.0
+offset_right = 224.0
+offset_bottom = 224.0
 mouse_filter = 2
 texture = ExtResource("imprint")
 expand_mode = 1

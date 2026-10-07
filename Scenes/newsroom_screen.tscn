@@ -303,9 +303,9 @@ excluded_controls = Array[NodePath]([NodePath("../Coffee/Cup"), NodePath("../Hea
 unique_name_in_owner = true
 z_index = 8
 offset_left = 1644.0
-offset_top = 115.0
+offset_top = 75.0
 offset_right = 1932.0
-offset_bottom = 403.0
+offset_bottom = 363.0
 stamp_area_path = NodePath("../StampArea")
 
 [node name="Coffee" parent="Canvas/World" unique_id=1348446098 instance=ExtResource("coffee")]
@@ -444,9 +444,9 @@ unique_name_in_owner = true
 z_index = 50
 layout_mode = 0
 offset_left = 1650.0
-offset_top = 99.0
+offset_top = 10.0
 offset_right = 1890.0
-offset_bottom = 156.0
+offset_bottom = 67.0
 mouse_default_cursor_shape = 2
 theme_override_font_sizes/font_size = 24
 text = "Сдать выпуск"

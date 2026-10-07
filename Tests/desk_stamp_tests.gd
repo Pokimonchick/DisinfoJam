@@ -59,16 +59,17 @@ func _run() -> void:
 	work._select_headline(0)
 	await create_timer(0.4).timeout
 	check(stamp.enabled and not work.choices.visible, "Selecting a draft makes the stamp available")
+	var default_imprint_size := area.imprint_size
 	area.imprint_size = Vector2(112, 112)
 	area.imprint_angle_degrees = -8.0
 	check(area.preview.size == area.imprint_size and area.imprint.size == area.imprint_size and is_equal_approx(area.preview.rotation, deg_to_rad(-8)), "Inspector changes keep seal geometry and drop bounds in sync")
-	area.imprint_size = Vector2(160, 160)
+	area.imprint_size = default_imprint_size
 	area.imprint_angle_degrees = -2.0
 	var source: Control = work.get_node("%SourceText")
 	check(area.can_stamp(source.get_global_transform_with_canvas() * (source.size * 0.5)), "Printing directly over the source text is allowed")
 	var headline: Control = work.get_node("%HeadlineField")
 	check(not area.can_stamp(headline.get_global_transform_with_canvas() * (headline.size * 0.5)), "The headline field is outside the stamp area")
-	var cup_overlap := area.get_global_transform_with_canvas() * Vector2(area.size.x - 90, 180)
+	var cup_overlap := area.get_global_transform_with_canvas() * Vector2(area.size.x - area.imprint_size.x * 0.5 - 18, 180)
 	var exclusions: Array[NodePath] = area.excluded_controls.duplicate()
 	area.excluded_controls = []
 	var inside_body := area.can_stamp(cup_overlap)
@@ -80,12 +81,28 @@ func _run() -> void:
 		var image: Image = stamp.get_node("Render").get_texture().get_image()
 		var visible_pixels := 0
 		var sampled_pixels := 0
+		var last_visible_row := 0
 		for y in range(0, image.get_height(), 8):
 			for x in range(0, image.get_width(), 8):
 				sampled_pixels += 1
 				if image.get_pixel(x, y).a > 0.1:
 					visible_pixels += 1
+					last_visible_row = maxi(last_visible_row, y)
 		check(visible_pixels > sampled_pixels * 0.01 and visible_pixels < sampled_pixels * 0.85, "The 3D model renders with a transparent background")
+		var bottom := stamp.get_global_transform_with_canvas() * (Vector2(144, last_visible_row + 8) * stamp.size / Vector2(image.get_size()))
+		var cup: TextureButton = work.get_node("%Coffee/Cup")
+		var cup_image := cup.texture_normal.get_image()
+		var first_cup_row := cup_image.get_height()
+		# The cup texture has transparent padding above its actual silhouette.
+		for y in range(0, cup_image.get_height(), 4):
+			for x in range(0, cup_image.get_width(), 4):
+				if cup_image.get_pixel(x, y).a > 0.1:
+					first_cup_row = y
+					break
+			if first_cup_row < cup_image.get_height():
+				break
+		var cup_top := cup.get_global_transform_with_canvas() * Vector2(0, first_cup_row * cup.size.y / cup_image.get_height())
+		check(bottom.y + 8 < cup_top.y, "The resting stamp and its shadow leave a gap above the visible coffee")
 	var rest := stamp.position
 	var rest_view: Transform3D = stamp.get_node("Render/Camera").transform
 	var grip := stamp.get_global_transform_with_canvas() * Vector2(144, 105)
@@ -94,8 +111,11 @@ func _run() -> void:
 	await process_frame
 	check(not work.get_node("Canvas").motion_enabled, "Dragging freezes the desk parallax")
 	await _button(grip, false)
+	check(stamp.dragging and game.session.total_published == 0, "Releasing the pickup click keeps the stamp attached to the cursor")
+	await _button(grip, true)
+	await _button(grip, false)
 	await create_timer(0.4).timeout
-	check(not stamp.busy and stamp.position.is_equal_approx(rest) and game.session.total_published == 0, "Dropping beside the paper returns the stamp without publishing")
+	check(not stamp.busy and stamp.position.is_equal_approx(rest) and game.session.total_published == 0, "Clicking beside the paper returns the stamp without publishing")
 
 	# Both transforms include the desk's scaling, rotation and parallax.
 	var world: Control = work.get_node("Canvas/World")
@@ -105,8 +125,9 @@ func _run() -> void:
 	check(area.can_stamp(centre) and not area.can_stamp(area.get_global_transform_with_canvas() * Vector2(6, 6)), "The entire rotated seal must fit inside the free paper field")
 	grip = stamp.get_global_transform_with_canvas() * Vector2(144, 105)
 	await _button(grip, true)
+	await _button(grip, false)
 	await _move(grip + centre - stamp.contact_position())
-	check(stamp.dragging and area.preview.visible, "Dragging over paper shows the impression in transformed coordinates")
+	check(stamp.dragging and area.preview.visible, "Moving without holding a button shows the impression in transformed coordinates")
 	check(stamp.contact_position().distance_to(centre) < 0.1 and not stamp.get_node("Render/Camera").transform.is_equal_approx(rest_view), "Perspective changes during movement without shifting the intended drop point")
 	await _capture("drag")
 	game.transitioning = false
@@ -122,24 +143,66 @@ func _run() -> void:
 	centre = area.get_global_transform_with_canvas() * Vector2(area.size.x * 0.8, 130)
 	grip = stamp.get_global_transform_with_canvas() * Vector2(144, 105)
 	await _button(grip, true)
+	await _button(grip, false)
 	await _move(grip + centre - stamp.contact_position())
+	await _button(centre, true)
 	await _button(centre, false)
-	check(stamp.busy and game.session.total_published == 0, "Releasing on paper starts the strike before applying consequences")
+	check(stamp.busy and game.session.total_published == 0, "The second click starts the strike before applying consequences")
 	await create_timer(0.25).timeout
-	check(game.session.total_published == 1 and area.printed and area.imprint.visible and work.popup.active, "Contact leaves an impression and applies the existing publication result once")
+	check(game.session.total_published == 1 and area.printed and area.imprint.visible and not work.popup.active, "Contact applies the publication once while the result note stays hidden")
 	var ink_centre := area.get_global_transform_with_canvas() * (area.imprint.position + area.imprint_size * 0.5)
 	check(ink_centre.distance_to(centre) < 0.1, "The new ink stays at the actual contact point over the article text")
 	var money: int = game.session.money
 	check(not stamp.begin_drag(centre), "The publication result prevents a second stamp")
 	work._publish_selected()
 	check(game.session.money == money and game.session.total_published == 1, "Repeated publication cannot award twice")
-	await create_timer(0.4).timeout
+	await stamp.returned_to_rest
+	check(stamp.position.is_equal_approx(rest) and not work.popup.active, "Returning the stamp does not open the result note immediately")
+	var health: float = game.session.health
+	game.session.tick_work(30.0)
+	check(game.session.health == health, "Waiting for the result note does not drain stamina")
+	await _capture("after-stamp")
+	await create_timer(1.75).timeout
+	check(not work.popup.active, "The result stays hidden during the two-second delay after returning")
+	await create_timer(0.3).timeout
+	check(work.popup.active and work.popup.scale.x < 0.98, "The result then begins approaching instead of jumping to full size")
+	var opening_scale: float = work.popup.scale.x
+	await create_timer(0.2).timeout
+	check(work.popup.scale.x > opening_scale and work.popup.scale.x < 0.98, "The note is still approaching smoothly after the first part of its entrance")
+	await create_timer(0.55).timeout
+	check(work.popup.scale.is_equal_approx(Vector2.ONE), "The slower entrance finishes at the correct size")
 	await _capture("result")
 	work.restore_presentation(work.capture_presentation())
 	check(area.printed and area.imprint.visible and work.popup.active and game.session.total_published == 1, "Restoring a publication result restores the seal without replaying consequences")
 	work.popup.primary_pressed.emit()
 	await create_timer(0.35).timeout
 	check(not area.printed and not area.imprint.visible and work.selected_index == -1 and stamp.position.is_equal_approx(rest), "The next source clears the old seal and restores the stamp")
+
+	# Pausing during the committed stroke must retain its pending feedback.
+	game.session.reputation = 100.0
+	game.session.loyalty = 100.0
+	work._open_choices(false)
+	work._select_headline(0)
+	await create_timer(0.4).timeout
+	grip = stamp.get_global_transform_with_canvas() * Vector2(144, 105)
+	centre = area.get_global_transform_with_canvas() * (area.size * 0.5)
+	await _button(grip, true)
+	await _button(grip, false)
+	await _move(grip + centre - stamp.contact_position())
+	await _button(centre, true)
+	await _button(centre, false)
+	await create_timer(0.25).timeout
+	game._toggle_pause()
+	check(game.session.total_published == 2 and stamp.position.is_equal_approx(rest), "Pause after contact returns the stamp without undoing the publication")
+	await create_timer(2.15).timeout
+	check(not work.popup.active and game.session.total_published == 2, "Paused time cannot consume the pending result delay or replay a publication")
+	game._toggle_pause()
+	await create_timer(1.75).timeout
+	check(not work.popup.active, "The delay resumes after unpausing instead of opening immediately")
+	await create_timer(0.3).timeout
+	check(work.popup.active and game.session.total_published == 2, "The retained result opens once after its remaining delay")
+	work.popup.primary_pressed.emit()
+	await create_timer(0.35).timeout
 
 	# Cancellation before contact must never charge money or stamina.
 	work._open_choices(false)
@@ -148,11 +211,13 @@ func _run() -> void:
 	grip = stamp.get_global_transform_with_canvas() * Vector2(144, 105)
 	centre = area.get_global_transform_with_canvas() * (area.size * 0.5)
 	await _button(grip, true)
+	await _button(grip, false)
 	await _move(grip + centre - stamp.contact_position())
+	await _button(centre, true)
 	await _button(centre, false)
 	game._toggle_pause()
 	await create_timer(0.25).timeout
-	check(game.session.total_published == 1 and not area.printed, "Pausing before contact cancels the strike without a second publication")
+	check(game.session.total_published == 2 and not area.printed, "Pausing before contact cancels the strike without another publication")
 	game._toggle_pause()
 	game._run_active = false
 	game.queue_free()

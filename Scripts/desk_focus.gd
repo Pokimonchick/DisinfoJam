@@ -7,6 +7,8 @@ signal close_pressed
 
 const ZOOM_TIME := 0.26
 
+@export_range(0.2, 2.0, 0.05) var opening_seconds := 0.7
+
 var active := false
 var _origin: Control
 var _motion: Tween
@@ -68,11 +70,11 @@ func present(origin: Control, tag: String, title: String, body: String, primary:
 	rotation = origin_transform.get_rotation()
 	modulate.a = 1.0
 	$Margin.modulate.a = 0.0
-	_motion = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_motion.tween_property(self, "position", (get_parent().size - target_size) / 2.0, ZOOM_TIME)
-	_motion.tween_property(self, "scale", Vector2.ONE, ZOOM_TIME)
-	_motion.tween_property(self, "rotation", -0.015, ZOOM_TIME)
-	_motion.tween_property($Margin, "modulate:a", 1.0, ZOOM_TIME * 0.75).set_delay(ZOOM_TIME * 0.25)
+	_motion = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_motion.tween_property(self, "position", (get_parent().size - target_size) / 2.0, opening_seconds)
+	_motion.tween_property(self, "scale", Vector2.ONE, opening_seconds)
+	_motion.tween_property(self, "rotation", -0.015, opening_seconds)
+	_motion.tween_property($Margin, "modulate:a", 1.0, opening_seconds * 0.75).set_delay(opening_seconds * 0.25)
 
 func close(after_close: Callable = Callable()) -> void:
 	if not active:

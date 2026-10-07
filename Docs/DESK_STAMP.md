@@ -1,13 +1,17 @@
 # Desk publication stamp
 
-The stamp replaces the publication button. Hold its handle with the left mouse
-button, move it over the article body, including source text, and release.
+The stamp replaces the publication button. Click its handle with the left mouse
+button, move the cursor over the article body, then click again to print.
+Releasing the first click keeps the stamp attached to the cursor.
 The full seal must fit within that area and avoid the headline and visible cup.
 A faint preview and darker field corners appear at valid positions.
 Consequences apply once at the end of the downward stroke, using the existing
-`NewsroomSession.publish_headline()` rules and publication-result note.
+`NewsroomSession.publish_headline()` rules. The result note waits until the stamp
+returns to rest, then waits another two seconds and approaches over 0.7 seconds
+with smooth acceleration and deceleration. Passive stamina loss stays paused
+through this wait and the result. Pausing also pauses the pending result delay.
 
-Releasing elsewhere returns the stamp without publishing. Right click cancels a
+Clicking elsewhere returns the stamp without publishing. Right click cancels a
 held stamp. Pause, interface locks, loss of window focus, and leaving the desk
 cancel an unfinished stroke. Picking up the stamp stops desk parallax.
 Choosing a headline and reading a result prevent further stamping.
@@ -17,7 +21,8 @@ Choosing a headline and reading a result prevent further stamping.
 - `Scenes/newsroom_screen.tscn`, `Canvas/World/Stamp`: resting position. It sits to
   the right of the article, above the coffee, outside the source text.
 - `Canvas/World/StampArea`: article body. Move or resize it in the 2D editor.
-  `Imprint Size` (160 x 160 by default) and `Imprint Angle Degrees` set the seal
+  `Imprint Size` (224 x 224 by default, including the PNG's transparent margins)
+  approximates the round base's visible diameter. `Imprint Angle Degrees` sets the seal
   footprint. `Excluded Controls` reject overlap with the cup and headline even
   if the print area is moved. The full rotated footprint is checked.
 - `Assets/Desk/stamp_approved.png`: the supplied red mouse seal. `stamp_ink.gdshader`
@@ -33,6 +38,8 @@ Choosing a headline and reading a result prevent further stamping.
   its view slightly while keeping the base contact fixed under the mouse offset.
 - `Grab Rect`: elliptical clickable handle/body region in local 2D coordinates.
 - `Lift Height`, `Lift Tilt Degrees`, `Strike Seconds`, `Return Seconds`: motion.
+- `Scenes/newsroom_screen.tscn` root, `Result Delay Seconds`: wait after returning.
+- `Canvas/DeskFocus`, `Opening Seconds`: duration of the result note's entrance.
 - `Shadow Strength`, `Shadow Offset`: soft silhouette shadow, shared with the
   existing note-shadow shader. It expands when the stamp is lifted.
 - `Impact Sound`, `Impact Volume Db`: optional authored audio, routed through the
@@ -49,7 +56,8 @@ the existing result, selected headline, money and stats remain authoritative.
 
 ## Focused checks
 
-`Tests/desk_stamp_tests.gd` checks real mouse-event pickup/drop, transformed paper
+`Tests/desk_stamp_tests.gd` checks real mouse-event two-click pickup/printing, transformed paper
 bounds, preview, modal and pause cancellation, publication at contact and
-duplicate protection. Run with `-- --capture` under the native Compatibility
+duplicate protection, result timing and pause/resume during the wait.
+Run with `-- --capture` under the native Compatibility
 renderer to inspect the 3D render and save desk/drag/result images into `%TEMP%`.

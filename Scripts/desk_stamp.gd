@@ -4,6 +4,7 @@ extends Control
 
 signal stamped
 signal interaction_changed
+signal returned_to_rest
 
 @export_group("Model and light")
 @export var model_scene: PackedScene:
@@ -132,8 +133,9 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		move_drag(event.position)
 		get_viewport().set_input_as_handled()
-	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
-		finish_drag()
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			finish_drag()
 		get_viewport().set_input_as_handled()
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 		cancel_interaction()
@@ -142,7 +144,7 @@ func _input(event: InputEvent) -> void:
 func set_enabled(value: bool) -> void:
 	enabled = value
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if value else Control.CURSOR_ARROW
-	tooltip_text = "Зажми штамп и перенеси его на текст статьи или свободное место под ним. Отпусти для печати." if value and not dragging and not busy else ""
+	tooltip_text = "Нажми на штамп, перенеси курсор на текст статьи или место под ним и нажми ещё раз для печати." if value and not dragging and not busy else ""
 	if not value and (dragging or (busy and not _impact_done)):
 		cancel_interaction()
 
@@ -206,6 +208,7 @@ func cancel_interaction() -> void:
 		_area.preview.hide()
 	_render.render_target_update_mode = SubViewport.UPDATE_ONCE if is_visible_in_tree() else SubViewport.UPDATE_DISABLED
 	interaction_changed.emit()
+	returned_to_rest.emit()
 
 func _impact() -> void:
 	if not enabled or not can_process() or not _area.commit(contact_position()):
@@ -232,6 +235,7 @@ func _return_to_rest() -> void:
 		_impact_done = false
 		_render.render_target_update_mode = SubViewport.UPDATE_ONCE
 		interaction_changed.emit()
+		returned_to_rest.emit()
 	)
 	interaction_changed.emit()
 

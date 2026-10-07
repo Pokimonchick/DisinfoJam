@@ -19,6 +19,8 @@ const NUMBER_ART: Array[Texture2D] = [
 
 enum DialogKind { NONE, RESULT }
 
+@export_group("Publication result")
+@export_range(0.0, 5.0, 0.1) var result_delay_seconds := 2.0
 @export_group("Audio")
 @export var headline_appear_sound: AudioStream = preload("res://Assets/Sounds/paper - Part_1.wav")
 @export_range(-40.0, 6.0, 0.5) var headline_appear_volume_db: float = 0.0
@@ -35,6 +37,8 @@ var _choice_close_button: Button
 var _shown_combo_count := -1
 var _shown_combo_type := -1
 var _combo_tween: Tween
+var _pending_result: Dictionary = {}
+var _result_delay: Tween
 @onready var cards: Array[Button] = [%Headline1, %Headline2, %Headline3]
 @onready var popup: DeskFocus = $Canvas/DeskFocus
 @onready var combo_burst: Control = %ComboBurst
@@ -57,13 +61,14 @@ func _ready() -> void:
 	%FinishShift.pressed.connect(_finish_shift)
 	stamp.stamped.connect(_publish_selected)
 	stamp.interaction_changed.connect(_refresh_actions)
+	stamp.returned_to_rest.connect(_start_result_delay)
 	%Drawer.toggled.connect(func(_expanded: bool): view_changed.emit())
 	popup.primary_pressed.connect(_on_primary)
 	popup.secondary_pressed.connect(_close_focus)
 	popup.close_pressed.connect(_close_focus)
 
 func _process(_delta: float) -> void:
-	$Canvas.motion_enabled = not popup.visible and not stamp.dragging and not stamp.busy and not (choices.visible and GameSettings.choice_overlay_enabled)
+	$Canvas.motion_enabled = not popup.visible and _pending_result.is_empty() and not stamp.dragging and not stamp.busy and not (choices.visible and GameSettings.choice_overlay_enabled)
 
 func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree() or not event is InputEventMouseButton:
@@ -109,7 +114,7 @@ func _update_choice_overlay() -> void:
 func bind(model: NewsroomSession) -> void:
 	session = model
 	session.article_changed.connect(show_article)
-	session.published.connect(_show_result)
+	session.published.connect(_on_published)
 	session.changed.connect(_refresh_desk)
 	session.phase_changed.connect(_phase_changed)
 	%Drawer.bind(session)
@@ -117,6 +122,7 @@ func bind(model: NewsroomSession) -> void:
 
 func _phase_changed() -> void:
 	if session.phase != NewsroomSession.Phase.WORK:
+		_clear_pending_result()
 		popup.reset()
 		popup_kind = DialogKind.NONE
 		_hide_choices(false)
@@ -188,6 +194,7 @@ func show_article() -> void:
 	if session.phase != NewsroomSession.Phase.WORK:
 		return
 	selected_index = -1
+	_clear_pending_result()
 	stamp.cancel_interaction()
 	stamp_area.reset()
 	popup.reset()
@@ -318,7 +325,35 @@ func _colored_result_delta(value: int, suffix := "") -> String:
 	var color := "#3f6a3d" if value > 0 else ("#9b4033" if value < 0 else "#665945")
 	return "[color=%s][b]%+d%s[/b][/color]" % [color, value, suffix]
 
+func _on_published(result: Dictionary) -> void:
+	if stamp.busy:
+		# Effects apply at contact; the note waits until the stamp is resting.
+		_pending_result = result.duplicate(true)
+	else:
+		_show_result(result)
+
+func _start_result_delay() -> void:
+	if _pending_result.is_empty() or (_result_delay and _result_delay.is_valid()):
+		return
+	# A node-bound tween also pauses while the interface is disabled.
+	_result_delay = create_tween()
+	_result_delay.tween_interval(result_delay_seconds)
+	_result_delay.tween_callback(func():
+		var result := _pending_result
+		_pending_result = {}
+		_result_delay = null
+		if is_visible_in_tree() and session.phase == NewsroomSession.Phase.WORK and session.awaiting_acknowledgement:
+			_show_result(result)
+	)
+
+func _clear_pending_result() -> void:
+	_pending_result = {}
+	if _result_delay and _result_delay.is_valid():
+		_result_delay.kill()
+	_result_delay = null
+
 func _show_result(result: Dictionary) -> void:
+	_clear_pending_result()
 	_hide_choices(false)
 	popup_kind = DialogKind.RESULT
 	for article in session.articles:
