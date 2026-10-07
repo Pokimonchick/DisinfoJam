@@ -13,12 +13,15 @@ extends Control
 		imprint_angle_degrees = value
 		if is_node_ready():
 			_configure_imprint()
+@export_range(0.0, 3.0, 0.05) var absorption_seconds := 0.8
 
 var printed := false
 var _ready_to_print := false
+var _absorption: Tween
 
 @onready var preview: Control = $Preview
 @onready var imprint: Control = $Imprint
+@onready var _ink_material: ShaderMaterial = imprint.material as ShaderMaterial
 
 func _ready() -> void:
 	_configure_imprint()
@@ -78,6 +81,8 @@ func show_preview(viewport_point: Vector2) -> void:
 func commit(viewport_point: Vector2) -> bool:
 	if not can_stamp(viewport_point):
 		return false
+	_stop_absorption()
+	_set_absorption(0.0)
 	_place(imprint, viewport_point)
 	imprint.show()
 	printed = true
@@ -85,19 +90,41 @@ func commit(viewport_point: Vector2) -> bool:
 	queue_redraw()
 	return true
 
-func reset() -> void:
+func reset(absorb_ink := false) -> void:
+	var should_absorb := absorb_ink and printed and imprint.visible and absorption_seconds > 0.0
+	_stop_absorption()
 	printed = false
 	preview.hide()
-	imprint.hide()
+	_set_absorption(0.0)
+	if should_absorb:
+		# Bound to this node so the interface lock also pauses the ink.
+		_absorption = create_tween().set_pause_mode(Tween.TWEEN_PAUSE_BOUND).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		_absorption.tween_method(_set_absorption, 0.0, 1.0, absorption_seconds)
+		_absorption.tween_callback(func():
+			imprint.hide()
+			_absorption = null
+		)
+	else:
+		imprint.hide()
 	queue_redraw()
 
 func restore_result() -> void:
 	# Old and current saves retain publication data, not transient drag positions.
+	_stop_absorption()
+	_set_absorption(0.0)
 	imprint.position = (size - imprint_size) * 0.5
 	imprint.show()
 	printed = true
 	preview.hide()
 	queue_redraw()
+
+func _stop_absorption() -> void:
+	if _absorption and _absorption.is_valid():
+		_absorption.kill()
+	_absorption = null
+
+func _set_absorption(progress: float) -> void:
+	_ink_material.set_shader_parameter("absorption_progress", progress)
 
 func _place(seal: Control, viewport_point: Vector2) -> void:
 	seal.pivot_offset = imprint_size * 0.5

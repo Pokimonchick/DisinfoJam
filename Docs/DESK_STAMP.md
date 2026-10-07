@@ -7,9 +7,13 @@ The full seal must fit within that area and avoid the headline and visible cup.
 A faint preview and darker field corners appear at valid positions.
 Consequences apply once at the end of the downward stroke, using the existing
 `NewsroomSession.publish_headline()` rules. The result note waits until the stamp
-returns to rest, then waits another two seconds and approaches over 0.7 seconds
+returns to rest, waits for the configured `Result Delay Seconds`, and approaches over 0.7 seconds
 with smooth acceleration and deceleration. Passive stamina loss stays paused
 through this wait and the result. Pausing also pauses the pending result delay.
+When the result closes and the next article appears, the old red ink gradually
+diffuses and absorbs into the paper. This animation pauses with the interface.
+A new imprint cancels any remaining absorption; new runs and loading clear it
+immediately, while a restored publication result shows fresh ink.
 
 Clicking elsewhere returns the stamp without publishing. Right click cancels a
 held stamp. Pause, interface locks, loss of window focus, and leaving the desk
@@ -27,9 +31,14 @@ Choosing a headline and reading a result prevent further stamping.
   approximates the round base's visible diameter. `Imprint Angle Degrees` sets the seal
   footprint. `Excluded Controls` reject overlap with the cup and headline even
   if the print area is moved. The full rotated footprint is checked.
+  `Absorption Seconds` (0.8 by default) controls the old seal's disappearance
+  when advancing to the next article; zero makes it immediate.
 - `Assets/Desk/stamp_approved.png`: the supplied red mouse seal. `stamp_ink.gdshader`
   removes its neutral paper background during drawing and multiplies only the
   red ink over the existing article; the original PNG is preserved.
+  Preview and imprint have separate local materials. The imprint's shader
+  parameters `Absorption Spread Pixels` and `Absorption Grain` adjust subtle
+  edge diffusion and paper pores without adding a background.
 - `Scenes/desk_stamp.tscn`: transparent 640 x 640 3D render, camera and warm light.
   `Model Scene` accepts a replacement `PackedScene` with its underside at local
   `y = 0`; the initial model is `Scenes/desk_stamp_model.tscn`.
@@ -60,6 +69,7 @@ the existing result, selected headline, money and stats remain authoritative.
 
 `Tests/desk_stamp_tests.gd` checks real mouse-event two-click pickup/printing, transformed paper
 bounds, preview, modal and pause cancellation, publication at contact and
-duplicate protection, result timing and pause/resume during the wait.
+duplicate protection, result timing, pause/resume during the wait and ink
+absorption, and cancellation of old ink animations by new stamps and restores.
 Run with `-- --capture` under the native Compatibility
-renderer to inspect the 3D render and save desk/drag/result images into `%TEMP%`.
+renderer to inspect the 3D render and save desk/drag/result/ink images into `%TEMP%`.

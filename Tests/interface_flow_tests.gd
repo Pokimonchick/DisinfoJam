@@ -101,6 +101,34 @@ func _test_interface() -> void:
 	var game = load("res://Scenes/mvp_game.tscn").instantiate()
 	root.add_child(game)
 	game.set_process(false)
+	await create_timer(0.3).timeout
+	var menu: Control = game.get_node("%Menu")
+	check(menu.get_rect() == game.get_rect() and not game.get_node("Padding").visible, "Main menu occupies the screen without the gameplay header")
+	check(game.get_node("%ContinueGame").disabled and not game.get_node("%SaveSummary").text.is_empty(), "Continue stays disabled with a useful summary when no save exists")
+	for button_name in ["ContinueGame", "NewGame", "MenuSettings", "Quit"]:
+		var button: Button = game.get_node("%" + button_name)
+		var fits := true
+		for corner in [Vector2.ZERO, Vector2(button.size.x, 0), button.size, Vector2(0, button.size.y)]:
+			fits = fits and root.get_visible_rect().has_point(button.get_global_transform_with_canvas() * corner)
+		check(fits, "Main menu action %s fits the current viewport" % button_name)
+	await _capture("menu")
+	_click(game.get_node("%ContinueGame"))
+	await process_frame
+	check(game.view == game.View.MENU, "A disabled continue button cannot start a campaign")
+	_click(game.get_node("%MenuSettings"))
+	await process_frame
+	check(game.settings_panel.visible, "The paper settings button opens the existing settings")
+	_click(game.get_node("%NewGame"))
+	await process_frame
+	check(game.view == game.View.MENU, "Settings block menu actions underneath them")
+	game.settings_panel.close()
+	_click(game.get_node("%NewGame"))
+	await process_frame
+	check(game.view == game.View.PROFILE, "The paper new-story button opens the existing confirmation")
+	await create_timer(0.3).timeout
+	_click(game.get_node("%CancelStory"))
+	await create_timer(0.3).timeout
+	check(game.view == game.View.MENU, "Cancelling a new story returns to the redesigned menu")
 	game._new_run(false)
 	game._narrative_next()
 	check(game._story_page == 1 and not game.get_node("%NarrativeBack").disabled, "Dialogue back is available after the first page")
@@ -124,7 +152,10 @@ func _test_interface() -> void:
 	check(game.work.choices_open and game.tutorial._highlight.has_area(), "The choice lesson demonstrates the actual notes")
 	await _capture("choices")
 	game._show_menu()
-	game._continue_run()
+	await create_timer(0.3).timeout
+	check(not game.get_node("%ContinueGame").disabled, "A saved campaign enables Continue in the redesigned menu")
+	await _capture("menu-saved")
+	_click(game.get_node("%ContinueGame"))
 	await process_frame
 	check(game.view == game.View.WORK and game.tutorial.visible and game._tutorial_step == 2, "Continue restores the current spotlight step")
 	for step in range(3, _work_step_count()):

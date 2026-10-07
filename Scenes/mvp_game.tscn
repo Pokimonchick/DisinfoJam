@@ -14,6 +14,15 @@
 [ext_resource type="PackedScene" path="res://Scenes/audio_cue.tscn" id="12_audio"]
 [ext_resource type="AudioStream" path="res://Assets/Sounds/Work_background.mp3" id="13_work_music"]
 [ext_resource type="AudioStream" path="res://Assets/Sounds/at_home.mp3" id="14_home_music"]
+[ext_resource type="Script" path="res://Scripts/main_menu.gd" id="15_menu"]
+[ext_resource type="Script" path="res://Scripts/menu_paper_button.gd" id="16_menu_button"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/menu_background.PNG" id="17_menu_background"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/coco_news.PNG" id="18_menu_logo"]
+[ext_resource type="FontFile" path="res://Assets/Fonts/Neucha/Neucha.ttf" id="19_menu_font"]
+
+[sub_resource type="Theme" id="MenuTheme"]
+default_font = ExtResource("19_menu_font")
+default_font_size = 26
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_fatigue"]
 resource_local_to_scene = true
@@ -96,89 +105,6 @@ unique_name_in_owner = true
 [node name="Stage" type="Control" parent="Padding/Layout" unique_id=331086246]
 layout_mode = 2
 size_flags_vertical = 3
-
-[node name="Menu" type="CenterContainer" parent="Padding/Layout/Stage" unique_id=844596861]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Card" type="HBoxContainer" parent="Padding/Layout/Stage/Menu" unique_id=1220970866]
-layout_mode = 2
-theme_override_constants/separation = 50
-
-[node name="Visual" type="Control" parent="Padding/Layout/Stage/Menu/Card" unique_id=1415983995]
-custom_minimum_size = Vector2(280, 320)
-layout_mode = 2
-mouse_filter = 2
-script = ExtResource("6")
-
-[node name="Text" type="VBoxContainer" parent="Padding/Layout/Stage/Menu/Card" unique_id=163955573]
-custom_minimum_size = Vector2(610, 0)
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="Kicker" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=1587473370]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.91, 0.74, 0.41, 1)
-theme_override_font_sizes/font_size = 16
-text = "ГЛАВА I · АМНЕЗИЯ · ДЕМО"
-
-[node name="Title" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=402366423]
-layout_mode = 2
-theme_override_font_sizes/font_size = 64
-text = "ДО ПЕЧАТИ"
-
-[node name="Description" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=1236143359]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Пройди первую рабочую неделю.
-Выбирай заголовки и позаботься о себе.
-В старых текстах осталось что-то знакомое."
-
-[node name="ContinueGame" type="Button" parent="Padding/Layout/Stage/Menu/Card/Text"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 54)
-layout_mode = 2
-mouse_default_cursor_shape = 2
-text = "ПРОДОЛЖИТЬ"
-
-[node name="SaveSummary" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 17
-autowrap_mode = 3
-
-[node name="NewGame" type="Button" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=1856127047]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 62)
-layout_mode = 2
-mouse_default_cursor_shape = 2
-text = "НАЧАТЬ НОВУЮ ИСТОРИЮ"
-
-[node name="MenuSettings" type="Button" parent="Padding/Layout/Stage/Menu/Card/Text"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 54)
-layout_mode = 2
-mouse_default_cursor_shape = 2
-text = "НАСТРОЙКИ"
-
-[node name="Quit" type="Button" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=2057678127]
-unique_name_in_owner = true
-layout_mode = 2
-mouse_default_cursor_shape = 2
-text = "Выйти"
-
-[node name="Hint" type="Label" parent="Padding/Layout/Stage/Menu/Card/Text" unique_id=578268836]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "Мышь — выбор  ·  Esc — пауза  ·  F11 — экран
-Прогресс сохраняется автоматически."
-autowrap_mode = 3
 
 [node name="ProfileSetup" type="CenterContainer" parent="Padding/Layout/Stage"]
 unique_name_in_owner = true
@@ -291,6 +217,138 @@ unique_name_in_owner = true
 layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_font_sizes/font_size = 18
+
+[node name="Menu" type="Control" parent="." unique_id=844596861]
+unique_name_in_owner = true
+editor_description = "Главное меню: фон на весь экран, эмблема и четыре кнопки слева. Расположение редактируется в Canvas, в координатах 1920×1080."
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("MenuTheme")
+script = ExtResource("15_menu")
+
+[node name="Background" type="TextureRect" parent="Menu"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("17_menu_background")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Canvas" type="Control" parent="Menu"]
+layout_mode = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+
+[node name="Logo" type="TextureRect" parent="Menu/Canvas"]
+layout_mode = 0
+offset_left = 60.0
+offset_top = 15.0
+offset_right = 520.0
+offset_bottom = 365.0
+rotation = -0.055
+pivot_offset = Vector2(230, 175)
+mouse_filter = 2
+texture = ExtResource("18_menu_logo")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="Menu/Canvas" unique_id=402366423]
+layout_mode = 0
+offset_left = 520.0
+offset_top = 153.0
+offset_right = 960.0
+offset_bottom = 233.0
+rotation = -0.052
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.96, 0.9, 0.74, 1)
+theme_override_font_sizes/font_size = 62
+text = "ДО ПЕЧАТИ"
+
+[node name="Kicker" type="Label" parent="Menu/Canvas" unique_id=1587473370]
+layout_mode = 0
+offset_left = 526.0
+offset_top = 231.0
+offset_right = 960.0
+offset_bottom = 268.0
+rotation = -0.052
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.82, 0.72, 0.51, 1)
+theme_override_font_sizes/font_size = 26
+text = "ГЛАВА I · АМНЕЗИЯ"
+
+[node name="ContinueGame" type="Button" parent="Menu/Canvas"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 106.0
+offset_top = 387.0
+offset_right = 792.0
+offset_bottom = 513.0
+rotation = -0.035
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 72
+text = "ПРОДОЛЖИТЬ"
+script = ExtResource("16_menu_button")
+
+[node name="SaveSummary" type="Label" parent="Menu/Canvas"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 137.0
+offset_top = 525.0
+offset_right = 785.0
+offset_bottom = 585.0
+rotation = -0.035
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.9, 0.83, 0.65, 1)
+theme_override_font_sizes/font_size = 24
+autowrap_mode = 3
+
+[node name="NewGame" type="Button" parent="Menu/Canvas" unique_id=1856127047]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 121.0
+offset_top = 590.0
+offset_right = 807.0
+offset_bottom = 718.0
+rotation = -0.038
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 72
+text = "НОВАЯ ИСТОРИЯ"
+script = ExtResource("16_menu_button")
+
+[node name="MenuSettings" type="Button" parent="Menu/Canvas"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 118.0
+offset_top = 762.0
+offset_right = 473.0
+offset_bottom = 867.0
+rotation = -0.028
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 46
+text = "НАСТРОЙКИ"
+script = ExtResource("16_menu_button")
+
+[node name="Quit" type="Button" parent="Menu/Canvas" unique_id=2057678127]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 526.0
+offset_top = 746.0
+offset_right = 801.0
+offset_bottom = 851.0
+rotation = -0.043
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 50
+text = "ВЫХОД"
+script = ExtResource("16_menu_button")
 
 [node name="Work" parent="." unique_id=346840475 instance=ExtResource("3")]
 unique_name_in_owner = true

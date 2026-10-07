@@ -34,6 +34,9 @@ func _capture(name: String) -> void:
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png(OS.get_environment("TEMP").path_join("disinfo-stamp-" + name + ".png"))
 
+func _ink_progress(seal: Control) -> float:
+	return float((seal.material as ShaderMaterial).get_shader_parameter("absorption_progress"))
+
 func _run() -> void:
 	AudioServer.set_bus_mute(0, true)
 	root.mode = Window.MODE_WINDOWED
@@ -164,9 +167,11 @@ func _run() -> void:
 	game.session.tick_work(30.0)
 	check(game.session.health == health, "Waiting for the result note does not drain stamina")
 	await _capture("after-stamp")
-	await create_timer(1.75).timeout
-	check(not work.popup.active, "The result stays hidden during the two-second delay after returning")
-	await create_timer(0.3).timeout
+	await create_timer(work.result_delay_seconds * 0.5).timeout
+	check(not work.popup.active, "The result stays hidden during the configured delay after returning")
+	if not work.popup.active:
+		await work.view_changed
+	await process_frame
 	check(work.popup.active and work.popup.scale.x < 0.98, "The result then begins approaching instead of jumping to full size")
 	var opening_scale: float = work.popup.scale.x
 	await create_timer(0.2).timeout
@@ -176,9 +181,26 @@ func _run() -> void:
 	await _capture("result")
 	work.restore_presentation(work.capture_presentation())
 	check(area.printed and area.imprint.visible and work.popup.active and game.session.total_published == 1, "Restoring a publication result restores the seal without replaying consequences")
+	var old_ink_position := area.imprint.position
 	work.popup.primary_pressed.emit()
-	await create_timer(0.35).timeout
-	check(not area.printed and not area.imprint.visible and work.selected_index == -1 and stamp.position.is_equal_approx(rest), "The next source clears the old seal and restores the stamp")
+	if game.session.awaiting_acknowledgement:
+		await game.session.article_changed
+	await create_timer(area.absorption_seconds * 0.35).timeout
+	check(not area.printed and area.imprint.visible and work.selected_index == -1 and stamp.position.is_equal_approx(rest), "The next source unlocks the draft while the old ink remains visible during absorption")
+	var absorbing_progress := _ink_progress(area.imprint)
+	check(absorbing_progress > 0.0 and absorbing_progress < 1.0 and area.imprint.position.is_equal_approx(old_ink_position), "The old ink absorbs gradually at its original position")
+	check(area.preview.material != area.imprint.material and is_zero_approx(_ink_progress(area.preview)), "The preview has an independent material and never inherits absorption")
+	await _capture("ink-absorbing")
+	game._toggle_pause()
+	absorbing_progress = _ink_progress(area.imprint)
+	await create_timer(area.absorption_seconds + 0.1).timeout
+	check(game.paused and area.imprint.visible and is_equal_approx(_ink_progress(area.imprint), absorbing_progress), "Pause freezes absorption without hiding the partly absorbed ink")
+	game._toggle_pause()
+	await create_timer(area.absorption_seconds * 0.2).timeout
+	check(_ink_progress(area.imprint) > absorbing_progress and area.imprint.visible, "Unpausing resumes the remaining ink absorption")
+	await create_timer(area.absorption_seconds).timeout
+	check(not area.imprint.visible and is_equal_approx(_ink_progress(area.imprint), 1.0), "Absorption finishes with no old ink left on the next article")
+	await _capture("next-article")
 
 	# Pausing during the committed stroke must retain its pending feedback.
 	game.session.reputation = 100.0
@@ -196,15 +218,24 @@ func _run() -> void:
 	await create_timer(0.25).timeout
 	game._toggle_pause()
 	check(game.session.total_published == 2 and stamp.position.is_equal_approx(rest), "Pause after contact returns the stamp without undoing the publication")
-	await create_timer(2.15).timeout
+	await create_timer(work.result_delay_seconds + 0.15).timeout
 	check(not work.popup.active and game.session.total_published == 2, "Paused time cannot consume the pending result delay or replay a publication")
 	game._toggle_pause()
-	await create_timer(1.75).timeout
+	await create_timer(work.result_delay_seconds * 0.5).timeout
 	check(not work.popup.active, "The delay resumes after unpausing instead of opening immediately")
-	await create_timer(0.3).timeout
+	if not work.popup.active:
+		await work.view_changed
+	await process_frame
 	check(work.popup.active and game.session.total_published == 2, "The retained result opens once after its remaining delay")
 	work.popup.primary_pressed.emit()
-	await create_timer(0.35).timeout
+	if game.session.awaiting_acknowledgement:
+		await game.session.article_changed
+	await create_timer(area.absorption_seconds * 0.2).timeout
+	check(area.imprint.visible and _ink_progress(area.imprint) > 0.0, "The next acknowledged result starts ink absorption again")
+	work.restore_presentation(work.capture_presentation())
+	check(not area.printed and not area.imprint.visible and is_zero_approx(_ink_progress(area.imprint)), "Restoring an unprinted draft clears transient ink immediately")
+	await create_timer(area.absorption_seconds + 0.1).timeout
+	check(not area.imprint.visible, "An interrupted absorption cannot revive old ink after restoring a draft")
 
 	# Cancellation before contact must never charge money or stamina.
 	work._open_choices(false)
@@ -221,6 +252,28 @@ func _run() -> void:
 	await create_timer(0.25).timeout
 	check(game.session.total_published == 2 and not area.printed, "Pausing before contact cancels the strike without another publication")
 	game._toggle_pause()
+
+	# A replacement imprint must not be hidden by the old tween's callback.
+	area.restore_result()
+	area.reset(true)
+	await create_timer(area.absorption_seconds * 0.2).timeout
+	area.restore_result()
+	check(area.printed and area.imprint.visible and is_zero_approx(_ink_progress(area.imprint)), "A restored result cancels absorption and shows fresh ink")
+	await create_timer(area.absorption_seconds + 0.1).timeout
+	check(area.printed and area.imprint.visible and is_zero_approx(_ink_progress(area.imprint)), "The previous absorption cannot later hide a restored result")
+	area.reset(true)
+	await create_timer(area.absorption_seconds * 0.2).timeout
+	area.show_preview(centre)
+	check(area.preview.visible and is_zero_approx(_ink_progress(area.preview)), "A new preview stays intact while the previous ink is absorbing")
+	check(area.commit(centre) and area.printed and is_zero_approx(_ink_progress(area.imprint)), "A new stamp replaces absorbing ink at full strength")
+	await create_timer(area.absorption_seconds + 0.1).timeout
+	check(area.imprint.visible and is_zero_approx(_ink_progress(area.imprint)) and game.session.total_published == 2, "The old absorption cannot hide the replacement ink or replay publication rules")
+	area.reset(true)
+	await create_timer(area.absorption_seconds * 0.2).timeout
+	game._new_run(false)
+	check(game.session.phase == NewsroomSession.Phase.IDLE and not area.printed and not area.imprint.visible, "A new run clears absorbing ink before its first shift starts")
+	await create_timer(area.absorption_seconds + 0.1).timeout
+	check(not area.imprint.visible and is_zero_approx(_ink_progress(area.imprint)), "A new run cancels the old ink tween completely")
 	game._run_active = false
 	game.queue_free()
 	await process_frame

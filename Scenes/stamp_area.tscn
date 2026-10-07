@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://Scripts/stamp_area.gd" id="area"]
 [ext_resource type="Texture2D" path="res://Assets/Desk/stamp_approved.png" id="imprint"]
@@ -7,6 +7,12 @@
 [sub_resource type="ShaderMaterial" id="InkMaterial"]
 resource_local_to_scene = true
 shader = ExtResource("ink")
+shader_parameter/absorption_progress = 0.0
+
+[sub_resource type="ShaderMaterial" id="PreviewInkMaterial"]
+resource_local_to_scene = true
+shader = ExtResource("ink")
+shader_parameter/absorption_progress = 0.0
 
 [node name="StampArea" type="Control"]
 offset_right = 1038.0
@@ -16,7 +22,7 @@ script = ExtResource("area")
 
 [node name="Preview" type="TextureRect" parent="."]
 visible = false
-material = SubResource("InkMaterial")
+material = SubResource("PreviewInkMaterial")
 offset_right = 224.0
 offset_bottom = 224.0
 mouse_filter = 2

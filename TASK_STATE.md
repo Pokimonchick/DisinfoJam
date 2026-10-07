@@ -4,67 +4,67 @@
 Completed
 
 ## Current task
-Use the approved round 3D publication stamp and supplied red mouse seal over the article body, excluding the headline and visible cup. Keep a gap above the coffee and match the visible seal diameter to the stamp's round base. First left click picks up the stamp; cursor motion carries it without holding a button; the next left click prints. Show results two seconds after the stamp returns, with a softer entrance animation.
+Redesign the main menu using the supplied menu_background.PNG and coco_news.PNG,
+following the sketch's left-side layout while retaining the four existing actions.
+Make the previous publication seal disappear into the paper when the next article appears.
 
 ## Context
-- Workspace is the existing DisinfoJam Godot 4.x project; five untimed shifts and the existing publication-result note remain authoritative.
-- The user approved the round model and size, then requested two-click controls, a clear gap above the coffee, delayed results and a smoother result-note entrance.
-- Existing draft selection, both headline-choice presentations, gameplay effects and saves remain in place.
-- Current AGENTS.md permits minimal risk-based checks. Do not recover the older snapshot's blanket prohibition on tests.
+- Existing five-shift Godot game on local elfat; source and Git outrank old snapshots.
+- Two-click 3D stamping, both headline-choice layouts and the restored 8-bit home stay in place.
+- The user is tuning the editor during work; preserve live values and unrelated scene edits.
 
 ## Already done
-- Added a replaceable native round wooden model in a transparent, isolated SubViewport with warm light and self-shadows.
-- Added cursor carrying after one click, pickup tilt, perspective adjustment, a soft silhouette shadow, downward stroke and return animation.
-- Raised the resting stamp and the finish-shift button to separate the stamp, coffee and button without resizing them.
-- Added the supplied PNG seal at 224 x 224, including the source image margins, so visible ink approximates the stamp base diameter. A Multiply shader removes its paper background during drawing without modifying the original PNG.
-- The print area covers source text and space below it. The full rotated seal must fit and cannot overlap the visible cup or headline; field markers and preview indicate valid drops.
-- Contact accounts for desk scaling, rotation and parallax; camera changes preserve the intended drop point.
-- Invalid second clicks return without publishing. Right click, pause, interface locks, focus loss and leaving the desk cancel unfinished interactions.
-- Publication uses NewsroomSession's existing rules once on impact. Results wait until return completes, then another two seconds; the note approaches over 0.7 seconds with sine easing. Passive stamina loss remains paused throughout feedback.
-- The pending-result tween pauses with the work interface. Pausing after impact retains feedback; cancelling before impact never publishes.
-- The next source clears the seal. Continuing a publication result restores a centred seal without replaying effects.
-- Updated tutorial targets/text, drawer help and callers that previously referenced %Publish.
-- Inspector exposes model, camera/perspective, light, pickup/stroke/return, shadow and impact audio controls. Imprint size/angle update live. The newsroom root exposes Result Delay Seconds; DeskFocus exposes Opening Seconds.
-- Added focused stamp interaction/render checks. Existing broader test callers were adapted without running the full suite.
+- Full-screen authored menu background, emblem at upper left, heroine visible at right.
+- Two large paper arrows for Continue/New Story and two smaller ones for Settings/Quit.
+- Native Button input, disabled Continue, saved-run summary and original actions retained.
+- Reference canvas fits uniformly to the window; background keeps its aspect ratio and covers it.
+- Paper hover animation and keyboard focus marker; menu header/help clutter removed.
+- Old stamp ink diffuses and fades through the existing red-ink Multiply shader over 0.8s.
+- Absorption pauses with the desk. Preview material is independent; new ink cancels old callbacks.
+- Restores, new runs and leaving WORK clear transient ink immediately.
+- Focused interaction tests and project documentation updated.
 
 ## Decisions
-- First left click picks up; release keeps carrying; the next left click over article text or blank paper below it prints. There is no extra confirmation.
-- Keep the stamp right of the article, above the coffee. Its 2D root sets resting placement; transform Scale adjusts displayed size.
-- Render 3D continuously during interaction and once at rest; editor model/light preview remains live.
-- No rigid-body physics or new gameplay/save resource. Drag positions and animations are transient.
-- Impact audio defaults to a short synthesized thud until an authored sound is assigned; it uses AudioManager and SFX volume.
+- Exactly four menu buttons; the sketch does not introduce separate Work/Home routes.
+- Menu positions are editable under Scenes/mvp_game.tscn -> Menu/Canvas in 1920x1080 coordinates.
+- Absorption Seconds on StampArea controls fade duration; zero disables the animation.
+- Imprint shader exposes Absorption Spread Pixels and Absorption Grain.
+- Result Delay Seconds currently reads 0.5 in newsroom_screen.gd: this live user value was preserved.
+- No new save data, gameplay effects or release export.
 
 ## Relevant files
-- Scenes/desk_stamp.tscn; Scenes/desk_stamp_model.tscn; Scenes/stamp_area.tscn.
-- Scripts/desk_stamp.gd; Scripts/stamp_area.gd; Shaders/stamp_wood.gdshader; Shaders/stamp_ink.gdshader.
-- Assets/Desk/stamp_approved.png and its Godot-generated import metadata.
-- Scenes/newsroom_screen.tscn; Scripts/newsroom_screen.gd; Scripts/desk_focus.gd; Scripts/mvp_game.gd.
-- Data/interface_lessons.gd; Scenes/work_status_drawer.tscn.
-- Docs/DESK_STAMP.md; MVP_README.md.
-- Tests/desk_stamp_tests.gd; Tests/mvp_tests.gd; Tests/balance_playthrough.gd.
+- Scenes/mvp_game.tscn; Scripts/main_menu.gd; Scripts/menu_paper_button.gd; Scripts/mvp_game.gd.
+- Assets/Assets for new version of game/menu_background.PNG and coco_news.PNG plus Godot import metadata.
+- Scenes/stamp_area.tscn; Scripts/stamp_area.gd; Shaders/stamp_ink.gdshader; Scripts/newsroom_screen.gd.
+- Tests/interface_flow_tests.gd; Tests/desk_stamp_tests.gd; Docs/DESK_STAMP.md; MVP_README.md.
 
 ## Do not touch
-- User-tuned solar rays/dust and existing desk artwork, coffee animation or article layout outside the added stamp field.
-- Authored balance, rent/food/coffee prices, stamina rules, stored campaign history and player saves.
-- Both choice layouts and the restored 8-bit home.
-- Generated .godot/import files: only Godot may generate them.
+- User/editor changes in Scenes/newsroom_screen.tscn, including solar animation time and node metadata.
+- Solar/dust tuning, coffee animation, authored balance, player saves and 8-bit home.
+- Both headline-choice layouts and the existing publication rules.
+- Cache/import contents: only Godot generates them.
 
 ## Remaining
-None for the agreed stamp controls, placement and result timing. Further model/material polish requires a new visual request.
+None for the agreed menu and ink-absorption scope.
 
 ## Validation
-- Final native Godot 4.7.2 Compatibility stamp run: 37 checks passed, exit 0, no script errors. Covers two-click input without holding, transformed contact, invalid positions, pause cancellation, publication once, result restoration, live imprint parameters, text printing, full-footprint cup exclusion, exact impression position, visible stamp/cup gap, return-triggered delay, smooth entrance and pause/resume after impact.
-- Headless compact interface flow: 49 checks passed, including tutorial integration.
-- Changed code, diff and directly affected callers reviewed.
-- Final native log: %TEMP%/disinfo-stamp-click-render.log. Native captures: %TEMP%/disinfo-stamp-desk.png, disinfo-stamp-drag.png, disinfo-stamp-after-stamp.png, disinfo-stamp-result.png; placement and the ink before feedback were visually inspected. Interface log: %TEMP%/disinfo-stamp-click-interface.log.
-- No full MVP suite, balance campaign, release export, FPS benchmark or manual editor session was run.
+- Native Godot 4.7.2 Compatibility: interface flow 61 checks passed at 1920x1080 and 960x640.
+- Native stamp/ink flow: 54 checks passed; headless focused ink run: 52 passed.
+- Covers menu clicks, modal blocking, disabled/enabled Continue, save resume, actual stamping,
+  delayed result entrance, next-article absorption, pause/resume and interruption by fresh/restored ink.
+- Menu and partly/fully absorbed ink screenshots visually reviewed; changed code and diff reviewed.
+- Logs: %TEMP%/disinfo-menu-interface.log, disinfo-menu-compact.log, disinfo-ink-native.log.
+- Captures: %TEMP%/disinfo-ux-menu.png, disinfo-ux-menu-saved.png, disinfo-ux-menu-compact.png,
+  disinfo-stamp-ink-absorbing.png and disinfo-stamp-next-article.png.
+- Checked the completed working-tree feature stage before its commit; no full MVP suite or export.
 
 ## Known issues / uncertainties
-- Wood remains a replaceable preliminary material; impact sound is a temporary synthesized effect. The final imprint uses the user-supplied PNG.
-- Visuals were checked in the native Compatibility renderer, not an exported build.
-- Completed model helper is idle; no preview/test process remains writing.
+- Background crops at non-16:9 aspect ratios; buttons remain fitted and the heroine stays visible.
+- No helper/test process continues writing; existing user Godot editor remains open.
 
 ## Git state
-- Workspace C:/Users/User/Desktop/gdg/DisinfoJam; branch elfat; base feature c77aa14. The controls/timing refinement is the following coherent commit.
-- c77aa14 was the first Codex commit since the successful push; this refinement is the second. Push only after the authorized third, local elfat to origin/elfat.
-- Inspect live Git/source on recovery; this snapshot describes the validated feature stage.
+- Workspace C:/Users/User/Desktop/gdg/DisinfoJam; local branch elfat.
+- Last successful push/base: 0fe67cb at origin/elfat.
+- This snapshot is from the validated feature stage before the menu/ink commit.
+- The following feature commit is the first Codex commit since that push; push only after three.
+- Keep the unrelated working-tree edit to Scenes/newsroom_screen.tscn out of that commit.

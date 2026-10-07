@@ -310,7 +310,7 @@ func _show_view(next: View) -> void:
 	%Narrative.visible = view in [View.INTRO, View.TUTORIAL, View.ENDING, View.STORY]
 	work.visible = view == View.WORK
 	home.visible = view == View.HOME
-	$Padding.visible = view != View.WORK
+	$Padding.visible = view not in [View.WORK, View.MENU]
 	%HUD.visible = view in [View.HOME, View.ENDING]
 	%PauseButton.visible = view in [View.WORK, View.HOME, View.INTRO, View.TUTORIAL, View.STORY]
 	%Location.text = {View.MENU: "НЕЗАВИСИМАЯ РЕДАКЦИЯ", View.INTRO: "ГЛАВА I · АМНЕЗИЯ", View.TUTORIAL: "ПЕРЕД ПЕРВОЙ СМЕНОЙ", View.WORK: "РАБОЧИЙ СТОЛ", View.HOME: "СЪЁМНАЯ КОМНАТА", View.ENDING: "ИТОГИ НЕДЕЛИ" if session.campaign_completed else "ПОСЛЕДНИЙ ВЫПУСК", View.PROFILE: "НОВОЕ ПРОХОЖДЕНИЕ", View.STORY: "ГЛАВА I · АМНЕЗИЯ"}[view]
@@ -547,7 +547,6 @@ func _refresh_goal() -> void:
 func _refresh_menu() -> void:
 	var document: Dictionary = GameState.save_store.load_document()
 	%ContinueGame.disabled = document.is_empty()
-	%Description.text = "Пройди первую рабочую неделю: %d смен.\nВыбирай заголовки и позаботься о себе.\nВ старых текстах осталось что-то знакомое." % session.balance.campaign_days
 	%SaveSummary.text = "Сохранений пока нет."
 	if document.is_empty() and GameState.save_store.exists():
 		%SaveSummary.text = "Сохранение недоступно."
@@ -605,7 +604,7 @@ func _continue_run() -> void:
 		_on_phase_changed()
 	if session.phase == NewsroomSession.Phase.WORK:
 		if view == View.STORY:
-			work.show_article()
+			work.show_article(false)
 		else:
 			work.restore_presentation(presentation.get("newsroom", {}))
 	_run_active = true

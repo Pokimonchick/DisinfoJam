@@ -20,7 +20,7 @@ const NUMBER_ART: Array[Texture2D] = [
 enum DialogKind { NONE, RESULT }
 
 @export_group("Publication result")
-@export_range(0.0, 5.0, 0.1) var result_delay_seconds := 2.0
+@export_range(0.0, 5.0, 0.1) var result_delay_seconds := 0.5
 @export_group("Audio")
 @export var headline_appear_sound: AudioStream = preload("res://Assets/Sounds/paper - Part_1.wav")
 @export_range(-40.0, 6.0, 0.5) var headline_appear_volume_db: float = 0.0
@@ -123,6 +123,7 @@ func bind(model: NewsroomSession) -> void:
 func _phase_changed() -> void:
 	if session.phase != NewsroomSession.Phase.WORK:
 		_clear_pending_result()
+		stamp_area.reset()
 		popup.reset()
 		popup_kind = DialogKind.NONE
 		_hide_choices(false)
@@ -190,13 +191,14 @@ func _set_issue_number(number: int) -> void:
 	if has_art:
 		%ArticleNumber.get_node("NumberArt").texture = NUMBER_ART[number - 1]
 
-func show_article() -> void:
+func show_article(absorb_ink := true) -> void:
+	# Restores and new runs can reach this while the session is still IDLE.
+	stamp_area.reset(absorb_ink and session.phase == NewsroomSession.Phase.WORK and session.published_today > 0)
 	if session.phase != NewsroomSession.Phase.WORK:
 		return
 	selected_index = -1
 	_clear_pending_result()
 	stamp.cancel_interaction()
-	stamp_area.reset()
 	popup.reset()
 	popup_kind = DialogKind.NONE
 	_hide_choices(false)
@@ -383,7 +385,7 @@ func capture_presentation() -> Dictionary:
 		"choices_open": choices_open, "drawer_expanded": %Drawer.expanded}
 
 func restore_presentation(data: Dictionary) -> void:
-	show_article()
+	show_article(false)
 	%Drawer.set_expanded(bool(data.get("drawer_expanded", true)), false)
 	selected_index = clampi(int(data.get("selected_index", -1)), -1, 2)
 	if session.awaiting_acknowledgement:
