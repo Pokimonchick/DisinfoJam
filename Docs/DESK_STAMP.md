@@ -21,6 +21,8 @@ Choosing a headline and reading a result prevent further stamping.
 - `Scenes/newsroom_screen.tscn`, `Canvas/World/Stamp`: resting position. It sits to
   the right of the article, above the coffee, outside the source text.
 - `Canvas/World/StampArea`: article body. Move or resize it in the 2D editor.
+  Its bounds include the left paper margin below the headline, rather than just
+  the central text column. A seal must still fit fully inside the paper body.
   `Imprint Size` (224 x 224 by default, including the PNG's transparent margins)
   approximates the round base's visible diameter. `Imprint Angle Degrees` sets the seal
   footprint. `Excluded Controls` reject overlap with the cup and headline even

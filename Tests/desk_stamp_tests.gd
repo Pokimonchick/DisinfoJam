@@ -67,6 +67,8 @@ func _run() -> void:
 	area.imprint_angle_degrees = -2.0
 	var source: Control = work.get_node("%SourceText")
 	check(area.can_stamp(source.get_global_transform_with_canvas() * (source.size * 0.5)), "Printing directly over the source text is allowed")
+	check(area.can_stamp(source.get_global_transform_with_canvas() * Vector2(40, 175)), "The left side of the source text accepts a full-size seal")
+	check(area.can_stamp(source.get_global_transform_with_canvas() * Vector2(40, source.size.y + 35)), "The blank paper below the left side of the source accepts a seal")
 	var headline: Control = work.get_node("%HeadlineField")
 	check(not area.can_stamp(headline.get_global_transform_with_canvas() * (headline.size * 0.5)), "The headline field is outside the stamp area")
 	var cup_overlap := area.get_global_transform_with_canvas() * Vector2(area.size.x - area.imprint_size.x * 0.5 - 18, 180)
@@ -140,7 +142,7 @@ func _run() -> void:
 	work._open_choices(false)
 	check(not stamp.enabled and not stamp.begin_drag(stamp.contact_position()), "The headline chooser blocks stamp interaction")
 	work._hide_choices(false)
-	centre = area.get_global_transform_with_canvas() * Vector2(area.size.x * 0.8, 130)
+	centre = source.get_global_transform_with_canvas() * Vector2(40, 175)
 	grip = stamp.get_global_transform_with_canvas() * Vector2(144, 105)
 	await _button(grip, true)
 	await _button(grip, false)
