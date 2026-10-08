@@ -41,6 +41,8 @@ and the [configuration screen](https://volx.jp/persona-5-royal-keyboard-controll
 - Article source/title text fade in on a new article or when the desk becomes
   visible. Restoring a publication result does not replay that fade. The result
   note fades and returns over `DeskFocus.closing_seconds`; acknowledgement runs
-  only after it closes, then the next article fades in.
+  only after it closes. The old source/title fade with the stamp's absorption
+  progress before being replaced by the next article, which then fades in.
+  Live results retain the source scrollbar position; a new article starts at the top.
 - Tune node sizes, spacing, heading colors and fonts in the scenes. Common colors
   and control states live in the theme; blur values live in each scene's material.

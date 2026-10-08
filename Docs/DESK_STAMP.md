@@ -13,7 +13,10 @@ through this wait and the result. Pausing also pauses the pending result delay.
 Closing the note fades the whole paper while it returns to its origin; publication
 acknowledgement and the next article wait until that motion finishes.
 When the result closes and the next article appears, the old red ink gradually
-diffuses and absorbs into the paper. This animation pauses with the interface.
+diffuses and absorbs into the paper. The previous source/title stay in place and
+fade using that exact absorption progress; then the next source fades in.
+Headline selection is blocked until the old source disappears. Pause freezes
+both the text and ink. Opening a live result keeps the source's reading position.
 A new imprint cancels any remaining absorption; new runs and loading clear it
 immediately, while a restored publication result shows fresh ink.
 

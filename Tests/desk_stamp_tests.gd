@@ -68,7 +68,7 @@ func _run() -> void:
 	check(area.preview.size == area.imprint_size and area.imprint.size == area.imprint_size and is_equal_approx(area.preview.rotation, deg_to_rad(-8)), "Inspector changes keep seal geometry and drop bounds in sync")
 	area.imprint_size = default_imprint_size
 	area.imprint_angle_degrees = -2.0
-	var source: Control = work.get_node("%SourceText")
+	var source: RichTextLabel = work.get_node("%SourceText")
 	check(area.can_stamp(source.get_global_transform_with_canvas() * (source.size * 0.5)), "Printing directly over the source text is allowed")
 	check(area.can_stamp(source.get_global_transform_with_canvas() * Vector2(40, 175)), "The left side of the source text accepts a full-size seal")
 	check(area.can_stamp(source.get_global_transform_with_canvas() * Vector2(40, source.size.y + 35)), "The blank paper below the left side of the source accepts a seal")
@@ -145,6 +145,15 @@ func _run() -> void:
 	work._open_choices(false)
 	check(not stamp.enabled and not stamp.begin_drag(stamp.contact_position()), "The headline chooser blocks stamp interaction")
 	work._hide_choices(false)
+	var published_article: NewsArticle = game.session.current_article()
+	published_article.source_text = "Строка длинного источника для чтения перед публикацией.\n".repeat(90)
+	work._display_source(published_article)
+	await process_frame
+	await process_frame
+	var source_scroll: VScrollBar = source.get_v_scroll_bar()
+	source_scroll.value = source_scroll.max_value * 0.55
+	var reading_scroll := source_scroll.value
+	check(reading_scroll > 0.0, "A long article can be scrolled before stamping")
 	centre = source.get_global_transform_with_canvas() * Vector2(40, 175)
 	grip = stamp.get_global_transform_with_canvas() * Vector2(144, 105)
 	await _button(grip, true)
@@ -155,6 +164,7 @@ func _run() -> void:
 	check(stamp.busy and game.session.total_published == 0, "The second click starts the strike before applying consequences")
 	await create_timer(0.25).timeout
 	check(game.session.total_published == 1 and area.printed and area.imprint.visible and not work.popup.active, "Contact applies the publication once while the result note stays hidden")
+	check(is_equal_approx(source_scroll.value, reading_scroll), "Stamping a scrolled article does not move its reading position")
 	var ink_centre := area.get_global_transform_with_canvas() * (area.imprint.position + area.imprint_size * 0.5)
 	check(ink_centre.distance_to(centre) < 0.1, "The new ink stays at the actual contact point over the article text")
 	var money: int = game.session.money
@@ -178,6 +188,7 @@ func _run() -> void:
 	check(work.popup.scale.x > opening_scale and work.popup.scale.x < 0.98, "The note is still approaching smoothly after the first part of its entrance")
 	await create_timer(0.55).timeout
 	check(work.popup.scale.is_equal_approx(Vector2.ONE), "The slower entrance finishes at the correct size")
+	check(is_equal_approx(source_scroll.value, reading_scroll), "Opening publication feedback keeps the article at its original scroll position")
 	await _capture("result")
 	work.restore_presentation(work.capture_presentation())
 	check(area.printed and area.imprint.visible and work.popup.active and game.session.total_published == 1, "Restoring a publication result restores the seal without replaying consequences")
@@ -190,22 +201,27 @@ func _run() -> void:
 	if game.session.awaiting_acknowledgement:
 		await game.session.article_changed
 	await process_frame
-	check(not work.popup.visible and source.self_modulate.a < 1.0, "Only after the result closes does the next article begin fading in")
+	check(not work.popup.visible and source.text == published_article.source_text and source.self_modulate.a > 0.0, "Closing feedback retains the old source for its fade-out")
+	work._open_choices(false)
+	check(not work.choices_open and not stamp.enabled, "A fading old article cannot accept choices or another publication")
 	await create_timer(area.absorption_seconds * 0.35).timeout
 	check(not area.printed and area.imprint.visible and work.selected_index == -1 and stamp.position.is_equal_approx(rest), "The next source unlocks the draft while the old ink remains visible during absorption")
 	var absorbing_progress := _ink_progress(area.imprint)
 	check(absorbing_progress > 0.0 and absorbing_progress < 1.0 and area.imprint.position.is_equal_approx(old_ink_position), "The old ink absorbs gradually at its original position")
+	check(source.text == published_article.source_text and is_equal_approx(source.self_modulate.a, 1.0 - absorbing_progress) and is_equal_approx(work.get_node("%SourceTitle").self_modulate.a, source.self_modulate.a), "Old title and source text fade on the exact same clock as the ink")
 	check(area.preview.material != area.imprint.material and is_zero_approx(_ink_progress(area.preview)), "The preview has an independent material and never inherits absorption")
 	await _capture("ink-absorbing")
 	game._toggle_pause()
 	absorbing_progress = _ink_progress(area.imprint)
 	await create_timer(area.absorption_seconds + 0.1).timeout
-	check(game.paused and area.imprint.visible and is_equal_approx(_ink_progress(area.imprint), absorbing_progress), "Pause freezes absorption without hiding the partly absorbed ink")
+	check(game.paused and area.imprint.visible and is_equal_approx(_ink_progress(area.imprint), absorbing_progress) and is_equal_approx(source.self_modulate.a, 1.0 - absorbing_progress), "Pause freezes the old source and ink together")
 	game._toggle_pause()
 	await create_timer(area.absorption_seconds * 0.2).timeout
 	check(_ink_progress(area.imprint) > absorbing_progress and area.imprint.visible, "Unpausing resumes the remaining ink absorption")
 	await create_timer(area.absorption_seconds).timeout
 	check(not area.imprint.visible and is_equal_approx(_ink_progress(area.imprint), 1.0), "Absorption finishes with no old ink left on the next article")
+	check(source.text == game.session.current_article().source_text and source_scroll.value == 0.0 and not work.get_node("%HeadlineField").disabled, "The next source replaces old text at the top only after absorption, then enables choices")
+	await create_timer(work.source_reveal_seconds).timeout
 	check(is_equal_approx(source.self_modulate.a, 1.0), "The next source finishes fully readable")
 	await _capture("next-article")
 
@@ -241,6 +257,7 @@ func _run() -> void:
 	check(area.imprint.visible and _ink_progress(area.imprint) > 0.0, "The next acknowledged result starts ink absorption again")
 	work.restore_presentation(work.capture_presentation())
 	check(not area.printed and not area.imprint.visible and is_zero_approx(_ink_progress(area.imprint)), "Restoring an unprinted draft clears transient ink immediately")
+	check(source.text == game.session.current_article().source_text and is_equal_approx(source.self_modulate.a, 1.0), "Restoring during a handover cancels the old source and displays the current article")
 	await create_timer(area.absorption_seconds + 0.1).timeout
 	check(not area.imprint.visible, "An interrupted absorption cannot revive old ink after restoring a draft")
 

@@ -2,6 +2,8 @@
 class_name StampArea
 extends Control
 
+signal absorption_progress_changed(progress: float)
+
 @export var imprint_size := Vector2(224, 224):
 	set(value):
 		imprint_size = value.max(Vector2(8, 8))
@@ -125,6 +127,7 @@ func _stop_absorption() -> void:
 
 func _set_absorption(progress: float) -> void:
 	_ink_material.set_shader_parameter("absorption_progress", progress)
+	absorption_progress_changed.emit(progress)
 
 func _place(seal: Control, viewport_point: Vector2) -> void:
 	seal.pivot_offset = imprint_size * 0.5

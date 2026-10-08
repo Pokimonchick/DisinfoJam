@@ -42,6 +42,7 @@ var _combo_tween: Tween
 var _pending_result: Dictionary = {}
 var _result_delay: Tween
 var _source_reveal: Tween
+var _next_source: NewsArticle
 @onready var cards: Array[Button] = [%Headline1, %Headline2, %Headline3]
 @onready var popup: DeskFocus = $Canvas/DeskFocus
 @onready var combo_burst: Control = %ComboBurst
@@ -51,6 +52,7 @@ var _source_reveal: Tween
 
 func _ready() -> void:
 	visibility_changed.connect(func(): _animate_source(is_visible_in_tree()))
+	stamp_area.absorption_progress_changed.connect(_on_source_absorption)
 	_choice_overlay = CHOICE_OVERLAY.instantiate() as Control
 	choices.add_child(_choice_overlay)
 	choices.move_child(_choice_overlay, 0)
@@ -126,6 +128,8 @@ func bind(model: NewsroomSession) -> void:
 
 func _phase_changed() -> void:
 	if session.phase != NewsroomSession.Phase.WORK:
+		_next_source = null
+		_animate_source(false)
 		_clear_pending_result()
 		stamp_area.reset()
 		popup.reset()
@@ -145,7 +149,7 @@ func _refresh_desk() -> void:
 func _refresh_actions() -> void:
 	if session == null:
 		return
-	var blocked := session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached()
+	var blocked := session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached() or _next_source != null
 	var overlay_blocks := choices.visible and GameSettings.choice_overlay_enabled
 	%HeadlineField.disabled = blocked or _choices_animating or overlay_blocks
 	var can_publish := not (blocked or selected_index < 0 or choices_open or _choices_animating or popup.visible or overlay_blocks)
@@ -183,6 +187,7 @@ func _drink_coffee() -> void:
 		session.drink_coffee()
 
 func _display_source(article: NewsArticle, animate := false) -> void:
+	_next_source = null
 	%SourceTitle.text = article.source_title
 	%SourceText.text = article.source_text
 	%SourceText.scroll_to_line(0)
@@ -190,6 +195,14 @@ func _display_source(article: NewsArticle, animate := false) -> void:
 	_animate_source(animate)
 
 func _animate_source(animate := true) -> void:
+	if _next_source != null:
+		# Leaving/restoring the desk completes the transient handover immediately.
+		var article := _next_source
+		_next_source = null
+		stamp_area.reset()
+		_display_source(article, animate)
+		_refresh_actions()
+		return
 	if _source_reveal:
 		_source_reveal.kill()
 		_source_reveal = null
@@ -201,6 +214,17 @@ func _animate_source(animate := true) -> void:
 		for label in [%SourceTitle, %SourceText]:
 			_source_reveal.tween_property(label, "self_modulate:a", 1.0, source_reveal_seconds)
 
+func _on_source_absorption(progress: float) -> void:
+	if _next_source == null:
+		return
+	# One clock fades the old source and the actual stamped ink together.
+	for label in [%SourceTitle, %SourceText]:
+		label.self_modulate.a = 1.0 - progress
+	if progress >= 1.0:
+		_display_source(_next_source, true)
+		_refresh_actions()
+		view_changed.emit()
+
 func _set_issue_number(number: int) -> void:
 	var has_art := number >= 1 and number <= NUMBER_ART.size()
 	%ArticleNumber.text = "" if has_art else "%02d" % number
@@ -210,7 +234,12 @@ func _set_issue_number(number: int) -> void:
 
 func show_article(absorb_ink := true) -> void:
 	# Restores and new runs can reach this while the session is still IDLE.
-	stamp_area.reset(absorb_ink and session.phase == NewsroomSession.Phase.WORK and session.published_today > 0)
+	var fade_previous := absorb_ink and session.phase == NewsroomSession.Phase.WORK and is_visible_in_tree() and stamp_area.printed and stamp_area.imprint.visible and stamp_area.absorption_seconds > 0.0
+	_next_source = null
+	_animate_source(false)
+	if fade_previous:
+		_next_source = session.current_article()
+	stamp_area.reset(fade_previous)
 	if session.phase != NewsroomSession.Phase.WORK:
 		return
 	selected_index = -1
@@ -219,7 +248,8 @@ func show_article(absorb_ink := true) -> void:
 	popup.reset()
 	popup_kind = DialogKind.NONE
 	_hide_choices(false)
-	_display_source(session.current_article(), absorb_ink)
+	if not fade_previous:
+		_display_source(session.current_article(), absorb_ink)
 	%HeadlineField.set_headline("")
 	for i in cards.size():
 		cards[i].get_node("Content/Headline").text = session.option_at(i).text
@@ -234,7 +264,7 @@ func _toggle_choices() -> void:
 		_open_choices()
 
 func _open_choices(animate := true) -> void:
-	if session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached():
+	if session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached() or _next_source != null:
 		return
 	if _choice_tween:
 		_choice_tween.kill()
@@ -377,7 +407,9 @@ func _show_result(result: Dictionary) -> void:
 	popup_kind = DialogKind.RESULT
 	for article in session.articles:
 		if article.id == result.get("article_id", ""):
-			_display_source(article)
+			# Reloads need the published source; a live result keeps its scroll position.
+			if %SourceTitle.text != article.source_title or %SourceText.text != article.source_text:
+				_display_source(article)
 			break
 	%HeadlineField.set_headline(result.headline)
 	_set_issue_number(session.published_today)
