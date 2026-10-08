@@ -225,7 +225,7 @@ const ROWS: Array[Dictionary] = [
 
 static func create_articles() -> Array[NewsArticle]:
 	var result: Array[NewsArticle] = []
-	var rows: Array = ROWS.slice(0, 2) + preload("res://Data/community_articles.gd").ROWS + ROWS.slice(2)
+	var rows: Array = ROWS.slice(0, 2) + preload("res://Data/community_articles.gd").ROWS + ROWS.slice(2) + preload("res://Data/bripolis_articles.gd").ROWS
 	for row in rows:
 		result.append(NewsArticle.from_row(row))
 	return result
