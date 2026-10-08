@@ -3,18 +3,19 @@ extends RefCounted
 
 # Stable names, not node paths or enum ordinals. Add optional fields here; reset()
 # supplies defaults for saves made before the field existed.
-const NUMBERS := ["health", "reputation", "loyalty", "money", "day", "time_left",
+const NUMBERS := ["health", "reputation", "loyalty", "qualification", "money", "day", "time_left",
 	"shift_length", "article_cursor", "combo_type", "combo_count", "published_today",
 	"earned_today", "total_published", "completed_shifts", "campaign_days", "campaign_money"]
-const FLAGS := ["coffee_ready", "coffee_used_today", "approval_time_applied", "approval_stamina_applied", "food_stocked", "awaiting_acknowledgement", "campaign_completed"]
+const FLAGS := ["coffee_ready", "coffee_used_today", "approval_time_applied", "approval_stamina_applied", "food_stocked", "awaiting_acknowledgement", "campaign_completed", "proofreading_unlocked", "proofreading_started"]
 const PHASES := ["idle", "work", "home", "ended"]
-const ENDINGS := ["none", "exhaustion", "office_fire", "arrest", "debt", "victory", "goal_missed"]
+const ENDINGS := ["none", "exhaustion", "office_fire", "arrest", "debt", "victory", "goal_missed", "qualification_fired"]
 
 static func capture(session: NewsroomSession) -> Dictionary:
 	var run := {"phase": PHASES[session.phase], "ending": ENDINGS[session.ending],
 		"mode": session.mode, "id": session.run_id, "option_order": session.option_order.duplicate(),
 		"journal": session.journal.duplicate(true), "last_result": session.last_result.duplicate(true),
-		"last_shift": session.last_shift.duplicate(true), "finances": session.finances.to_data()}
+		"last_shift": session.last_shift.duplicate(true), "finances": session.finances.to_data(),
+		"story_choices": session.story_choices.duplicate(), "proofreading": session.proofreading.to_data()}
 	for key in NUMBERS + FLAGS:
 		run[key] = session.get(key)
 	var rows: Array = []
@@ -24,7 +25,7 @@ static func capture(session: NewsroomSession) -> Dictionary:
 		"profile": {"id": session.player_id, "name": session.player_name, "endless_unlocked": session.endless_unlocked},
 		"run": run,
 		# Save the actual material, including generated stories, not just catalog indices.
-		"content": {"articles": rows, "rng_seed": str(session._rng.seed), "rng_state": str(session._rng.state)}
+		"content": {"sequence_version": 1, "articles": rows, "rng_seed": str(session._rng.seed), "rng_state": str(session._rng.state)}
 	}
 
 static func validate(sections: Dictionary) -> bool:
@@ -58,7 +59,7 @@ static func validate(sections: Dictionary) -> bool:
 	for key in FLAGS:
 		if run.has(key) and not run[key] is bool:
 			return false
-	for key in ["health", "reputation", "loyalty", "day", "time_left", "shift_length", "article_cursor", "combo_count", "published_today", "total_published", "completed_shifts", "campaign_money"]:
+	for key in ["health", "reputation", "loyalty", "qualification", "day", "time_left", "shift_length", "article_cursor", "combo_count", "published_today", "total_published", "completed_shifts", "campaign_money"]:
 		if run.get(key, 0) < 0:
 			return false
 	if run.get("campaign_days", 5) < 1 or not int(run.get("combo_type", -1)) in [-1, 0, 1, 2]:
@@ -85,6 +86,8 @@ static func validate(sections: Dictionary) -> bool:
 	for entry in run.get("journal", []):
 		if not entry is Dictionary:
 			return false
+		if entry.has("option_index") and not _choice_index(entry.option_index):
+			return false
 		# Legacy finance import converts these fields before recording entries.
 		if not run.get("finances", {}).has("entries"):
 			for key in ["day", "money", "combo_type"]:
@@ -96,6 +99,20 @@ static func validate(sections: Dictionary) -> bool:
 	if run.get("awaiting_acknowledgement", false) and result.is_empty():
 		return false
 	if not result.is_empty():
+		if result.has("option_index") and not _choice_index(result.option_index):
+			return false
+		if result.has("source_text") and not result.source_text is String:
+			return false
+		if result.has("proofreading"):
+			if not result.proofreading is Dictionary:
+				return false
+			for key in ["corrected", "missed", "wrong", "money", "qualification"]:
+				var value: Variant = result.proofreading.get(key)
+				if not _number(value) or int(value) != value:
+					return false
+			for key in ["corrected", "missed", "wrong"]:
+				if result.proofreading[key] < 0:
+					return false
 		for key in ["headline", "explanation"]:
 			if not result.get(key) is String:
 				return false
@@ -108,11 +125,27 @@ static func validate(sections: Dictionary) -> bool:
 			return false
 	if not content.get("articles") is Array or content.articles.is_empty():
 		return false
+	if content.has("sequence_version") and (not _number(content.sequence_version) or content.sequence_version != 1):
+		return false
+	if content.has("sequence_version") and run.article_cursor > content.articles.size():
+		return false
 	var ids: Dictionary = {}
 	for row in content.articles:
 		if not _article_valid(row) or ids.has(row.id):
 			return false
 		ids[row.id] = true
+	if not run.get("story_choices", {}) is Dictionary:
+		return false
+	for id in run.get("story_choices", {}):
+		var choice: Variant = run.story_choices[id]
+		if not id is String or not ids.has(id) or not _number(choice) or int(choice) != choice or not int(choice) in [0, 1, 2]:
+			return false
+	if run.has("proofreading"):
+		if not run.proofreading is Dictionary or not ProofreadingState.validate_data(run.proofreading):
+			return false
+		var proof_id: String = run.proofreading.article_id
+		if not proof_id.is_empty() and not ids.has(proof_id):
+			return false
 	for key in ["rng_seed", "rng_state"]:
 		if not content.get(key, "0") is String or not content.get(key, "0").is_valid_int():
 			return false
@@ -152,12 +185,69 @@ static func restore(session: NewsroomSession, sections: Dictionary) -> bool:
 	# JSON numbers cannot represent all 64-bit RNG states exactly. Store as strings.
 	session._rng.seed = int(sections.content.get("rng_seed", "0"))
 	session._rng.state = int(sections.content.get("rng_state", "0"))
+	_restore_story_choices(session, run)
+	if not sections.content.has("sequence_version"):
+		_migrate_queue(session)
+	session._resolved_article = null
+	if not run.has("proofreading_unlocked"):
+		session.proofreading_unlocked = session.day >= session.balance.proofreading_unlock_day
+	if run.has("proofreading"):
+		session.proofreading.restore(run.proofreading)
+	if not session.awaiting_acknowledgement and session.phase in [NewsroomSession.Phase.WORK, NewsroomSession.Phase.HOME]:
+		session.prepare_proofreading()
 	session.changed.emit()
 	session.phase_changed.emit()
 	return true
 
+static func _restore_story_choices(session: NewsroomSession, run: Dictionary) -> void:
+	session.story_choices.clear()
+	for id in run.get("story_choices", {}):
+		session.story_choices[id] = int(run.story_choices[id])
+	for entry in session.journal:
+		var id: String = str(entry.get("article_id", ""))
+		if id.is_empty() or session.story_choices.has(id):
+			continue
+		var index: Variant = entry.get("option_index", -1)
+		if _number(index) and int(index) == index and int(index) in [0, 1, 2]:
+			session.story_choices[id] = int(index)
+			continue
+		# Old journals store exact headline text. Recover the stable authored index
+		# from that run first, then the untouched archive of the eight user sources.
+		for article in session.articles:
+			if article.id == id:
+				for option in article.headlines.size():
+					if article.headlines[option].text == entry.get("headline", ""):
+						session.story_choices[id] = option
+		for row in preload("res://Docs/OriginalArticles/community_articles_original.gd").ROWS:
+			if row.id == id and not session.story_choices.has(id):
+				for option in row.options.size():
+					if row.options[option][0] == entry.get("headline", ""):
+						session.story_choices[id] = option
+
+static func _migrate_queue(session: NewsroomSession) -> void:
+	# Keep the published prefix and the current draft. Extend the actual saved
+	# content with missing catalog IDs; never replace manually edited materials.
+	session.article_cursor = mini(session.article_cursor, session.articles.size())
+	var published_ids: Dictionary = {}
+	for entry in session.journal:
+		published_ids[str(entry.get("article_id", ""))] = true
+	for index in range(session.articles.size() - 1, session.article_cursor - 1, -1):
+		if published_ids.has(session.articles[index].id):
+			session.articles.remove_at(index)
+	var existing: Dictionary = published_ids.duplicate()
+	for article in session.articles:
+		existing[article.id] = true
+	for article in preload("res://Data/article_catalog.gd").create_articles():
+		if not existing.has(article.id):
+			session.articles.append(article)
+			existing[article.id] = true
+	ArticleSequence.order_remaining(session.articles, session.article_cursor + 1)
+
 static func _number(value: Variant) -> bool:
 	return (value is int or value is float) and is_finite(float(value))
+
+static func _choice_index(value: Variant) -> bool:
+	return _number(value) and int(value) == value and int(value) in [0, 1, 2]
 
 static func _article_valid(row: Variant) -> bool:
 	if not row is Dictionary:

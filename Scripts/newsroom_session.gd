@@ -11,7 +11,7 @@ signal save_requested
 signal transaction_recorded(entry: Dictionary)
 
 enum Phase { IDLE, WORK, HOME, ENDED }
-enum Ending { NONE, EXHAUSTION, OFFICE_FIRE, ARREST, DEBT, VICTORY, GOAL_MISSED }
+enum Ending { NONE, EXHAUSTION, OFFICE_FIRE, ARREST, DEBT, VICTORY, GOAL_MISSED, QUALIFICATION_FIRED }
 
 var balance: NewsroomBalance = preload("res://Data/mvp_balance.tres")
 var articles: Array[NewsArticle] = []
@@ -20,6 +20,12 @@ var ending: Ending = Ending.NONE
 var health: float
 var reputation: float
 var loyalty: float
+var qualification: float = 70.0
+var proofreading_unlocked := false
+var proofreading_started := false
+var proofreading := ProofreadingState.new()
+var story_choices: Dictionary = {}
+var _resolved_article: NewsArticle
 var money: int
 var day: int = 0
 # Inert legacy save fields. Work no longer counts down or ends on a deadline.
@@ -71,6 +77,12 @@ func reset(seed_value: int = -1) -> void:
 	health = balance.starting_health
 	reputation = balance.starting_reputation
 	loyalty = balance.starting_loyalty
+	qualification = balance.starting_qualification
+	proofreading_unlocked = false
+	proofreading_started = false
+	proofreading = ProofreadingState.new()
+	story_choices.clear()
+	_resolved_article = null
 	money = balance.starting_money
 	day = 0
 	time_left = 0.0
@@ -105,6 +117,11 @@ func start_shift() -> void:
 	if phase == Phase.HOME:
 		health = minf(balance.maximum_stat, health + balance.sleep_health)
 	day += 1
+	if day > 1:
+		ArticleSequence.promote_continuations(articles, article_cursor, story_choices, _rng)
+		_resolved_article = null
+	proofreading_unlocked = day >= balance.proofreading_unlock_day
+	prepare_proofreading()
 	approval_stamina_applied = loyalty >= balance.state_approval.threshold
 	if approval_stamina_applied:
 		health = minf(balance.maximum_stat, health + balance.state_approval.amount)
@@ -133,13 +150,36 @@ func tick_work(delta: float) -> void:
 
 
 func current_article() -> NewsArticle:
-	if articles.is_empty():
+	if article_cursor >= articles.size():
 		return null
-	return articles[article_cursor % articles.size()]
+	if _resolved_article == null or _resolved_article.id != articles[article_cursor].id:
+		_resolved_article = ArticleSequence.resolve(articles[article_cursor], story_choices, journal)
+	return _resolved_article
+
+
+func display_source_text(article: NewsArticle) -> String:
+	if proofreading_unlocked and proofreading.article_id == article.id and proofreading.source_text == article.source_text:
+		return proofreading.display_text
+	return article.source_text
+
+
+func prepare_proofreading() -> void:
+	var article := current_article()
+	if not proofreading_unlocked or article == null:
+		return
+	if proofreading.article_id == article.id and proofreading.source_text == article.source_text:
+		return
+	proofreading.prepare(article.id, article.source_text, _rng.randi(), not proofreading_started)
+	proofreading_started = true
+
+
+func proofreading_changed() -> void:
+	changed.emit()
+	save_requested.emit()
 
 
 func option_at(display_index: int) -> HeadlineOption:
-	if display_index < 0 or display_index >= option_order.size():
+	if display_index < 0 or display_index >= option_order.size() or current_article() == null:
 		return null
 	return current_article().headlines[option_order[display_index]]
 
@@ -155,8 +195,11 @@ func publish_headline(display_index: int) -> bool:
 	combo_type = option.editorial_type
 	var multiplier := combo_multiplier()
 	var stamina_cost := publication_stamina_cost()
+	var article := current_article()
 	last_result = {
-		"article_id": current_article().id,
+		"article_id": article.id,
+		"option_index": option_order[display_index],
+		"source_text": display_source_text(article),
 		"headline": option.text,
 		"money": roundi(option.money * multiplier * balance.publication_income_multiplier),
 		"reputation": roundi(option.reputation * multiplier),
@@ -170,6 +213,18 @@ func publish_headline(display_index: int) -> bool:
 	}
 	money += last_result.money
 	_record_transaction("publication", last_result.money, "Публикация", combo_type, option.text)
+	if proofreading_unlocked and proofreading.article_id == article.id:
+		var corrections := proofreading.settlement()
+		last_result["proofreading"] = corrections
+		last_result["publication_money"] = last_result.money
+		last_result.money += corrections.money
+		money += corrections.money
+		qualification = clampf(qualification + corrections.qualification, 0.0, balance.maximum_stat)
+		for transaction in [["proofreading_reward", corrections.corrected * 2, "Вычитка: исправления"],
+			["proofreading_missed", -corrections.missed, "Вычитка: пропущенные опечатки"],
+			["proofreading_wrong", -corrections.wrong, "Вычитка: неверные пометки"]]:
+			if transaction[1] != 0:
+				_record_transaction(transaction[0], transaction[1], transaction[2], -1, option.text)
 	reputation = clampf(reputation + last_result.reputation, 0.0, balance.maximum_stat)
 	loyalty = clampf(loyalty + last_result.loyalty, 0.0, balance.maximum_stat)
 	health = maxf(0.0, health - stamina_cost)
@@ -177,9 +232,11 @@ func publish_headline(display_index: int) -> bool:
 	total_published += 1
 	earned_today += last_result.money
 	journal.append(last_result.duplicate())
+	story_choices[article.id] = option_order[display_index]
 	# A published article leaves the queue immediately, even if the shift ends
 	# while its feedback is visible. Unconfirmed articles keep their cursor.
 	article_cursor += 1
+	_resolved_article = null
 	_shuffle_options()
 	changed.emit()
 	if not _check_ending():
@@ -192,9 +249,10 @@ func acknowledge_publication() -> void:
 	if phase != Phase.WORK or not awaiting_acknowledgement:
 		return
 	awaiting_acknowledgement = false
-	if publication_limit_reached():
+	if publication_limit_reached() or current_article() == null:
 		finish_shift()
 		return
+	prepare_proofreading()
 	article_changed.emit()
 	save_requested.emit()
 
@@ -294,6 +352,8 @@ func _check_ending() -> bool:
 		ending = Ending.ARREST
 	elif money <= balance.debt_limit:
 		ending = Ending.DEBT
+	elif proofreading_unlocked and qualification <= 0.0:
+		ending = Ending.QUALIFICATION_FIRED
 	else:
 		return false
 	phase = Phase.ENDED
@@ -304,11 +364,7 @@ func _check_ending() -> bool:
 
 
 func _shuffle_articles() -> void:
-	for i in range(articles.size() - 1, 0, -1):
-		var other := _rng.randi_range(0, i)
-		var previous: NewsArticle = articles[i]
-		articles[i] = articles[other]
-		articles[other] = previous
+	ArticleSequence.shuffle(articles, _rng)
 
 
 func _shuffle_options() -> void:

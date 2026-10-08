@@ -98,6 +98,7 @@ func _refresh() -> void:
 	_text.add_text("\nДОХОДЫ ОТ ПУБЛИКАЦИЙ\n")
 	for type in range(3):
 		_text.add_text("%s: %s $\n" % [Ledger.INCOME_NAMES[type], _signed(summary.publication_by_type[type])])
+	_text.add_text("Исправления при вычитке: %s $\n" % _signed(summary.proofreading_income))
 	var best_names: Array[String] = []
 	for type in summary.best_types:
 		best_names.append(Ledger.INCOME_NAMES[type])

@@ -80,7 +80,7 @@ func _run() -> void:
 
 func _test_catalog() -> void:
 	var s := _fresh()
-	_check(s.articles.size() == 32, "The shared pool includes eight community stories")
+	_check(s.articles.size() == 50, "The finite pool includes eight community stories and eighteen new Bripolis materials")
 	var catalog_order: Array[String] = []
 	for article in preload("res://Data/article_catalog.gd").create_articles():
 		catalog_order.append(article.id)
@@ -107,7 +107,7 @@ func _test_catalog() -> void:
 		if article.high_risk:
 			dangerous += 1
 		_check(not article.high_risk or has_risky_choice, "High-risk articles retain a risky choice after rebalancing")
-	_check(dangerous == 8, "The eight original high-risk stories remain in the pool")
+	_check(dangerous == 10, "Eight original and two new high-risk stories remain in the pool")
 
 func _test_day_cycle() -> void:
 	var s := _fresh()
@@ -163,6 +163,9 @@ func _test_publication_queue() -> void:
 	s = _fresh()
 	s.balance.maximum_stat = 10000
 	s.balance.publication_health_cost = 0
+	s.balance.campaign_days = 100
+	s.campaign_days = 100
+	s.balance.proofreading_unlock_day = 100
 	s.reputation = 10000
 	s.loyalty = 10000
 	s.start_shift()
@@ -175,7 +178,7 @@ func _test_publication_queue() -> void:
 		s.acknowledge_publication()
 		if s.phase == NewsroomSession.Phase.HOME:
 			s.start_shift()
-	_check(seen.size() == 32 and s.current_article().id == s.articles[0].id, "All stories appear before the shuffled pool cycles")
+	_check(seen.size() == 50 and s.current_article() == null and not s.publish_headline(0), "Every material appears once and the finite pool never cycles")
 	_check(orders.size() > 1, "Headline positions vary between stories")
 
 func _test_publication_limit() -> void:

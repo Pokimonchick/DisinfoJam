@@ -13,6 +13,7 @@ var _origin: Control
 var _motion: Tween
 var _opening := false
 var _version := 0
+var _target_size := Vector2.ZERO
 
 @onready var body_label: RichTextLabel = %Body
 @onready var primary_button: Button = %Primary
@@ -49,6 +50,7 @@ func present(origin: Control, tag: String, title: String, body: String, primary:
 	var available_size: Vector2 = (get_parent() as Control).size - Vector2(32.0, 24.0)
 	var zoom: float = minf(minf(preferred_size.x / origin.size.x, preferred_size.y / origin.size.y), minf(available_size.x / origin.size.x, available_size.y / origin.size.y))
 	var target_size: Vector2 = origin.size * zoom
+	_target_size = target_size
 	_origin.hide()
 	active = true
 	_opening = true
@@ -60,7 +62,6 @@ func present(origin: Control, tag: String, title: String, body: String, primary:
 	await get_tree().process_frame
 	if version != _version or not active:
 		return
-	_opening = false
 	size = target_size
 	pivot_offset = target_size / 2.0
 	var origin_transform := _origin_transform()
@@ -74,12 +75,41 @@ func present(origin: Control, tag: String, title: String, body: String, primary:
 	_motion.tween_property(self, "scale", Vector2.ONE, opening_seconds)
 	_motion.tween_property(self, "rotation", -0.015, opening_seconds)
 	_motion.tween_property($Margin, "modulate:a", 1.0, opening_seconds * 0.75).set_delay(opening_seconds * 0.25)
+	_motion.chain().tween_callback(func():
+		if version == _version:
+			_opening = false
+			_motion = null
+	)
+
+func is_opening() -> bool:
+	return active and _opening
+
+func finish_opening() -> bool:
+	if not is_opening():
+		return false
+	# Consume this press even during the initial text-layout frame.
+	_version += 1
+	if _motion and _motion.is_valid():
+		_motion.kill()
+	_motion = null
+	_opening = false
+	size = _target_size
+	pivot_offset = size * 0.5
+	position = ((get_parent() as Control).size - size) * 0.5
+	scale = Vector2.ONE
+	rotation = -0.015
+	modulate.a = 1.0
+	$Margin.modulate.a = 1.0
+	return true
 
 func close(after_close: Callable = Callable()) -> void:
 	if not active:
 		return
 	active = false
 	_version += 1
+	if _motion and _motion.is_valid():
+		_motion.kill()
+	_motion = null
 	if _opening:
 		_opening = false
 		if is_instance_valid(_origin):
@@ -89,8 +119,6 @@ func close(after_close: Callable = Callable()) -> void:
 		if after_close.is_valid():
 			after_close.call()
 		return
-	if _motion and _motion.is_valid():
-		_motion.kill()
 	_motion = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	var origin_transform := _origin_transform()
 	_motion.tween_property(self, "position", origin_transform * (_origin.size * 0.5) - size * 0.5, closing_seconds)

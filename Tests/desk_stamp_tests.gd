@@ -37,6 +37,9 @@ func _capture(name: String) -> void:
 func _ink_progress(seal: Control) -> float:
 	return float((seal.material as ShaderMaterial).get_shader_parameter("absorption_progress"))
 
+func _source_progress(source: Control) -> float:
+	return float((source.material as ShaderMaterial).get_shader_parameter("absorption_progress"))
+
 func _run() -> void:
 	AudioServer.set_bus_mute(0, true)
 	root.mode = Window.MODE_WINDOWED
@@ -192,7 +195,10 @@ func _run() -> void:
 	await _capture("result")
 	work.restore_presentation(work.capture_presentation())
 	check(area.printed and area.imprint.visible and work.popup.active and game.session.total_published == 1, "Restoring a publication result restores the seal without replaying consequences")
-	await create_timer(work.popup.opening_seconds + 0.05).timeout
+	await _button(Vector2(1240, 680), true)
+	await _button(Vector2(1240, 680), false)
+	check(work.popup.active and not work.popup.is_opening() and work.popup.scale.is_equal_approx(Vector2.ONE) and game.session.awaiting_acknowledgement,
+		"A click during result entrance only completes opening and keeps feedback")
 	var old_ink_position := area.imprint.position
 	work.popup.primary_pressed.emit()
 	await create_timer(work.popup.closing_seconds * 0.4).timeout
@@ -208,13 +214,13 @@ func _run() -> void:
 	check(not area.printed and area.imprint.visible and work.selected_index == -1 and stamp.position.is_equal_approx(rest), "The next source unlocks the draft while the old ink remains visible during absorption")
 	var absorbing_progress := _ink_progress(area.imprint)
 	check(absorbing_progress > 0.0 and absorbing_progress < 1.0 and area.imprint.position.is_equal_approx(old_ink_position), "The old ink absorbs gradually at its original position")
-	check(source.text == published_article.source_text and is_equal_approx(source.self_modulate.a, 1.0 - absorbing_progress) and is_equal_approx(work.get_node("%SourceTitle").self_modulate.a, source.self_modulate.a), "Old title and source text fade on the exact same clock as the ink")
+	check(source.text == published_article.source_text and is_equal_approx(_source_progress(source), absorbing_progress) and work.get_node("%SourceTitle").material == source.material, "Old title and source use an organic mask on the exact same clock as the ink")
 	check(area.preview.material != area.imprint.material and is_zero_approx(_ink_progress(area.preview)), "The preview has an independent material and never inherits absorption")
 	await _capture("ink-absorbing")
 	game._toggle_pause()
 	absorbing_progress = _ink_progress(area.imprint)
 	await create_timer(area.absorption_seconds + 0.1).timeout
-	check(game.paused and area.imprint.visible and is_equal_approx(_ink_progress(area.imprint), absorbing_progress) and is_equal_approx(source.self_modulate.a, 1.0 - absorbing_progress), "Pause freezes the old source and ink together")
+	check(game.paused and area.imprint.visible and is_equal_approx(_ink_progress(area.imprint), absorbing_progress) and is_equal_approx(_source_progress(source), absorbing_progress), "Pause freezes the old source and ink together")
 	game._toggle_pause()
 	await create_timer(area.absorption_seconds * 0.2).timeout
 	check(_ink_progress(area.imprint) > absorbing_progress and area.imprint.visible, "Unpausing resumes the remaining ink absorption")
@@ -222,7 +228,7 @@ func _run() -> void:
 	check(not area.imprint.visible and is_equal_approx(_ink_progress(area.imprint), 1.0), "Absorption finishes with no old ink left on the next article")
 	check(source.text == game.session.current_article().source_text and source_scroll.value == 0.0 and not work.get_node("%HeadlineField").disabled, "The next source replaces old text at the top only after absorption, then enables choices")
 	await create_timer(work.source_reveal_seconds).timeout
-	check(is_equal_approx(source.self_modulate.a, 1.0), "The next source finishes fully readable")
+	check(is_equal_approx(float((source.material as ShaderMaterial).get_shader_parameter("reveal_progress")), 1.0), "The next source finishes fully readable")
 	await _capture("next-article")
 
 	# Pausing during the committed stroke must retain its pending feedback.
@@ -251,6 +257,8 @@ func _run() -> void:
 	await process_frame
 	check(work.popup.active and game.session.total_published == 2, "The retained result opens once after its remaining delay")
 	work.popup.primary_pressed.emit()
+	if work.popup.active:
+		work.popup.primary_pressed.emit()
 	if game.session.awaiting_acknowledgement:
 		await game.session.article_changed
 	await create_timer(area.absorption_seconds * 0.2).timeout

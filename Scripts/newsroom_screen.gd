@@ -23,6 +23,9 @@ enum DialogKind { NONE, RESULT }
 @export_range(0.0, 5.0, 0.1) var result_delay_seconds := 0.5
 @export_group("Text motion")
 @export_range(0.0, 2.0, 0.05) var source_reveal_seconds := 0.45
+@export var source_ink_material: ShaderMaterial = preload("res://Data/source_ink.tres")
+@export_group("Proofreading")
+@export var pencil_rest_position := Vector2(800, 940)
 @export_group("Audio")
 @export var headline_appear_sound: AudioStream = preload("res://Assets/Sounds/paper - Part_1.wav")
 @export_range(-40.0, 6.0, 0.5) var headline_appear_volume_db: float = 0.0
@@ -43,6 +46,10 @@ var _pending_result: Dictionary = {}
 var _result_delay: Tween
 var _source_reveal: Tween
 var _next_source: NewsArticle
+var _source_material: ShaderMaterial
+var pencil: DeskPencil
+var proofreading_surface: ProofreadingSurface
+var undo_stroke: Button
 @onready var cards: Array[Button] = [%Headline1, %Headline2, %Headline3]
 @onready var popup: DeskFocus = $Canvas/DeskFocus
 @onready var combo_burst: Control = %ComboBurst
@@ -51,8 +58,13 @@ var _next_source: NewsArticle
 @onready var stamp_area: StampArea = %StampArea
 
 func _ready() -> void:
+	_source_material = source_ink_material.duplicate(true) as ShaderMaterial
+	for label in [%SourceTitle, %SourceText]:
+		label.material = _source_material
+	_create_proofreading_tools()
 	visibility_changed.connect(func(): _animate_source(is_visible_in_tree()))
 	stamp_area.absorption_progress_changed.connect(_on_source_absorption)
+	stamp_area.ink_time_changed.connect(func(time: float): _source_material.set_shader_parameter("ink_time", time))
 	_choice_overlay = CHOICE_OVERLAY.instantiate() as Control
 	choices.add_child(_choice_overlay)
 	choices.move_child(_choice_overlay, 0)
@@ -73,8 +85,46 @@ func _ready() -> void:
 	popup.secondary_pressed.connect(_close_focus)
 	popup.close_pressed.connect(_close_focus)
 
+func _create_proofreading_tools() -> void:
+	var world: Control = $Canvas/World
+	proofreading_surface = ProofreadingSurface.new()
+	proofreading_surface.name = "Proofreading"
+	proofreading_surface.size = $Canvas.design_size
+	proofreading_surface.z_index = 20
+	proofreading_surface.material = _source_material
+	world.add_child(proofreading_surface)
+	proofreading_surface.changed.connect(func():
+		if session != null:
+			session.proofreading_changed()
+		view_changed.emit()
+	)
+	pencil = preload("res://Scenes/desk_pencil.tscn").instantiate() as DeskPencil
+	pencil.position = pencil_rest_position
+	pencil.z_index = 60
+	world.add_child(pencil)
+	pencil.set_surface(proofreading_surface)
+	pencil.interaction_changed.connect(_refresh_actions)
+	undo_stroke = Button.new()
+	undo_stroke.name = "UndoStroke"
+	undo_stroke.text = "Отменить штрих"
+	undo_stroke.tooltip_text = "Убрать последнюю пометку карандашом"
+	undo_stroke.position = Vector2(1380, 986)
+	undo_stroke.size = Vector2(230, 50)
+	undo_stroke.z_index = 65
+	undo_stroke.add_theme_font_size_override("font_size", 24)
+	var paper := StyleBoxFlat.new()
+	paper.bg_color = Color("eee0b8")
+	paper.border_color = Color("9b7650")
+	paper.set_border_width_all(1)
+	paper.set_corner_radius_all(2)
+	undo_stroke.add_theme_stylebox_override("normal", paper)
+	undo_stroke.add_theme_color_override("font_color", Color("544034"))
+	world.add_child(undo_stroke)
+	undo_stroke.pressed.connect(proofreading_surface.undo_last)
+	pencil.input_exclusions.assign([undo_stroke, %SourceText.get_v_scroll_bar()])
+
 func _process(_delta: float) -> void:
-	$Canvas.motion_enabled = not popup.visible and _pending_result.is_empty() and not stamp.dragging and not stamp.busy and not (choices.visible and GameSettings.choice_overlay_enabled)
+	$Canvas.motion_enabled = not popup.visible and _pending_result.is_empty() and not stamp.dragging and not stamp.busy and not pencil.held and not (choices.visible and GameSettings.choice_overlay_enabled)
 
 func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree() or not event is InputEventMouseButton:
@@ -82,8 +132,11 @@ func _input(event: InputEvent) -> void:
 	if event.button_index != MOUSE_BUTTON_LEFT or not event.pressed:
 		return
 	if popup.active:
-		if not Rect2(Vector2.ZERO, popup.size).has_point(popup.get_local_mouse_position()):
-			_close_focus()
+		var scrollbar := popup.body_label.get_v_scroll_bar()
+		if scrollbar.visible and _pointer_over(scrollbar, event.position):
+			return
+		_close_focus()
+		get_viewport().set_input_as_handled()
 	elif choices_open and GameSettings.choice_overlay_enabled:
 		if _pointer_over(_choice_close_button, event.position):
 			return
@@ -114,6 +167,8 @@ func _update_choice_overlay() -> void:
 	%Drawer.visible = not overlay_blocks
 	%FinishShift.visible = not overlay_blocks
 	stamp.visible = not overlay_blocks
+	pencil.visible = session != null and session.proofreading_unlocked and not overlay_blocks
+	undo_stroke.visible = pencil.visible
 	if session != null:
 		_refresh_actions()
 
@@ -135,6 +190,7 @@ func _phase_changed() -> void:
 		popup.reset()
 		popup_kind = DialogKind.NONE
 		_hide_choices(false)
+		pencil.cancel_interaction()
 	_refresh_desk()
 
 func _refresh_desk() -> void:
@@ -151,12 +207,18 @@ func _refresh_actions() -> void:
 		return
 	var blocked := session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached() or _next_source != null
 	var overlay_blocks := choices.visible and GameSettings.choice_overlay_enabled
-	%HeadlineField.disabled = blocked or _choices_animating or overlay_blocks
-	var can_publish := not (blocked or selected_index < 0 or choices_open or _choices_animating or popup.visible or overlay_blocks)
+	%HeadlineField.disabled = blocked or _choices_animating or overlay_blocks or pencil.held
+	var can_publish := not (blocked or selected_index < 0 or choices_open or _choices_animating or popup.visible or overlay_blocks or pencil.held)
 	stamp.set_enabled(can_publish)
 	stamp_area.set_available(can_publish)
-	%FinishShift.disabled = blocked or overlay_blocks or stamp.dragging or stamp.busy
-	%Coffee.get_node("Cup").disabled = blocked or not session.coffee_ready or session.coffee_used_today or session.health >= session.balance.maximum_stat or overlay_blocks or stamp.dragging or stamp.busy
+	pencil.enabled = session.proofreading_unlocked
+	pencil.visible = pencil.enabled and not overlay_blocks
+	undo_stroke.visible = pencil.visible
+	pencil.interaction_enabled = not (blocked or choices.visible or popup.visible or stamp.dragging or stamp.busy)
+	proofreading_surface.input_enabled = pencil.enabled and pencil.interaction_enabled
+	undo_stroke.disabled = blocked or choices.visible or popup.visible or stamp.dragging or stamp.busy or session.proofreading.strokes.is_empty()
+	%FinishShift.disabled = blocked or overlay_blocks or stamp.dragging or stamp.busy or pencil.held
+	%Coffee.get_node("Cup").disabled = blocked or not session.coffee_ready or session.coffee_used_today or session.health >= session.balance.maximum_stat or overlay_blocks or stamp.dragging or stamp.busy or pencil.held
 
 func _refresh_combo() -> void:
 	if session.combo_count == _shown_combo_count and session.combo_type == _shown_combo_type:
@@ -188,8 +250,18 @@ func _drink_coffee() -> void:
 
 func _display_source(article: NewsArticle, animate := false) -> void:
 	_next_source = null
+	if article == null:
+		%SourceTitle.text = "ВЫПУСК ГОТОВ"
+		%SourceText.text = "Все материалы разобраны. Можно сдать выпуск."
+		proofreading_surface.clear()
+		_animate_source(false)
+		return
 	%SourceTitle.text = article.source_title
-	%SourceText.text = article.source_text
+	%SourceText.text = session.display_source_text(article)
+	if session.proofreading_unlocked and session.proofreading.article_id == article.id:
+		proofreading_surface.bind(%SourceText, session.proofreading)
+	else:
+		proofreading_surface.clear()
 	%SourceText.scroll_to_line(0)
 	_set_issue_number(session.published_today + 1)
 	_animate_source(animate)
@@ -208,18 +280,22 @@ func _animate_source(animate := true) -> void:
 		_source_reveal = null
 	var should_animate := animate and is_visible_in_tree() and source_reveal_seconds > 0.0
 	for label in [%SourceTitle, %SourceText]:
-		label.self_modulate.a = 0.0 if should_animate else 1.0
+		label.self_modulate.a = 1.0
+	_source_material.set_shader_parameter("absorption_progress", 0.0)
+	_source_material.set_shader_parameter("ink_origin", %SourceText.get_global_transform_with_canvas().origin)
+	_set_source_reveal(0.0 if should_animate else 1.0)
 	if should_animate:
-		_source_reveal = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		for label in [%SourceTitle, %SourceText]:
-			_source_reveal.tween_property(label, "self_modulate:a", 1.0, source_reveal_seconds)
+		_source_reveal = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		_source_reveal.tween_method(_set_source_reveal, 0.0, 1.0, source_reveal_seconds)
+
+func _set_source_reveal(progress: float) -> void:
+	_source_material.set_shader_parameter("reveal_progress", progress)
 
 func _on_source_absorption(progress: float) -> void:
 	if _next_source == null:
 		return
 	# One clock fades the old source and the actual stamped ink together.
-	for label in [%SourceTitle, %SourceText]:
-		label.self_modulate.a = 1.0 - progress
+	_source_material.set_shader_parameter("absorption_progress", progress)
 	if progress >= 1.0:
 		_display_source(_next_source, true)
 		_refresh_actions()
@@ -245,6 +321,7 @@ func show_article(absorb_ink := true) -> void:
 	selected_index = -1
 	_clear_pending_result()
 	stamp.cancel_interaction()
+	pencil.cancel_interaction()
 	popup.reset()
 	popup_kind = DialogKind.NONE
 	_hide_choices(false)
@@ -252,7 +329,8 @@ func show_article(absorb_ink := true) -> void:
 		_display_source(session.current_article(), absorb_ink)
 	%HeadlineField.set_headline("")
 	for i in cards.size():
-		cards[i].get_node("Content/Headline").text = session.option_at(i).text
+		var option := session.option_at(i)
+		cards[i].get_node("Content/Headline").text = option.text if option != null else ""
 	_refresh_actions()
 	view_changed.emit()
 
@@ -264,7 +342,7 @@ func _toggle_choices() -> void:
 		_open_choices()
 
 func _open_choices(animate := true) -> void:
-	if session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached() or _next_source != null:
+	if session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached() or _next_source != null or session.current_article() == null or pencil.held:
 		return
 	if _choice_tween:
 		_choice_tween.kill()
@@ -361,6 +439,9 @@ func _publish_selected() -> void:
 func _close_focus() -> void:
 	if not popup.active:
 		return
+	if popup.finish_opening():
+		get_viewport().set_input_as_handled()
+		return
 	var was_result := popup_kind == DialogKind.RESULT
 	popup_kind = DialogKind.NONE
 	popup.close(func():
@@ -407,9 +488,10 @@ func _show_result(result: Dictionary) -> void:
 	popup_kind = DialogKind.RESULT
 	for article in session.articles:
 		if article.id == result.get("article_id", ""):
+			var resolved := ArticleSequence.resolve(article, session.story_choices, session.journal)
 			# Reloads need the published source; a live result keeps its scroll position.
-			if %SourceTitle.text != article.source_title or %SourceText.text != article.source_text:
-				_display_source(article)
+			if %SourceTitle.text != resolved.source_title or %SourceText.text != result.get("source_text", session.display_source_text(resolved)):
+				_display_source(resolved)
 			break
 	%HeadlineField.set_headline(result.headline)
 	_set_issue_number(session.published_today)
@@ -421,9 +503,13 @@ func _show_result(result: Dictionary) -> void:
 	var stamina_color := "#9b4033" if stamina_cost > 0.0 else "#665945"
 	var stamina_change := "−%d" % roundi(stamina_cost) if stamina_cost > 0.0 else "0"
 	changes += "[color=#6b7046]Выносливость:[/color] [color=%s][b]%s[/b][/color]\n\n%s" % [stamina_color, stamina_change, result.explanation]
-	var full_issue := session.publication_limit_reached()
+	if result.has("proofreading"):
+		var corrections: Dictionary = result.proofreading
+		changes += "\n\n[color=#78512c]Вычитка: исправлено %d · пропущено %d · неверно %d[/color]\n" % [corrections.corrected, corrections.missed, corrections.wrong]
+		changes += "Из них за вычитку: %s · Квалификация: %s" % [_colored_result_delta(int(corrections.money), " $"), _colored_result_delta(int(corrections.qualification))]
+	var full_issue := session.publication_limit_reached() or session.current_article() == null
 	if full_issue:
-		changes += "\n\n[color=#78512c]В текущем выпуске газеты недостаточно места для новых публикаций.[/color]"
+		changes += "\n\n[color=#78512c]%s[/color]" % ("Все материалы разобраны." if session.current_article() == null else "В текущем выпуске газеты недостаточно места для новых публикаций.")
 	popup.present(cards[maxi(selected_index, 0)], "ВЫПУСК ЗАПОЛНЕН" if full_issue else "НАПЕЧАТАНО", result.headline, changes, "Сдать выпуск и пойти домой" if full_issue else "Следующий материал", "", Vector2(640, 800))
 	_refresh_actions()
 	view_changed.emit()

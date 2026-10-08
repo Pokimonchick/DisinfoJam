@@ -68,6 +68,16 @@ func _refresh() -> void:
 	_set_meter(%HealthBar, %HealthValue, session.health, Color("6b7046"))
 	_set_meter(%ReputationBar, %ReputationValue, session.reputation, Color("916038"))
 	_set_meter(%LoyaltyBar, %LoyaltyValue, session.loyalty, Color("626648"))
+	var qualification_visible := session.proofreading_unlocked
+	for control: Control in [%QualificationTitle, %QualificationBar, %QualificationValue, %QualificationHelp, %QualificationHint]:
+		control.visible = qualification_visible
+	if qualification_visible:
+		_set_meter(%QualificationBar, %QualificationValue, session.qualification, Color("64697c"))
+		%QualificationHint.text = "ВЫЧИТКА ИСТОЧНИКА ДОСТУПНА"
+	%QualificationHelp.tooltip_text = preload("res://Scripts/stat_descriptions.gd").text_for("qualification", session.balance)
+	var balance_y := 950.0 if qualification_visible else 790.0
+	%MoneyValue.position.y = balance_y
+	$SlidingPanel/MoneyTitle.position.y = balance_y
 	var support: StatBenefit = session.balance.reader_support
 	var support_text := support.ready_text if session.reputation >= support.threshold else support.locked_text
 	%ReputationHint.text = support.formatted(support_text)
@@ -82,7 +92,7 @@ func _refresh() -> void:
 	%LoyaltyHint.text = approval.formatted(approval_text)
 	%LoyaltyHelp.tooltip_text = preload("res://Scripts/stat_descriptions.gd").text_for("loyalty", session.balance)
 	%MoneyValue.text = "%d $" % session.money
-	var money_color := Color("ff9f82") if session.money < 0 else Color("f8e9c7")
+	var money_color := Color("587148") if session.money > 0 else (Color("a65b50") if session.money < 0 else Color("544330"))
 	if %MoneyValue.get_theme_color("font_color") != money_color:
 		%MoneyValue.add_theme_color_override("font_color", money_color)
 

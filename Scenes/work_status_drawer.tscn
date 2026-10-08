@@ -138,31 +138,34 @@ color = Color(0.584314, 0.435294, 0.243137, 0.7)
 layout_mode = 0
 offset_left = 50.0
 offset_top = 245.0
-offset_right = 280.0
-offset_bottom = 278.0
+offset_right = 222.0
+offset_bottom = 305.0
 theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 20
 text = "ВЫНОСЛИВОСТЬ"
+autowrap_mode = 2
+vertical_alignment = 1
 
 [node name="HealthValue" type="Label" parent="SlidingPanel" unique_id=1071360477]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 226.0
-offset_top = 244.0
+offset_left = 225.0
+offset_top = 245.0
 offset_right = 354.0
-offset_bottom = 282.0
+offset_bottom = 305.0
 theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 24
 text = "100 / 100"
 horizontal_alignment = 2
+vertical_alignment = 1
 
 [node name="HealthBar" type="ProgressBar" parent="SlidingPanel" unique_id=582706671]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 50.0
-offset_top = 291.0
+offset_top = 309.0
 offset_right = 295.0
-offset_bottom = 351.0
+offset_bottom = 357.0
 mouse_filter = 2
 theme_override_styles/background = SubResource("StyleBoxEmpty_eagcc")
 theme_override_styles/fill = SubResource("StyleBoxEmpty_nyhhg")
@@ -173,10 +176,10 @@ script = ExtResource("9_pencil_meter")
 [node name="HealthHelp" type="TextureButton" parent="SlidingPanel"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 307.0
-offset_top = 291.0
-offset_right = 367.0
-offset_bottom = 351.0
+offset_left = 313.0
+offset_top = 309.0
+offset_right = 361.0
+offset_bottom = 357.0
 tooltip_text = "Подробнее о выносливости"
 focus_mode = 0
 mouse_default_cursor_shape = 2
@@ -187,32 +190,35 @@ stretch_mode = 0
 [node name="ReputationTitle" type="Label" parent="SlidingPanel" unique_id=958320419]
 layout_mode = 0
 offset_left = 50.0
-offset_top = 366.0
-offset_right = 355.0
-offset_bottom = 398.0
+offset_top = 388.0
+offset_right = 222.0
+offset_bottom = 448.0
 theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
-theme_override_font_sizes/font_size = 21
+theme_override_font_sizes/font_size = 20
 text = "РЕПУТАЦИЯ КОМПАНИИ"
+autowrap_mode = 2
+vertical_alignment = 1
 
 [node name="ReputationValue" type="Label" parent="SlidingPanel" unique_id=1882840824]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 228.0
-offset_top = 398.0
-offset_right = 355.0
-offset_bottom = 435.0
+offset_left = 225.0
+offset_top = 388.0
+offset_right = 354.0
+offset_bottom = 448.0
 theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
-theme_override_font_sizes/font_size = 27
+theme_override_font_sizes/font_size = 24
 text = "50 / 100"
 horizontal_alignment = 2
+vertical_alignment = 1
 
 [node name="ReputationBar" type="ProgressBar" parent="SlidingPanel" unique_id=544960821]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 50.0
-offset_top = 437.0
+offset_top = 452.0
 offset_right = 295.0
-offset_bottom = 497.0
+offset_bottom = 500.0
 mouse_filter = 2
 theme_override_styles/background = SubResource("StyleBoxEmpty_b8ynm")
 theme_override_styles/fill = SubResource("StyleBoxEmpty_yofgt")
@@ -224,21 +230,21 @@ script = ExtResource("9_pencil_meter")
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 50.0
-offset_top = 473.0
-offset_right = 300.0
-offset_bottom = 531.0
+offset_top = 504.0
+offset_right = 355.0
+offset_bottom = 546.0
 theme_override_colors/font_color = Color(0.329412, 0.25098, 0.14902, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 17
 text = "ПРИ 75: −2 К РАСХОДУ СИЛ"
 autowrap_mode = 2
 
 [node name="ReputationHelp" type="Button" parent="SlidingPanel" unique_id=874088108]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 307.0
-offset_top = 437.0
-offset_right = 367.0
-offset_bottom = 497.0
+offset_left = 313.0
+offset_top = 452.0
+offset_right = 361.0
+offset_bottom = 500.0
 tooltip_text = "Подробнее о показателе"
 focus_mode = 0
 flat = true
@@ -260,31 +266,34 @@ expand_mode = 1
 layout_mode = 0
 offset_left = 50.0
 offset_top = 558.0
-offset_right = 355.0
-offset_bottom = 590.0
+offset_right = 222.0
+offset_bottom = 618.0
 theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
-theme_override_font_sizes/font_size = 21
+theme_override_font_sizes/font_size = 20
 text = "ЛОЯЛЬНОСТЬ ГОСУДАРСТВУ"
+autowrap_mode = 2
+vertical_alignment = 1
 
 [node name="LoyaltyValue" type="Label" parent="SlidingPanel" unique_id=785926688]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 228.0
-offset_top = 593.0
-offset_right = 355.0
-offset_bottom = 630.0
+offset_left = 225.0
+offset_top = 558.0
+offset_right = 354.0
+offset_bottom = 618.0
 theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
-theme_override_font_sizes/font_size = 27
+theme_override_font_sizes/font_size = 24
 text = "50 / 100"
 horizontal_alignment = 2
+vertical_alignment = 1
 
 [node name="LoyaltyBar" type="ProgressBar" parent="SlidingPanel" unique_id=1324650800]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 50.0
-offset_top = 632.0
+offset_top = 622.0
 offset_right = 295.0
-offset_bottom = 692.0
+offset_bottom = 670.0
 mouse_filter = 2
 theme_override_styles/background = SubResource("StyleBoxEmpty_r64ts")
 theme_override_styles/fill = SubResource("StyleBoxEmpty_w1yn8")
@@ -296,21 +305,21 @@ script = ExtResource("9_pencil_meter")
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 50.0
-offset_top = 671.0
-offset_right = 300.0
-offset_bottom = 729.0
+offset_top = 674.0
+offset_right = 355.0
+offset_bottom = 716.0
 theme_override_colors/font_color = Color(0.329412, 0.25098, 0.14902, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 17
 text = "ПРИ 75: +10 К СИЛАМ"
 autowrap_mode = 2
 
 [node name="LoyaltyHelp" type="Button" parent="SlidingPanel" unique_id=1647371514]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 307.0
-offset_top = 632.0
-offset_right = 367.0
-offset_bottom = 692.0
+offset_left = 313.0
+offset_top = 622.0
+offset_right = 361.0
+offset_bottom = 670.0
 tooltip_text = "Подробнее о показателе"
 focus_mode = 0
 flat = true
@@ -326,6 +335,76 @@ mouse_filter = 2
 texture = ExtResource("8_help")
 expand_mode = 1
 
+[node name="QualificationTitle" type="Label" parent="SlidingPanel"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 50.0
+offset_top = 746.0
+offset_right = 222.0
+offset_bottom = 806.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 20
+text = "КВАЛИФИКАЦИЯ"
+autowrap_mode = 2
+vertical_alignment = 1
+
+[node name="QualificationValue" type="Label" parent="SlidingPanel"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 225.0
+offset_top = 746.0
+offset_right = 354.0
+offset_bottom = 806.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 24
+text = "70 / 100"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="QualificationBar" type="ProgressBar" parent="SlidingPanel"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 50.0
+offset_top = 810.0
+offset_right = 295.0
+offset_bottom = 858.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxEmpty_r64ts")
+theme_override_styles/fill = SubResource("StyleBoxEmpty_w1yn8")
+value = 70.0
+show_percentage = false
+script = ExtResource("9_pencil_meter")
+
+[node name="QualificationHelp" type="TextureButton" parent="SlidingPanel"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 313.0
+offset_top = 810.0
+offset_right = 361.0
+offset_bottom = 858.0
+tooltip_text = "Подробнее о квалификации"
+focus_mode = 0
+mouse_default_cursor_shape = 2
+texture_normal = ExtResource("8_help")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="QualificationHint" type="Label" parent="SlidingPanel"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 50.0
+offset_top = 862.0
+offset_right = 355.0
+offset_bottom = 910.0
+theme_override_colors/font_color = Color(0.329412, 0.25098, 0.14902, 1)
+theme_override_font_sizes/font_size = 17
+text = "ВЫЧИТКА ИСТОЧНИКА ДОСТУПНА"
+autowrap_mode = 2
 [node name="BalanceCard" type="Panel" parent="SlidingPanel" unique_id=2107403312]
 layout_mode = 0
 offset_left = 42.0
@@ -334,27 +413,31 @@ offset_right = 366.0
 offset_bottom = 920.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_balance")
+visible = false
 
 [node name="MoneyTitle" type="Label" parent="SlidingPanel" unique_id=1545158402]
 layout_mode = 0
-offset_left = 61.0
-offset_top = 800.0
-offset_right = 347.0
-offset_bottom = 838.0
-theme_override_colors/font_color = Color(0.886, 0.706, 0.424, 1)
-theme_override_font_sizes/font_size = 20
+offset_left = 50.0
+offset_top = 950.0
+offset_right = 194.0
+offset_bottom = 998.0
+theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_font_sizes/font_size = 22
 text = "БАЛАНС"
+vertical_alignment = 1
 
 [node name="MoneyValue" type="Label" parent="SlidingPanel" unique_id=2044053456]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 61.0
-offset_top = 837.0
-offset_right = 347.0
-offset_bottom = 907.0
-theme_override_colors/font_color = Color(0.973, 0.914, 0.78, 1)
-theme_override_font_sizes/font_size = 43
+offset_left = 194.0
+offset_top = 950.0
+offset_right = 355.0
+offset_bottom = 998.0
+theme_override_colors/font_color = Color(0.329412, 0.25098, 0.14902, 1)
+theme_override_font_sizes/font_size = 29
 text = "0 $"
+vertical_alignment = 1
+horizontal_alignment = 2
 
 [node name="Tab" type="TextureRect" parent="SlidingPanel" unique_id=782465842]
 z_index = -1

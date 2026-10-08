@@ -3,6 +3,7 @@ class_name StampArea
 extends Control
 
 signal absorption_progress_changed(progress: float)
+signal ink_time_changed(time: float)
 
 @export var imprint_size := Vector2(224, 224):
 	set(value):
@@ -18,6 +19,7 @@ signal absorption_progress_changed(progress: float)
 @export_range(0.0, 3.0, 0.05) var absorption_seconds := 0.8
 
 var printed := false
+var ink_time := 0.0
 var _ready_to_print := false
 var _absorption: Tween
 
@@ -28,6 +30,14 @@ var _absorption: Tween
 func _ready() -> void:
 	_configure_imprint()
 	reset()
+
+func _process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
+	# Shader TIME keeps running while paused; this clock follows the desk.
+	ink_time += delta
+	_ink_material.set_shader_parameter("ink_time", ink_time)
+	ink_time_changed.emit(ink_time)
 
 func _configure_imprint() -> void:
 	for seal in [preview, imprint]:

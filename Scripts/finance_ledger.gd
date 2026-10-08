@@ -1,8 +1,8 @@
 class_name FinanceLedger
 extends RefCounted
 
-const EXPENSE_KINDS := ["rent", "meal", "snack", "coffee"]
-const EXPENSE_NAMES := {"rent": "Аренда", "meal": "Полноценная еда", "snack": "Перекус", "coffee": "Кофе"}
+const EXPENSE_KINDS := ["rent", "meal", "snack", "coffee", "proofreading_missed", "proofreading_wrong"]
+const EXPENSE_NAMES := {"rent": "Аренда", "meal": "Полноценная еда", "snack": "Перекус", "coffee": "Кофе", "proofreading_missed": "Пропущенные опечатки", "proofreading_wrong": "Неверные пометки"}
 const INCOME_NAMES := ["Факты", "Сенсация", "Поддержка власти"]
 
 var entries: Array[Dictionary] = []
@@ -82,7 +82,7 @@ func restore(data: Dictionary, legacy_journal: Array = [], completed_shifts: int
 
 func summary(day: int = -1) -> Dictionary:
 	var result := {"income": 0, "expenses": 0, "balance": 0, "expenses_by_kind": {},
-		"publication_by_type": {0: 0, 1: 0, 2: 0}, "best_types": [], "transactions": []}
+		"publication_by_type": {0: 0, 1: 0, 2: 0}, "proofreading_income": 0, "best_types": [], "transactions": []}
 	for kind in EXPENSE_KINDS:
 		result.expenses_by_kind[kind] = 0
 	for entry in entries:
@@ -99,6 +99,8 @@ func summary(day: int = -1) -> Dictionary:
 			result.expenses_by_kind[entry.kind] -= amount
 		if entry.kind == "publication" and result.publication_by_type.has(entry.editorial_type):
 			result.publication_by_type[entry.editorial_type] += amount
+		if entry.kind == "proofreading_reward":
+			result.proofreading_income += amount
 	var best := 0
 	for type in range(3):
 		var earned: int = result.publication_by_type[type]

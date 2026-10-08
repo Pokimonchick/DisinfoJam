@@ -6,7 +6,7 @@ func bind(model: NewsroomSession) -> void:
 	session = model
 	session.changed.connect(refresh)
 	session.phase_changed.connect(refresh)
-	for bar: ProgressBar in [%Health, %Reputation, %Loyalty]:
+	for bar: ProgressBar in [%Health, %Reputation, %Loyalty, %Qualification]:
 		bar.add_theme_stylebox_override("fill", preload("res://Scripts/mvp_theme.gd").box(Color.WHITE, 5, 0))
 	refresh()
 
@@ -16,6 +16,10 @@ func refresh() -> void:
 	_set_meter(%Health, %HealthValue, session.health, Color("b6c995"))
 	_set_meter(%Reputation, %ReputationValue, session.reputation, Color("79bec1"))
 	_set_meter(%Loyalty, %LoyaltyValue, session.loyalty, Color("c4a3d3"))
+	%QualificationGroup.visible = session.proofreading_unlocked
+	if %QualificationGroup.visible:
+		_set_meter(%Qualification, %QualificationValue, session.qualification, Color("a6afd0"))
+	%QualificationHelp.tooltip_text = preload("res://Scripts/stat_descriptions.gd").text_for("qualification", session.balance)
 	%HealthHelp.tooltip_text = preload("res://Scripts/stat_descriptions.gd").text_for("health", session.balance)
 	%ReputationHelp.tooltip_text = preload("res://Scripts/stat_descriptions.gd").text_for("reputation", session.balance)
 	%LoyaltyHelp.tooltip_text = preload("res://Scripts/stat_descriptions.gd").text_for("loyalty", session.balance)
@@ -28,7 +32,7 @@ func refresh() -> void:
 		approval_state = StatBenefitHint.State.READY
 	%LoyaltyHint.present(session.balance.state_approval, approval_state)
 	%Money.text = "%d $" % session.money
-	var money_color := Color("ed987e") if session.money < 0 else Color("e8bd68")
+	var money_color := Color("a5c38d") if session.money > 0 else (Color("c58a80") if session.money < 0 else Color("d7cdb8"))
 	if %Money.get_theme_color("font_color") != money_color:
 		%Money.add_theme_color_override("font_color", money_color)
 	%Day.text = "СМЕНА %02d" % session.day

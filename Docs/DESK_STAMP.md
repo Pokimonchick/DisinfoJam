@@ -12,9 +12,13 @@ with smooth acceleration and deceleration. Passive stamina loss stays paused
 through this wait and the result. Pausing also pauses the pending result delay.
 Closing the note fades the whole paper while it returns to its origin; publication
 acknowledgement and the next article wait until that motion finishes.
+An LMB press during the entrance completes opening immediately; the next press
+starts closing. Clicking or dragging the result scrollbar does not dismiss it.
 When the result closes and the next article appears, the old red ink gradually
 diffuses and absorbs into the paper. The previous source/title stay in place and
-fade using that exact absorption progress; then the next source fades in.
+dissolve through a flowing noise mask using that exact absorption progress;
+then the next source appears through an organic ink reveal. This effect is often
+called an **ink reveal / ink dissolve** or **noise-masked dissolve**.
 Headline selection is blocked until the old source disappears. Pause freezes
 both the text and ink. Opening a live result keeps the source's reading position.
 A new imprint cancels any remaining absorption; new runs and loading clear it
@@ -43,7 +47,8 @@ Choosing a headline and reading a result prevent further stamping.
   red ink over the existing article; the original PNG is preserved.
   Preview and imprint have separate local materials. The imprint's shader
   parameters `Absorption Spread Pixels` and `Absorption Grain` adjust subtle
-  edge diffusion and paper pores without adding a background.
+  edge diffusion and paper pores without adding a background. `Blotch Scale`,
+  `Blotch Softness` and `Blotch Motion` tune patch size, edge softness and flow.
 - `Scenes/desk_stamp.tscn`: transparent 640 x 640 3D render, camera and warm light.
   `Model Scene` accepts a replacement `PackedScene` with its underside at local
   `y = 0`; the initial model is `Scenes/desk_stamp_model.tscn`.
@@ -57,7 +62,11 @@ Choosing a headline and reading a result prevent further stamping.
 - `Scenes/newsroom_screen.tscn` root, `Result Delay Seconds`: wait after returning.
 - `Canvas/DeskFocus`, `Opening Seconds` / `Closing Seconds`: result note entrance
   and fade-out duration (0.7 / 0.45 seconds initially).
-- Newsroom root, `Source Reveal Seconds`: new article text fade (0.45 seconds).
+- Newsroom root, `Source Reveal Seconds`: new article ink reveal (0.45 seconds).
+  `Source Ink Material` defaults to `Data/source_ink.tres`; its `Blotch Scale`
+  is in canvas pixels, with `Blotch Softness` and `Blotch Motion` for fine tuning.
+  `StampArea` supplies a shared pause-safe ink clock. Progress/time uniforms are
+  driven by gameplay, while style parameters remain editable in the inspector.
   Source text stays readable while the first spotlight lesson freezes the desk.
 - `Shadow Strength`, `Shadow Offset`: soft silhouette shadow, shared with the
   existing note-shadow shader. It expands when the stamp is lifted.

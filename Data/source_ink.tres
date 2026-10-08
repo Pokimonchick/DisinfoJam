@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://Shaders/source_ink.gdshader" id="ink"]
+
+[resource]
+resource_local_to_scene = true
+shader = ExtResource("ink")
+shader_parameter/blotch_scale = 80.0
+shader_parameter/blotch_softness = 0.09
+shader_parameter/blotch_motion = 0.45

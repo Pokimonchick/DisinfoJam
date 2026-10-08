@@ -14,6 +14,7 @@ const ENDINGS: Dictionary = {
 	NewsroomSession.Ending.OFFICE_FIRE: ["Редакция больше не печатает", "Репутация компании упала до нуля. Люди, которых обманывали ваши заголовки, собрались у офиса. К утру от редакции остались обугленные стены.", 3],
 	NewsroomSession.Ending.ARREST: ["За вами уже пришли", "Лояльность государству упала до нуля. В дверь постучали сотрудники госбезопасности. Правдивость отдельных статей не стала для них оправданием.", 4],
 	NewsroomSession.Ending.DEBT: ["Ночлег на картонке", "Долг достиг предела. Хозяин комнаты сменил замок, а кредиторы забрали последние вещи. Сегодня вместо кровати — картонка под навесом.", 5],
+	NewsroomSession.Ending.QUALIFICATION_FIRED: ["Последняя корректура", "Квалификация упала до нуля. Начальник возвращает лист с пропущенными ошибками и забирает красный карандаш. «Больше я не могу доверять тебе выпуск». Завтра твоё место займёт другой редактор.", 6],
 	NewsroomSession.Ending.VICTORY: ["Первая неделя позади", "Я прошла первую рабочую неделю. Прошлое пока не вернулось, но теперь у меня есть первая зацепка.\n\nСпасибо за прохождение демо «До печати». Первая глава завершена. История героини продолжится за пределами этой версии.", 0]
 }
 
@@ -37,6 +38,7 @@ var _tutorial_stage := ""
 var _tutorial_step := 0
 var _work_tutorial_done := false
 var _home_tutorial_done := false
+var _pencil_tutorial_done := false
 var _stamina_warning_day := 0
 var _notebook: Control
 var _pending_deductions: Array[int] = []
@@ -64,6 +66,7 @@ func _ready() -> void:
 	home.bind(session)
 	home.notebook_requested.connect(_open_notebook)
 	work.view_changed.connect(_queue_save)
+	work.view_changed.connect(_maybe_begin_pencil_tutorial)
 	work.pause_requested.connect(_toggle_pause)
 	%NewGame.pressed.connect(_show_profile_setup)
 	%MenuSettings.pressed.connect(_open_settings)
@@ -177,6 +180,7 @@ func _new_run(skip_story: bool) -> void:
 	_tutorial_step = 0
 	_work_tutorial_done = skip_story
 	_home_tutorial_done = skip_story
+	_pencil_tutorial_done = false
 	_stamina_warning_day = 0
 	_pending_deductions.clear()
 	$MoneyDelta.clear()
@@ -261,7 +265,13 @@ func _on_phase_changed() -> void:
 				_show_view(View.WORK)
 				if session.day == 1 and not _work_tutorial_done:
 					_begin_tutorial.call_deferred("work")
+				elif session.proofreading_unlocked and not _pencil_tutorial_done:
+					_maybe_begin_pencil_tutorial()
 		NewsroomSession.Phase.HOME:
+			var episode_id: String = CHAPTER.episode_for_evening(session.day)
+			if not episode_id.is_empty() and not episode_id in _seen_stories:
+				_show_story(episode_id)
+				return
 			_show_view(View.HOME)
 			home.open_evening()
 			if not _home_tutorial_done:
@@ -403,36 +413,45 @@ func _pause_dialogue_reveal() -> void:
 
 
 func _begin_tutorial(stage: String) -> void:
-	if (stage == "work" and view != View.WORK) or (stage == "home" and view != View.HOME):
+	if (stage in ["work", "pencil"] and view != View.WORK) or (stage == "home" and view != View.HOME):
+		return
+	if stage == "pencil" and (_pencil_tutorial_done or session.awaiting_acknowledgement or work.popup.visible or work.get("_next_source") != null or tutorial.visible):
 		return
 	if _tutorial_stage != stage:
 		_tutorial_step = 0
 	_tutorial_stage = stage
-	if stage == "work":
+	if stage in ["work", "pencil"]:
 		work.get_node("%Drawer").set_expanded(true, false)
 		# The desk freezes during lessons; its source must already be readable.
 		work._animate_source(false)
 	_present_tutorial_step()
 
 
+func _maybe_begin_pencil_tutorial() -> void:
+	if _restoring or view != View.WORK or not session.proofreading_unlocked or _pencil_tutorial_done or session.awaiting_acknowledgement or work.popup.visible or work.get("_next_source") != null or tutorial.visible:
+		return
+	# The desk emits this again after an acknowledged result shows its next source.
+	_begin_tutorial.call_deferred("pencil")
+
+
 func _present_tutorial_step() -> void:
-	var steps: Array[Dictionary] = INTERFACE_LESSONS.work(session.balance) if _tutorial_stage == "work" else INTERFACE_LESSONS.home(session.balance)
+	var steps := _tutorial_steps()
 	_tutorial_step = clampi(_tutorial_step, 0, steps.size() - 1)
 	var step: Dictionary = steps[_tutorial_step]
 	var targets: Array[Control] = []
-	if _tutorial_stage == "work":
+	if _tutorial_stage in ["work", "pencil"]:
 		_clear_combo_demonstration()
 		work._hide_choices(false)
 		if step.target == "choices":
 			work._open_choices(false)
 			targets.assign(work.cards)
-		elif step.target in ["health", "reputation", "loyalty"]:
-			var stat: String = {"health": "Health", "reputation": "Reputation", "loyalty": "Loyalty"}[step.target]
+		elif step.target in ["health", "reputation", "loyalty", "qualification"]:
+			var stat: String = {"health": "Health", "reputation": "Reputation", "loyalty": "Loyalty", "qualification": "Qualification"}[step.target]
 			var panel := "Canvas/Drawer/SlidingPanel/"
 			for suffix in ["Title", "Value", "Bar", "Help"]:
 				targets.append(work.get_node(panel + stat + suffix))
 		else:
-			var paths := {"source": "%SourceText", "headline": "%HeadlineField", "stamp": "%Stamp", "publish": "%StampArea", "coffee": "%Coffee", "finish": "%FinishShift", "combo": "%ComboBurst"}
+			var paths := {"source": "%SourceText", "headline": "%HeadlineField", "stamp": "%Stamp", "publish": "%StampArea", "coffee": "%Coffee", "finish": "%FinishShift", "combo": "%ComboBurst", "pencil": "Canvas/World/Pencil", "undo": "Canvas/World/UndoStroke"}
 			targets.append(work.get_node(paths[step.target]))
 			if step.target == "source":
 				targets.append(work.get_node("%SourceTitle"))
@@ -455,12 +474,21 @@ func _present_tutorial_step() -> void:
 
 
 func _tutorial_next() -> void:
-	var count := INTERFACE_LESSONS.work(session.balance).size() if _tutorial_stage == "work" else INTERFACE_LESSONS.home(session.balance).size()
+	var count := _tutorial_steps().size()
 	if _tutorial_step + 1 >= count:
 		_finish_tutorial()
 	else:
 		_tutorial_step += 1
 		_present_tutorial_step()
+
+
+func _tutorial_steps() -> Array[Dictionary]:
+	match _tutorial_stage:
+		"work":
+			return INTERFACE_LESSONS.work(session.balance)
+		"pencil":
+			return INTERFACE_LESSONS.pencil()
+	return INTERFACE_LESSONS.home(session.balance)
 
 
 func _tutorial_back() -> void:
@@ -473,6 +501,8 @@ func _finish_tutorial() -> void:
 	if _tutorial_stage == "work":
 		_work_tutorial_done = true
 		work._hide_choices(false)
+	elif _tutorial_stage == "pencil":
+		_pencil_tutorial_done = true
 	else:
 		_home_tutorial_done = true
 	_tutorial_stage = ""
@@ -598,6 +628,7 @@ func _continue_run() -> void:
 	_tutorial_step = int(guidance.get("step", 0))
 	_work_tutorial_done = guidance.get("work_done", session.phase != NewsroomSession.Phase.IDLE)
 	_home_tutorial_done = guidance.get("home_done", session.completed_shifts > 0)
+	_pencil_tutorial_done = guidance.get("pencil_done", false)
 	_stamina_warning_day = int(presentation.get("stamina_warning_day", 0))
 	_pending_deductions.clear()
 	$MoneyDelta.clear()
@@ -608,9 +639,10 @@ func _continue_run() -> void:
 	# Existing saves may already be in the middle of a shift. Do not insert an
 	# unseen morning scene into that shift or reapply its starting bonuses.
 	if not presentation.has("story"):
-		for day in [2, 4]:
-			if session.day >= day:
-				_seen_stories.append(CHAPTER.episode_for_day(day))
+		if session.day >= 2:
+			_seen_stories.append("day_2")
+		if session.day >= 4:
+			_seen_stories.append("day_4")
 	_restoring = false
 	if not _story_id.is_empty():
 		_show_story(_story_id, _story_page)
@@ -649,7 +681,7 @@ func _save_progress() -> bool:
 	var in_story := view in [View.INTRO, View.STORY]
 	sections["presentation"] = {"screen": VIEW_KEYS[view], "lesson": lesson,
 		"newsroom": work.capture_presentation(),
-		"guidance": {"stage": _tutorial_stage, "step": _tutorial_step, "work_done": _work_tutorial_done, "home_done": _home_tutorial_done},
+		"guidance": {"stage": _tutorial_stage, "step": _tutorial_step, "work_done": _work_tutorial_done, "home_done": _home_tutorial_done, "pencil_done": _pencil_tutorial_done},
 		"stamina_warning_day": _stamina_warning_day,
 		"story": {"id": _story_id if in_story else "", "page": _story_page if in_story else 0, "seen": _seen_stories.duplicate()}}
 	sections["extensions"] = GameState.capture_save_sections()
@@ -683,9 +715,9 @@ static func _validate_save(sections: Dictionary) -> bool:
 	if not NewsroomSaveData._number(warning_day) or int(warning_day) != warning_day or warning_day < 0 or warning_day > sections.run.day:
 		return false
 	var guidance: Variant = presentation.get("guidance", {})
-	if not guidance is Dictionary or not guidance.get("stage", "") in ["", "work", "home"]:
+	if not guidance is Dictionary or not guidance.get("stage", "") in ["", "work", "home", "pencil"]:
 		return false
-	for key in ["work_done", "home_done"]:
+	for key in ["work_done", "home_done", "pencil_done"]:
 		if guidance.has(key) and not guidance[key] is bool:
 			return false
 	var step: Variant = guidance.get("step", 0)
@@ -693,6 +725,9 @@ static func _validate_save(sections: Dictionary) -> bool:
 		return false
 	if guidance.get("stage", "").is_empty() and step != 0:
 		return false
+	if guidance.get("stage", "") == "pencil":
+		if sections.run.phase != "work" or not sections.run.get("proofreading_unlocked", int(sections.run.day) >= 3) or step >= INTERFACE_LESSONS.pencil().size() or guidance.get("pencil_done", false):
+			return false
 	var newsroom: Dictionary = presentation.get("newsroom", {})
 	var selected_index: Variant = newsroom.get("selected_index", -1)
 	if not NewsroomSaveData._number(selected_index) or int(selected_index) != selected_index or selected_index < -1 or selected_index > 2:
@@ -735,6 +770,10 @@ static func _validate_save(sections: Dictionary) -> bool:
 					return false
 				if episode == "finale":
 					if run.phase != "ended" or not run.ending in ["victory", "goal_missed"]:
+						return false
+				elif episode == "day_2":
+					# Existing saves may still contain this conversation before shift 2.
+					if int(run.day) != 2 or not run.phase in ["work", "home"]:
 						return false
 				elif run.phase != "work" or CHAPTER.episode_for_day(int(run.day)) != episode:
 					return false
