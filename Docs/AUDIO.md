@@ -39,8 +39,10 @@ restart on completion. Re-requesting the same track does not reset playback.
 
 - `Scenes/mvp_game.tscn` has `Audio/WorkMusic` and `Audio/HomeMusic` cue instances.
   Their streams and per-track gains can be changed in the Inspector.
-  `Scripts/mvp_game.gd` selects a cue when entering work or home and fades music
-  out for other screens. Pause, settings and publication results keep it playing.
+  `Scripts/mvp_game.gd` uses WorkMusic for the desk, menu, new-story confirmation
+  and dialogue screens. Pause, settings and publication results keep the current
+  track playing without restarting it. Home uses HomeMusic; endings fade music
+  out. Replace the cue streams later when individual scenes have their own tracks.
 - `Scripts/newsroom_screen.gd` exposes **Audio / Headline Appear Sound** and
   **Headline Appear Volume Db** on the newsroom root. An animated note plays
   `paper - Part_1.wav` at its own tween delay (0, 0.055, 0.11 seconds). Cancelling the tween
@@ -59,5 +61,16 @@ Values live in `GameSettings` and persist as `audio/music_volume` and
 Rapid changes are coalesced for 0.25 seconds; closing settings or quitting
 flushes pending changes. New campaigns keep the player's audio preferences.
 
-This integration was reviewed in source only; no runtime or audio audition
-was performed under the user's current no-test instruction.
+## Dialogue blips
+
+`Scripts/dialogue_reveal.gd` on `NarrativeBody` and the tutorial's `Explanation`
+uses the same SFX pool and player volume setting. `Heroine Voice` and `Boss Voice`
+are replaceable streams in the Inspector, with `Voice Volume Db` and
+`Pitch Variation` controls. The initial WAVs are original synthesized placeholders:
+soft/high for Nicola, lower/drier for the boss. They are not borrowed game samples.
+
+Letters and digits trigger a blip; spaces and punctuation remain silent. A slow
+frame plays at most one blip instead of a catch-up burst. Pausing stops the text
+and subsequent blips; hiding/skipping cancels the current reveal. No audio players
+are allocated per character. The tiny mono PCM16 assets have smooth attack/release
+envelopes and can be replaced with recorded character sounds later.

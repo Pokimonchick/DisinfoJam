@@ -25,7 +25,8 @@ func _run() -> void:
 	if "--compact" in OS.get_cmdline_user_args():
 		root.mode = Window.MODE_WINDOWED
 		root.size = Vector2i(960, 640)
-	_test_finance_save()
+	if not "--editorial-only" in OS.get_cmdline_user_args():
+		_test_finance_save()
 	await _test_interface()
 	for suffix in ["", ".bak", ".tmp"]:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(_test_path + suffix))
@@ -94,6 +95,15 @@ func _capture(name: String) -> void:
 		var suffix := "-compact" if "--compact" in OS.get_cmdline_user_args() else ""
 		root.get_texture().get_image().save_png(OS.get_environment("TEMP").path_join("disinfo-ux-" + name + suffix + ".png"))
 
+func _press_key(key: Key, shift: bool = false) -> void:
+	var event := InputEventKey.new()
+	event.keycode = key
+	event.shift_pressed = shift
+	event.pressed = true
+	root.push_input(event, true)
+	event.pressed = false
+	root.push_input(event, true)
+
 func _test_interface() -> void:
 	var state := root.get_node("GameState")
 	state.save_store = SaveRepository.new(_test_path)
@@ -102,6 +112,12 @@ func _test_interface() -> void:
 	root.add_child(game)
 	game.set_process(false)
 	await create_timer(0.3).timeout
+	var audio: Node = root.get_node("AudioManager")
+	var work_music: AudioStream = game.get_node("Audio/WorkMusic").stream
+	var home_music: AudioStream = game.get_node("Audio/HomeMusic").stream
+	var menu_music_player: AudioStreamPlayer = audio.get("_music_players")[audio.get("_active_music")]
+	var menu_music_stream: AudioStream = menu_music_player.stream
+	check(audio.get("_requested_music") == work_music, "The main menu starts the work soundtrack")
 	var menu: Control = game.get_node("%Menu")
 	check(menu.get_rect() == game.get_rect() and not game.get_node("Padding").visible, "Main menu occupies the screen without the gameplay header")
 	check(game.get_node("%ContinueGame").disabled and not game.get_node("%SaveSummary").text.is_empty(), "Continue stays disabled with a useful summary when no save exists")
@@ -118,6 +134,18 @@ func _test_interface() -> void:
 	_click(game.get_node("%MenuSettings"))
 	await process_frame
 	check(game.settings_panel.visible, "The paper settings button opens the existing settings")
+	check(menu_music_player.stream == menu_music_stream, "Settings retain the current music player without restarting its track")
+	await process_frame
+	check(root.get_visible_rect().encloses(game.settings_panel.get_node("Center/Paper").get_global_rect()), "The settings card fits the viewport")
+	await _capture("settings")
+	for index in range(5):
+		_press_key(KEY_TAB)
+		await process_frame
+		check(game.settings_panel.is_ancestor_of(root.gui_get_focus_owner()), "Settings keyboard focus cannot reach the blurred menu")
+	check(root.gui_get_focus_owner() == game.settings_panel.get_node("%Tooltips"), "Tab cycles through settings and returns to the first option")
+	_press_key(KEY_TAB, true)
+	await process_frame
+	check(root.gui_get_focus_owner() == game.settings_panel.get_node("%Close"), "Shift-Tab wraps within the settings card")
 	_click(game.get_node("%NewGame"))
 	await process_frame
 	check(game.view == game.View.MENU, "Settings block menu actions underneath them")
@@ -126,20 +154,74 @@ func _test_interface() -> void:
 	await process_frame
 	check(game.view == game.View.PROFILE, "The paper new-story button opens the existing confirmation")
 	await create_timer(0.3).timeout
+	check(menu.visible and not game.get_node("%Location").is_visible_in_tree(), "New story retains the menu backdrop without the corner label")
+	check(root.get_visible_rect().encloses(game.get_node("%ProfileSetup").get_node("Center/Panel").get_global_rect()), "The new-story card fits the viewport")
+	await _capture("new-story")
+	_click(game.get_node("%MenuSettings"))
+	await process_frame
+	check(game.view == game.View.PROFILE and not game.settings_panel.visible, "New-story confirmation blocks the menu behind its backdrop")
+	_press_key(KEY_TAB)
+	await process_frame
+	check(root.gui_get_focus_owner() == game.get_node("%CancelStory"), "New-story confirmation keeps keyboard focus on its own actions")
 	_click(game.get_node("%CancelStory"))
 	await create_timer(0.3).timeout
 	check(game.view == game.View.MENU, "Cancelling a new story returns to the redesigned menu")
 	game._new_run(false)
-	game._narrative_next()
+	await create_timer(0.3).timeout
+	check(game.get_node("%NarrativeVisual").sprite == game.HEROINE_PORTRAIT, "The heroine's story page uses Nicola's existing portrait")
+	check(root.get_visible_rect().encloses(game.get_node("%Narrative").get_global_rect()), "The narrative card fits the viewport")
+	var dialogue = game.get_node("%NarrativeBody")
+	check(dialogue.is_revealing() and dialogue.visible_characters >= 0 and dialogue.visible_characters < dialogue.get_total_character_count(), "A heroine page starts a gradual reveal")
+	_click(game.get_node("%NarrativePrimary"))
+	await process_frame
+	check(game._story_page == 0 and not dialogue.is_revealing() and dialogue.visible_characters == -1, "The first Next click reveals the entire dialogue without advancing")
+	await _capture("narrative")
+	_click(game.get_node("%NarrativePrimary"))
+	await create_timer(0.3).timeout
+	check(game.get_node("%NarrativeVisual").sprite == null and game.get_node("%NarrativeVisual").kind == 1, "A boss page keeps its own placeholder instead of reusing Nicola's portrait")
+	dialogue.finish_reveal()
+	await _capture("narrative-boss")
 	check(game._story_page == 1 and not game.get_node("%NarrativeBack").disabled, "Dialogue back is available after the first page")
+	check(audio.get("_requested_music") == work_music and menu_music_player.stream == menu_music_stream, "Menu, confirmation and dialogue share uninterrupted work music")
 	var money: int = game.session.money
 	game.get_node("%NarrativeBack").pressed.emit()
 	check(game._story_page == 0 and game.session.money == money and game.get_node("%NarrativeBack").disabled, "Rereading dialogue does not replay game effects")
+	await create_timer(0.3).timeout
+	var shown_characters: int = dialogue.visible_characters
+	game._toggle_pause()
+	await create_timer(0.15).timeout
+	check(dialogue.visible_characters == shown_characters, "Pause freezes dialogue reveal at its current character")
+	check(root.get_visible_rect().encloses(game.pause_panel.get_node("Center/Paper").get_global_rect()), "The restyled pause card fits the viewport")
+	await _capture("pause")
+	for index in range(3):
+		_press_key(KEY_TAB)
+		await process_frame
+		check(game.pause_panel.is_ancestor_of(root.gui_get_focus_owner()), "Pause keyboard focus stays inside its modal")
+	_click(game.pause_panel.settings_button)
+	await process_frame
+	check(game.paused and game.settings_panel.visible, "The restyled settings also open from a paused story")
+	_press_key(KEY_ESCAPE)
+	await process_frame
+	check(game.paused and not game.settings_panel.visible, "Escape returns from settings to the existing pause menu")
+	_press_key(KEY_ESCAPE)
+	await process_frame
+	check(not game.paused and game.view == game.View.INTRO, "Closing pause resumes the same narrative page")
+	await create_timer(0.1).timeout
+	check(dialogue.visible_characters > shown_characters, "Unpausing resumes the current dialogue instead of restarting it")
+	if "--editorial-only" in OS.get_cmdline_user_args():
+		game._run_active = false
+		game.queue_free()
+		await process_frame
+		return
 	while game.view == game.View.INTRO:
 		game._narrative_next()
 	await process_frame
 	await create_timer(0.3).timeout
 	check(game.view == game.View.WORK and game.tutorial.visible and game.session.day == 1, "Boss teaches directly on the first working desk")
+	check(is_equal_approx(game.work.get_node("%SourceText").self_modulate.a, 1.0), "The first spotlight lesson shows readable source text while the desk is frozen")
+	_click(game.tutorial.get_node("%Next"))
+	await process_frame
+	check(game._tutorial_step == 0 and not game.tutorial.get_node("%Explanation").is_revealing(), "Tutorial Next reveals the current explanation before advancing")
 	var health: float = game.session.health
 	game._process(60)
 	check(game.session.health == health, "Guided lessons pause passive stamina drain")
@@ -163,6 +245,8 @@ func _test_interface() -> void:
 		await process_frame
 		await process_frame
 		check(game.tutorial._highlight.has_area() and Rect2(Vector2.ZERO, game.tutorial.size).encloses(game.tutorial._panel.get_rect()), "Tutorial spotlight and dialogue fit step %d" % step)
+		if step == 3:
+			check(game.tutorial.get_node("%Explanation").text.contains("держать кнопку") and game.session.total_published == 0, "A dedicated stamp step teaches click pickup without publishing")
 		if step in [4, 7, 9]:
 			await _capture("work-step-%d" % step)
 	check(game.tutorial.get_node("%Explanation").text.contains("Сдать выпуск") and game.session.combo_count == 0 and game.session.total_published == 0, "Final boss instruction names finish shift; demonstrations never publish or change combo")
@@ -191,6 +275,7 @@ func _test_interface() -> void:
 	await create_timer(0.3).timeout
 	game._process(0)
 	check(game.view == game.View.HOME and game.tutorial.visible and game._tutorial_stage == "home", "First home evening starts the heroine's own tutorial")
+	check(audio.get("_requested_music") == home_music, "Home switches to its own soundtrack")
 	check(not is_instance_valid(game._notebook) and game.get_node("MoneyDelta")._labels.size() == 1, "Rent is animated near balance; notebook does not open automatically")
 	_click(game.home.get_node("%Meal"))
 	check(game.session.money == 155, "Home tutorial blocks purchases behind it")
@@ -234,7 +319,7 @@ func _test_interface() -> void:
 	game._process(30)
 	check(game.session.health == 7 and not game.stamina_warning.visible, "Low stamina waits while publication feedback is being read")
 	game.work._close_focus()
-	await create_timer(0.35).timeout
+	await create_timer(game.work.popup.closing_seconds + 0.05).timeout
 	game._process(0)
 	check(game.stamina_warning.visible, "Warning appears after publication feedback closes")
 	game._rest_after_warning()
@@ -247,6 +332,9 @@ func _test_interface() -> void:
 	game.session.changed.emit()
 	game._process(0)
 	check(game.stamina_warning.visible, "The next shift gets its own low stamina warning")
+	check(audio.get("_requested_music") == work_music, "Returning to work or its story resumes the shared work soundtrack")
+	game._show_view(game.View.ENDING)
+	check(audio.get("_requested_music") == null, "Ending screens fade out the soundtrack")
 	game._run_active = false
 	game.queue_free()
 	await process_frame

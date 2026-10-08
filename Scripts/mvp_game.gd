@@ -7,6 +7,7 @@ const AUTOSAVE_SECONDS := 5.0
 const INTERFACE_LESSONS := preload("res://Data/interface_lessons.gd")
 const FINANCE_NOTEBOOK := preload("res://Scenes/finance_notebook.tscn")
 const LOW_STAMINA_WARNING := 10.0
+const HEROINE_PORTRAIT := preload("res://Assets/Characters/Mask group (22).png")
 
 const ENDINGS: Dictionary = {
 	NewsroomSession.Ending.EXHAUSTION: ["Последняя смена", "Выносливость закончилась. Ещё один выпуск оказался важнее ужина, и организм не выдержал. Редакция завтра откроется — уже без тебя.", 2],
@@ -71,7 +72,7 @@ func _ready() -> void:
 	%CancelStory.pressed.connect(_show_menu)
 	%Quit.pressed.connect(_quit_game)
 	%QuitWithoutSave.confirmed.connect(func(): get_tree().quit())
-	%NarrativePrimary.pressed.connect(_narrative_next)
+	%NarrativePrimary.pressed.connect(_advance_dialogue)
 	%NarrativeSecondary.pressed.connect(_narrative_secondary)
 	%NarrativeBack.pressed.connect(_narrative_back)
 	tutorial.next_requested.connect(_tutorial_next)
@@ -230,6 +231,10 @@ func _narrative_next() -> void:
 		View.ENDING:
 			_show_profile_setup()
 
+func _advance_dialogue() -> void:
+	if not %NarrativeBody.finish_reveal():
+		_narrative_next()
+
 func _narrative_secondary() -> void:
 	if view == View.ENDING:
 		_show_menu()
@@ -289,12 +294,12 @@ func _show_menu() -> void:
 func _show_view(next: View) -> void:
 	view = next
 	match view:
-		View.WORK:
-			$Audio/WorkMusic.play()
 		View.HOME:
 			$Audio/HomeMusic.play()
-		_:
+		View.ENDING:
 			AudioManager.stop_music()
+		_:
+			$Audio/WorkMusic.play()
 	paused = false
 	tutorial.hide()
 	stamina_warning.hide()
@@ -302,15 +307,15 @@ func _show_view(next: View) -> void:
 	if is_instance_valid(_notebook):
 		_notebook.queue_free()
 		_notebook = null
-	_update_interface_lock()
 	pause_panel.hide()
 	settings_panel.hide()
-	%Menu.visible = view == View.MENU
+	_update_interface_lock()
+	%Menu.visible = view in [View.MENU, View.PROFILE]
 	%ProfileSetup.visible = view == View.PROFILE
 	%Narrative.visible = view in [View.INTRO, View.TUTORIAL, View.ENDING, View.STORY]
 	work.visible = view == View.WORK
 	home.visible = view == View.HOME
-	$Padding.visible = view not in [View.WORK, View.MENU]
+	$Padding.visible = view not in [View.WORK, View.MENU, View.PROFILE]
 	%HUD.visible = view in [View.HOME, View.ENDING]
 	%PauseButton.visible = view in [View.WORK, View.HOME, View.INTRO, View.TUTORIAL, View.STORY]
 	%Location.text = {View.MENU: "НЕЗАВИСИМАЯ РЕДАКЦИЯ", View.INTRO: "ГЛАВА I · АМНЕЗИЯ", View.TUTORIAL: "ПЕРЕД ПЕРВОЙ СМЕНОЙ", View.WORK: "РАБОЧИЙ СТОЛ", View.HOME: "СЪЁМНАЯ КОМНАТА", View.ENDING: "ИТОГИ НЕДЕЛИ" if session.campaign_completed else "ПОСЛЕДНИЙ ВЫПУСК", View.PROFILE: "НОВОЕ ПРОХОЖДЕНИЕ", View.STORY: "ГЛАВА I · АМНЕЗИЯ"}[view]
@@ -329,11 +334,17 @@ func _show_view(next: View) -> void:
 
 func _set_narrative(tag: String, title: String, body: String, visual: int, primary: String, secondary: String) -> void:
 	%NarrativeBack.hide()
+	%NarrativeBody.stop_reveal()
 	%NarrativeTag.text = tag
 	%NarrativeTitle.text = title
-	%NarrativeBody.text = body
-	%NarrativeBody.scroll_to_line(0)
+	if visual in [0, 1] and view in [View.INTRO, View.STORY]:
+		%NarrativeBody.reveal(body, DialogueReveal.Speaker.HEROINE if visual == 0 else DialogueReveal.Speaker.BOSS)
+	else:
+		%NarrativeBody.text = body
+		%NarrativeBody.visible_characters = -1
+		%NarrativeBody.scroll_to_line(0)
 	%NarrativeVisual.kind = visual
+	%NarrativeVisual.sprite = HEROINE_PORTRAIT if visual == 0 else null
 	%NarrativePrimary.text = primary
 	%NarrativeSecondary.text = secondary
 	%NarrativeSecondary.visible = not secondary.is_empty()
@@ -355,9 +366,11 @@ func _toggle_pause() -> void:
 
 func _open_settings() -> void:
 	settings_panel.present()
+	_pause_dialogue_reveal()
 
 
 func _on_settings_closed() -> void:
+	_pause_dialogue_reveal()
 	if paused:
 		pause_panel.settings_button.grab_focus()
 	else:
@@ -374,6 +387,7 @@ func _interface_blocked() -> bool:
 
 
 func _update_interface_lock() -> void:
+	_pause_dialogue_reveal()
 	var blocked := paused or _interface_blocked()
 	if blocked:
 		work.stamp.cancel_interaction()
@@ -381,6 +395,11 @@ func _update_interface_lock() -> void:
 	home.process_mode = Node.PROCESS_MODE_DISABLED if blocked else Node.PROCESS_MODE_INHERIT
 	# Freeze desk parallax too; the spotlight must remain on the explained item.
 	work.get_node("Canvas").motion_enabled = not blocked
+
+func _pause_dialogue_reveal() -> void:
+	var blocked := paused or settings_panel.visible
+	%NarrativeBody.set_reveal_paused(blocked)
+	tutorial.get_node("%Explanation").set_reveal_paused(blocked)
 
 
 func _begin_tutorial(stage: String) -> void:
@@ -391,6 +410,8 @@ func _begin_tutorial(stage: String) -> void:
 	_tutorial_stage = stage
 	if stage == "work":
 		work.get_node("%Drawer").set_expanded(true, false)
+		# The desk freezes during lessons; its source must already be readable.
+		work._animate_source(false)
 	_present_tutorial_step()
 
 
@@ -411,10 +432,8 @@ func _present_tutorial_step() -> void:
 			for suffix in ["Title", "Value", "Bar", "Help"]:
 				targets.append(work.get_node(panel + stat + suffix))
 		else:
-			var paths := {"source": "%SourceText", "headline": "%HeadlineField", "publish": "%Stamp", "coffee": "%Coffee", "finish": "%FinishShift", "combo": "%ComboBurst"}
+			var paths := {"source": "%SourceText", "headline": "%HeadlineField", "stamp": "%Stamp", "publish": "%StampArea", "coffee": "%Coffee", "finish": "%FinishShift", "combo": "%ComboBurst"}
 			targets.append(work.get_node(paths[step.target]))
-			if step.target == "publish":
-				targets.append(work.get_node("%StampArea"))
 			if step.target == "source":
 				targets.append(work.get_node("%SourceTitle"))
 			if step.target == "combo":

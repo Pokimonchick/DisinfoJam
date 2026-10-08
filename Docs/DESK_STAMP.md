@@ -10,6 +10,8 @@ Consequences apply once at the end of the downward stroke, using the existing
 returns to rest, waits for the configured `Result Delay Seconds`, and approaches over 0.7 seconds
 with smooth acceleration and deceleration. Passive stamina loss stays paused
 through this wait and the result. Pausing also pauses the pending result delay.
+Closing the note fades the whole paper while it returns to its origin; publication
+acknowledgement and the next article wait until that motion finishes.
 When the result closes and the next article appears, the old red ink gradually
 diffuses and absorbs into the paper. This animation pauses with the interface.
 A new imprint cancels any remaining absorption; new runs and loading clear it
@@ -50,7 +52,10 @@ Choosing a headline and reading a result prevent further stamping.
 - `Grab Rect`: elliptical clickable handle/body region in local 2D coordinates.
 - `Lift Height`, `Lift Tilt Degrees`, `Strike Seconds`, `Return Seconds`: motion.
 - `Scenes/newsroom_screen.tscn` root, `Result Delay Seconds`: wait after returning.
-- `Canvas/DeskFocus`, `Opening Seconds`: duration of the result note's entrance.
+- `Canvas/DeskFocus`, `Opening Seconds` / `Closing Seconds`: result note entrance
+  and fade-out duration (0.7 / 0.45 seconds initially).
+- Newsroom root, `Source Reveal Seconds`: new article text fade (0.45 seconds).
+  Source text stays readable while the first spotlight lesson freezes the desk.
 - `Shadow Strength`, `Shadow Offset`: soft silhouette shadow, shared with the
   existing note-shadow shader. It expands when the stamp is lifted.
 - `Impact Sound`, `Impact Volume Db`: optional authored audio, routed through the

@@ -5,9 +5,8 @@ signal primary_pressed
 signal secondary_pressed
 signal close_pressed
 
-const ZOOM_TIME := 0.26
-
 @export_range(0.2, 2.0, 0.05) var opening_seconds := 0.7
+@export_range(0.2, 2.0, 0.05) var closing_seconds := 0.45
 
 var active := false
 var _origin: Control
@@ -92,12 +91,13 @@ func close(after_close: Callable = Callable()) -> void:
 		return
 	if _motion and _motion.is_valid():
 		_motion.kill()
-	_motion = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	_motion = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	var origin_transform := _origin_transform()
-	_motion.tween_property(self, "position", origin_transform * (_origin.size * 0.5) - size * 0.5, ZOOM_TIME * 0.75)
-	_motion.tween_property(self, "scale", Vector2.ONE * (_origin.size.x / size.x) * origin_transform.get_scale().x, ZOOM_TIME * 0.75)
-	_motion.tween_property(self, "rotation", origin_transform.get_rotation(), ZOOM_TIME * 0.75)
-	_motion.tween_property($Margin, "modulate:a", 0.0, ZOOM_TIME * 0.5)
+	_motion.tween_property(self, "position", origin_transform * (_origin.size * 0.5) - size * 0.5, closing_seconds)
+	_motion.tween_property(self, "scale", Vector2.ONE * (_origin.size.x / size.x) * origin_transform.get_scale().x, closing_seconds)
+	_motion.tween_property(self, "rotation", origin_transform.get_rotation(), closing_seconds)
+	_motion.tween_property(self, "modulate:a", 0.0, closing_seconds)
+	_motion.tween_property($Margin, "modulate:a", 0.0, closing_seconds * 0.75)
 	_motion.chain().tween_callback(func():
 		if is_instance_valid(_origin):
 			_origin.show()

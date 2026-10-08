@@ -21,6 +21,8 @@ enum DialogKind { NONE, RESULT }
 
 @export_group("Publication result")
 @export_range(0.0, 5.0, 0.1) var result_delay_seconds := 0.5
+@export_group("Text motion")
+@export_range(0.0, 2.0, 0.05) var source_reveal_seconds := 0.45
 @export_group("Audio")
 @export var headline_appear_sound: AudioStream = preload("res://Assets/Sounds/paper - Part_1.wav")
 @export_range(-40.0, 6.0, 0.5) var headline_appear_volume_db: float = 0.0
@@ -39,6 +41,7 @@ var _shown_combo_type := -1
 var _combo_tween: Tween
 var _pending_result: Dictionary = {}
 var _result_delay: Tween
+var _source_reveal: Tween
 @onready var cards: Array[Button] = [%Headline1, %Headline2, %Headline3]
 @onready var popup: DeskFocus = $Canvas/DeskFocus
 @onready var combo_burst: Control = %ComboBurst
@@ -47,6 +50,7 @@ var _result_delay: Tween
 @onready var stamp_area: StampArea = %StampArea
 
 func _ready() -> void:
+	visibility_changed.connect(func(): _animate_source(is_visible_in_tree()))
 	_choice_overlay = CHOICE_OVERLAY.instantiate() as Control
 	choices.add_child(_choice_overlay)
 	choices.move_child(_choice_overlay, 0)
@@ -178,11 +182,24 @@ func _drink_coffee() -> void:
 	if not (choices.visible and GameSettings.choice_overlay_enabled):
 		session.drink_coffee()
 
-func _display_source(article: NewsArticle) -> void:
+func _display_source(article: NewsArticle, animate := false) -> void:
 	%SourceTitle.text = article.source_title
 	%SourceText.text = article.source_text
 	%SourceText.scroll_to_line(0)
 	_set_issue_number(session.published_today + 1)
+	_animate_source(animate)
+
+func _animate_source(animate := true) -> void:
+	if _source_reveal:
+		_source_reveal.kill()
+		_source_reveal = null
+	var should_animate := animate and is_visible_in_tree() and source_reveal_seconds > 0.0
+	for label in [%SourceTitle, %SourceText]:
+		label.self_modulate.a = 0.0 if should_animate else 1.0
+	if should_animate:
+		_source_reveal = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		for label in [%SourceTitle, %SourceText]:
+			_source_reveal.tween_property(label, "self_modulate:a", 1.0, source_reveal_seconds)
 
 func _set_issue_number(number: int) -> void:
 	var has_art := number >= 1 and number <= NUMBER_ART.size()
@@ -202,7 +219,7 @@ func show_article(absorb_ink := true) -> void:
 	popup.reset()
 	popup_kind = DialogKind.NONE
 	_hide_choices(false)
-	_display_source(session.current_article())
+	_display_source(session.current_article(), absorb_ink)
 	%HeadlineField.set_headline("")
 	for i in cards.size():
 		cards[i].get_node("Content/Headline").text = session.option_at(i).text

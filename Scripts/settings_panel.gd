@@ -5,6 +5,15 @@ signal closed
 
 
 func _ready() -> void:
+	var focus_controls: Array[Control] = [%Tooltips, %ChoiceOverlay, %MusicVolume, %SfxVolume, %Close]
+	for index in focus_controls.size():
+		var control: Control = focus_controls[index]
+		control.focus_next = control.get_path_to(focus_controls[(index + 1) % focus_controls.size()])
+		control.focus_previous = control.get_path_to(focus_controls[(index - 1 + focus_controls.size()) % focus_controls.size()])
+		control.focus_neighbor_top = control.focus_previous
+		control.focus_neighbor_bottom = control.focus_next
+		control.focus_neighbor_left = control.focus_previous
+		control.focus_neighbor_right = control.focus_next
 	%Tooltips.toggled.connect(GameSettings.set_tooltips_enabled)
 	%ChoiceOverlay.toggled.connect(GameSettings.set_choice_overlay_enabled)
 	%MusicVolume.value_changed.connect(_on_music_volume_changed)

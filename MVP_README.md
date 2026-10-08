@@ -39,6 +39,7 @@
 | Музыка, эффекты и громкость | `Scenes/audio_manager.tscn`, `Scripts/audio_manager.gd`, `Scenes/audio_cue.tscn`, `Scripts/game_settings.gd`, `Docs/AUDIO.md` |
 | Вечер и комната | `Scenes/home_screen.tscn`, `Scripts/home_screen.gd`, `Scripts/pixel_room.gd` |
 | Порядок экранов, история, меню, автосохранение | `Scenes/mvp_game.tscn`, `Scripts/mvp_game.gd`, `Data/chapter_one.gd` |
+| Стиль окон и появление реплик | `Data/editorial_ui_theme.tres`, `Scripts/editorial_card.gd`, `Scripts/dialogue_reveal.gd`, `Docs/UI_STYLE.md` |
 | Хранилище сохранений и правила расширения | `Scripts/save_repository.gd`, `Scripts/newsroom_save_data.gd`, `Scripts/game_state.gd`, `Docs/SAVES.md` |
 
 `Data/mvp_balance.tres` может содержать отладочные значения, отличающиеся от начальных значений в скрипте. Не переносите временные значения из ресурса в концепцию игры. Старые поля `shift_seconds`, `coffee_bonus_seconds` и `coffee_health_cost` сохранены для чтения прежних ресурсов, но больше не используются. Актуальные параметры — **Publication Health Cost**, **Health Drain Per Second**, **Coffee Health Restore**, а преимущества шкал задаются ресурсами `reader_support.tres` и `state_approval.tres`.

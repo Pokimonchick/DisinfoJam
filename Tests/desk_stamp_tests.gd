@@ -181,10 +181,16 @@ func _run() -> void:
 	await _capture("result")
 	work.restore_presentation(work.capture_presentation())
 	check(area.printed and area.imprint.visible and work.popup.active and game.session.total_published == 1, "Restoring a publication result restores the seal without replaying consequences")
+	await create_timer(work.popup.opening_seconds + 0.05).timeout
 	var old_ink_position := area.imprint.position
 	work.popup.primary_pressed.emit()
+	await create_timer(work.popup.closing_seconds * 0.4).timeout
+	check(work.popup.visible and work.popup.modulate.a > 0.0 and work.popup.modulate.a < 1.0 and game.session.awaiting_acknowledgement, "The result note fades while the current publication remains unacknowledged")
+	await _capture("result-closing")
 	if game.session.awaiting_acknowledgement:
 		await game.session.article_changed
+	await process_frame
+	check(not work.popup.visible and source.self_modulate.a < 1.0, "Only after the result closes does the next article begin fading in")
 	await create_timer(area.absorption_seconds * 0.35).timeout
 	check(not area.printed and area.imprint.visible and work.selected_index == -1 and stamp.position.is_equal_approx(rest), "The next source unlocks the draft while the old ink remains visible during absorption")
 	var absorbing_progress := _ink_progress(area.imprint)
@@ -200,6 +206,7 @@ func _run() -> void:
 	check(_ink_progress(area.imprint) > absorbing_progress and area.imprint.visible, "Unpausing resumes the remaining ink absorption")
 	await create_timer(area.absorption_seconds).timeout
 	check(not area.imprint.visible and is_equal_approx(_ink_progress(area.imprint), 1.0), "Absorption finishes with no old ink left on the next article")
+	check(is_equal_approx(source.self_modulate.a, 1.0), "The next source finishes fully readable")
 	await _capture("next-article")
 
 	# Pausing during the committed stroke must retain its pending feedback.

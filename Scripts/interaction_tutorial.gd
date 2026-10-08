@@ -18,20 +18,23 @@ var _redraw_dim_opacity := -1.0
 @onready var _panel: PanelContainer = $Paper
 
 func _ready() -> void:
-	%Next.pressed.connect(func(): next_requested.emit())
+	%Next.pressed.connect(func():
+		if not %Explanation.finish_reveal():
+			next_requested.emit()
+	)
 	%Back.pressed.connect(func(): previous_requested.emit())
 	%Skip.pressed.connect(func(): skip_requested.emit())
 
 func present(speaker: String, body: String, targets: Array[Control], step: int, count: int, heroine: bool, last_caption: String) -> void:
 	_targets = targets
 	%Speaker.text = "%s · %d / %d" % [speaker, step + 1, count]
-	%Explanation.text = body
 	%Back.disabled = step == 0
 	%Next.text = last_caption if step == count - 1 else "Дальше"
 	%Portrait.texture = heroine_portrait if heroine else boss_portrait
 	%Portrait.visible = %Portrait.texture != null
 	%BossPlaceholder.visible = not %Portrait.visible
 	show()
+	%Explanation.reveal(body, DialogueReveal.Speaker.HEROINE if heroine else DialogueReveal.Speaker.BOSS)
 	%Next.grab_focus()
 	_position_paper()
 	queue_redraw()

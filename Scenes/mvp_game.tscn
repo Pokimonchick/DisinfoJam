@@ -19,10 +19,20 @@
 [ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/menu_background.PNG" id="17_menu_background"]
 [ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/coco_news.PNG" id="18_menu_logo"]
 [ext_resource type="FontFile" path="res://Assets/Fonts/Neucha/Neucha.ttf" id="19_menu_font"]
+[ext_resource type="Theme" path="res://Data/editorial_ui_theme.tres" id="20_editorial_theme"]
+[ext_resource type="Script" path="res://Scripts/editorial_card.gd" id="21_editorial_card"]
+[ext_resource type="Shader" path="res://Shaders/pause_blur.gdshader" id="22_modal_blur"]
+[ext_resource type="Texture2D" path="res://Assets/Characters/Mask group (22).png" id="23_heroine"]
+[ext_resource type="Script" path="res://Scripts/dialogue_reveal.gd" id="24_dialogue_reveal"]
 
 [sub_resource type="Theme" id="MenuTheme"]
 default_font = ExtResource("19_menu_font")
 default_font_size = 26
+
+[sub_resource type="ShaderMaterial" id="NewStoryBlur"]
+shader = ExtResource("22_modal_blur")
+shader_parameter/blur_amount = 3.0
+shader_parameter/dim_color = Color(0.08, 0.06, 0.04, 0.4)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_fatigue"]
 resource_local_to_scene = true
@@ -96,6 +106,7 @@ theme_override_font_sizes/font_size = 16
 unique_name_in_owner = true
 layout_mode = 2
 mouse_default_cursor_shape = 2
+theme = ExtResource("20_editorial_theme")
 theme_override_font_sizes/font_size = 16
 text = "Пауза · Esc"
 
@@ -106,50 +117,6 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="ProfileSetup" type="CenterContainer" parent="Padding/Layout/Stage"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Panel" type="PanelContainer" parent="Padding/Layout/Stage/ProfileSetup"]
-custom_minimum_size = Vector2(610, 0)
-layout_mode = 2
-
-[node name="Form" type="VBoxContainer" parent="Padding/Layout/Stage/ProfileSetup/Panel"]
-layout_mode = 2
-theme_override_constants/separation = 18
-
-[node name="Title" type="Label" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 32
-text = "Новая история"
-
-[node name="Label" type="Label" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
-layout_mode = 2
-text = "История Николы Коко начинается с первого рабочего дня."
-
-[node name="NewRunWarning" type="Label" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 17
-autowrap_mode = 3
-
-[node name="StartStory" type="Button" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 54)
-layout_mode = 2
-text = "Начать историю"
-
-[node name="CancelStory" type="Button" parent="Padding/Layout/Stage/ProfileSetup/Panel/Form"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Назад"
-
 [node name="Narrative" type="PanelContainer" parent="Padding/Layout/Stage" unique_id=1176842582]
 unique_name_in_owner = true
 layout_mode = 1
@@ -158,33 +125,50 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("20_editorial_theme")
+script = ExtResource("21_editorial_card")
 
 [node name="Layout" type="HBoxContainer" parent="Padding/Layout/Stage/Narrative" unique_id=287667656]
 layout_mode = 2
-theme_override_constants/separation = 36
+theme_override_constants/separation = 30
 
-[node name="NarrativeVisual" type="Control" parent="Padding/Layout/Stage/Narrative/Layout" unique_id=1383027181]
+[node name="PortraitPanel" type="PanelContainer" parent="Padding/Layout/Stage/Narrative/Layout"]
+custom_minimum_size = Vector2(310, 350)
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"EditorialPortrait"
+
+[node name="NarrativeVisual" type="Control" parent="Padding/Layout/Stage/Narrative/Layout/PortraitPanel" unique_id=1383027181]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(255, 0)
 layout_mode = 2
 mouse_filter = 2
 script = ExtResource("6")
+sprite = ExtResource("23_heroine")
 
 [node name="Text" type="VBoxContainer" parent="Padding/Layout/Stage/Narrative/Layout" unique_id=786988081]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 18
 
-[node name="NarrativeTag" type="Label" parent="Padding/Layout/Stage/Narrative/Layout/Text" unique_id=1776798645]
+[node name="TitleBanner" type="PanelContainer" parent="Padding/Layout/Stage/Narrative/Layout/Text"]
+layout_mode = 2
+theme_type_variation = &"EditorialBanner"
+
+[node name="Titles" type="VBoxContainer" parent="Padding/Layout/Stage/Narrative/Layout/Text/TitleBanner"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="NarrativeTag" type="Label" parent="Padding/Layout/Stage/Narrative/Layout/Text/TitleBanner/Titles" unique_id=1776798645]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.91, 0.74, 0.41, 1)
 theme_override_font_sizes/font_size = 16
 
-[node name="NarrativeTitle" type="Label" parent="Padding/Layout/Stage/Narrative/Layout/Text" unique_id=1510054816]
+[node name="NarrativeTitle" type="Label" parent="Padding/Layout/Stage/Narrative/Layout/Text/TitleBanner/Titles" unique_id=1510054816]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(0.96, 0.9, 0.75, 1)
+theme_override_font_sizes/font_size = 36
 autowrap_mode = 3
 
 [node name="NarrativeBody" type="RichTextLabel" parent="Padding/Layout/Stage/Narrative/Layout/Text" unique_id=1728767463]
@@ -192,6 +176,8 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/normal_font_size = 22
+scroll_following_visible_characters = true
+script = ExtResource("24_dialogue_reveal")
 
 [node name="Actions" type="HBoxContainer" parent="Padding/Layout/Stage/Narrative/Layout/Text" unique_id=990910718]
 layout_mode = 2
@@ -211,12 +197,13 @@ custom_minimum_size = Vector2(0, 55)
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_default_cursor_shape = 2
+theme_type_variation = &"EditorialPrimary"
 
 [node name="NarrativeSecondary" type="Button" parent="Padding/Layout/Stage/Narrative/Layout/Text/Actions" unique_id=194769613]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 20
 
 [node name="Menu" type="Control" parent="." unique_id=844596861]
 unique_name_in_owner = true
@@ -349,6 +336,107 @@ mouse_default_cursor_shape = 2
 theme_override_font_sizes/font_size = 50
 text = "ВЫХОД"
 script = ExtResource("16_menu_button")
+
+[node name="ProfileSetup" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("20_editorial_theme")
+
+[node name="BackdropCopy" type="BackBufferCopy" parent="ProfileSetup"]
+copy_mode = 2
+
+[node name="Dim" type="ColorRect" parent="ProfileSetup"]
+material = SubResource("NewStoryBlur")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 1, 1, 1)
+
+[node name="Center" type="CenterContainer" parent="ProfileSetup"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="ProfileSetup/Center"]
+custom_minimum_size = Vector2(660, 0)
+layout_mode = 2
+script = ExtResource("21_editorial_card")
+
+[node name="Form" type="VBoxContainer" parent="ProfileSetup/Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Tag" type="Label" parent="ProfileSetup/Center/Panel/Form"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.24, 0.21, 1)
+theme_override_font_sizes/font_size = 16
+text = "COCO NEWS  /  ГЛАВА I"
+
+[node name="TitleBanner" type="PanelContainer" parent="ProfileSetup/Center/Panel/Form"]
+layout_mode = 2
+theme_type_variation = &"EditorialBanner"
+
+[node name="Title" type="Label" parent="ProfileSetup/Center/Panel/Form/TitleBanner"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.9, 0.75, 1)
+theme_override_font_sizes/font_size = 40
+text = "НОВАЯ ИСТОРИЯ"
+
+[node name="Label" type="Label" parent="ProfileSetup/Center/Panel/Form"]
+layout_mode = 2
+text = "История Николы Коко начинается с первого рабочего дня."
+autowrap_mode = 3
+
+[node name="NewRunWarning" type="Label" parent="ProfileSetup/Center/Panel/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.22, 0.18, 1)
+theme_override_font_sizes/font_size = 19
+autowrap_mode = 3
+
+[node name="Actions" type="HBoxContainer" parent="ProfileSetup/Center/Panel/Form"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="StartStory" type="Button" parent="ProfileSetup/Center/Panel/Form/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_neighbor_left = NodePath("../CancelStory")
+focus_neighbor_top = NodePath("../CancelStory")
+focus_neighbor_right = NodePath("../CancelStory")
+focus_neighbor_bottom = NodePath("../CancelStory")
+focus_next = NodePath("../CancelStory")
+focus_previous = NodePath("../CancelStory")
+theme_type_variation = &"EditorialPrimary"
+mouse_default_cursor_shape = 2
+text = "Начать историю"
+
+[node name="CancelStory" type="Button" parent="ProfileSetup/Center/Panel/Form/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 56)
+layout_mode = 2
+focus_neighbor_left = NodePath("../StartStory")
+focus_neighbor_top = NodePath("../StartStory")
+focus_neighbor_right = NodePath("../StartStory")
+focus_neighbor_bottom = NodePath("../StartStory")
+focus_next = NodePath("../StartStory")
+focus_previous = NodePath("../StartStory")
+mouse_default_cursor_shape = 2
+text = "Назад"
 
 [node name="Work" parent="." unique_id=346840475 instance=ExtResource("3")]
 unique_name_in_owner = true

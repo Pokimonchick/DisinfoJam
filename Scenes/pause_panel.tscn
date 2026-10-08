@@ -2,6 +2,18 @@
 
 [ext_resource type="PackedScene" uid="uid://tmr0o4wmncm6" path="res://Scenes/message_panel.tscn" id="1_panel"]
 [ext_resource type="Shader" path="res://Shaders/pause_blur.gdshader" id="2_blur"]
+[ext_resource type="Theme" path="res://Data/editorial_ui_theme.tres" id="3_theme"]
+[ext_resource type="Script" path="res://Scripts/editorial_card.gd" id="4_card"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pause_title"]
+content_margin_left = 20.0
+content_margin_top = 10.0
+content_margin_right = 20.0
+content_margin_bottom = 12.0
+bg_color = Color(0.15, 0.21, 0.2, 1)
+border_width_bottom = 4
+border_color = Color(0.65, 0.24, 0.21, 1)
+skew = Vector2(0.07, 0)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_pause_blur"]
 resource_local_to_scene = true
@@ -10,6 +22,7 @@ shader_parameter/blur_amount = 3.0
 shader_parameter/dim_color = Color(0.08, 0.06, 0.04, 0.34)
 
 [node name="PausePanel" instance=ExtResource("1_panel")]
+theme = ExtResource("3_theme")
 
 [node name="BackdropCopy" type="BackBufferCopy" parent="." index="0"]
 copy_mode = 2
@@ -17,3 +30,40 @@ copy_mode = 2
 [node name="Dim" parent="." index="1"]
 material = SubResource("ShaderMaterial_pause_blur")
 color = Color(1, 1, 1, 1)
+
+[node name="Paper" parent="Center" index="0"]
+custom_minimum_size = Vector2(760, 0)
+script = ExtResource("4_card")
+
+[node name="Tag" parent="Center/Paper/Layout" index="0"]
+theme_override_colors/font_color = Color(0.45, 0.18, 0.16, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="Title" parent="Center/Paper/Layout" index="1"]
+custom_minimum_size = Vector2(0, 0)
+theme_override_colors/font_color = Color(0.96, 0.9, 0.75, 1)
+theme_override_font_sizes/font_size = 34
+theme_override_styles/normal = SubResource("StyleBoxFlat_pause_title")
+
+[node name="Body" parent="Center/Paper/Layout" index="2"]
+custom_minimum_size = Vector2(0, 130)
+theme_override_font_sizes/normal_font_size = 22
+
+[node name="Primary" parent="Center/Paper/Layout/Actions" index="0"]
+theme_type_variation = &"EditorialPrimary"
+focus_neighbor_top = NodePath("../../Settings")
+focus_neighbor_bottom = NodePath("../Secondary")
+focus_next = NodePath("../Secondary")
+focus_previous = NodePath("../../Settings")
+
+[node name="Secondary" parent="Center/Paper/Layout/Actions" index="1"]
+focus_neighbor_top = NodePath("../Primary")
+focus_neighbor_bottom = NodePath("../../Settings")
+focus_next = NodePath("../../Settings")
+focus_previous = NodePath("../Primary")
+
+[node name="Settings" parent="Center/Paper/Layout" index="4"]
+focus_neighbor_top = NodePath("../Actions/Secondary")
+focus_neighbor_bottom = NodePath("../Actions/Primary")
+focus_next = NodePath("../Actions/Primary")
+focus_previous = NodePath("../Actions/Secondary")
