@@ -290,14 +290,14 @@ text = "Каждый вечер я вижу одного чёрного кота
 
 [node name="StampArea" parent="Canvas/World" instance=ExtResource("stamp_area")]
 unique_name_in_owner = true
-editor_description = "Область печати поверх текста и пустого места статьи. Заголовок и чашка исключены. Размер оттиска — Imprint Size."
+editor_description = "Прямоугольная область печати поверх текста и пустого места статьи. Чернила остаются под чашкой. Размер оттиска — Imprint Size."
 z_index = 5
 offset_left = 535.0
 offset_top = 430.0
 offset_right = 1648.0
-offset_bottom = 1060.0
+offset_bottom = 1080.0
 rotation = -0.022
-excluded_controls = Array[NodePath]([NodePath("../Coffee/Cup"), NodePath("../HeadlineField")])
+excluded_controls = Array[NodePath]([NodePath("../HeadlineField")])
 
 [node name="Stamp" parent="Canvas/World" instance=ExtResource("stamp")]
 unique_name_in_owner = true

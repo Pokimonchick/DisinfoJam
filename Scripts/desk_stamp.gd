@@ -72,12 +72,12 @@ var dragging := false
 var busy := false
 var _impact_done := false
 var _rest_position := Vector2.ZERO
-var _rest_contact := Vector2.ZERO
 var _grab_offset := Vector2.ZERO
 var _motion: Tween
 var _lift := 0.0
 var _fallback_sound: AudioStreamWAV
 var _area: StampArea
+var _rest_camera := Transform3D.IDENTITY
 
 @onready var _render: SubViewport = $Render
 @onready var _camera: Camera3D = $Render/Camera
@@ -87,7 +87,7 @@ var _area: StampArea
 func _ready() -> void:
 	_rest_position = position
 	_update_perspective(position + get_transform().basis_xform(size * 0.5))
-	_rest_contact = _parent_contact()
+	_rest_camera = _camera.transform
 	$Render/Sun.rotation_degrees = light_direction_degrees
 	$Render/Sun.light_energy = light_energy
 	_shadow.material.set_shader_parameter("shadow_strength", shadow_strength)
@@ -138,7 +138,7 @@ func _input(event: InputEvent) -> void:
 			finish_drag()
 		get_viewport().set_input_as_handled()
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-		cancel_interaction()
+		_return_to_rest()
 		get_viewport().set_input_as_handled()
 
 func set_enabled(value: bool) -> void:
@@ -223,11 +223,9 @@ func _return_to_rest() -> void:
 	dragging = false
 	busy = true
 	_area.preview.hide()
-	_motion = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_motion.tween_method(_place_contact, _parent_contact(), _rest_contact, return_seconds)
-	_motion.tween_method(_set_lift, _lift, 0.0, return_seconds)
-	_motion.tween_property(_model_root, "rotation_degrees", Vector3.ZERO, return_seconds)
-	_motion.chain().tween_callback(func():
+	_motion = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	_motion.tween_method(_return_step.bind(position, _lift, _model_root.rotation_degrees, _camera.transform), 0.0, 1.0, return_seconds)
+	_motion.tween_callback(func():
 		position = _rest_position
 		_update_perspective(position + get_transform().basis_xform(size * 0.5))
 		_set_lift(0)
@@ -238,6 +236,12 @@ func _return_to_rest() -> void:
 		returned_to_rest.emit()
 	)
 	interaction_changed.emit()
+
+func _return_step(progress: float, origin: Vector2, lift: float, tilt: Vector3, camera: Transform3D) -> void:
+	position = origin.lerp(_rest_position, progress)
+	_model_root.rotation_degrees = tilt.lerp(Vector3.ZERO, progress)
+	_camera.transform = camera.interpolate_with(_rest_camera, progress)
+	_set_lift(lerpf(lift, 0.0, progress))
 
 func _parent_point(viewport_point: Vector2) -> Vector2:
 	return (get_parent() as Control).get_global_transform_with_canvas().affine_inverse() * viewport_point
@@ -265,7 +269,7 @@ func _update_perspective(target: Vector2) -> void:
 func _refresh_perspective() -> void:
 	_update_perspective(position + get_transform().basis_xform(size * 0.5))
 	_set_lift(_lift)
-	_rest_contact = _parent_contact()
+	_rest_camera = _camera.transform
 	_wake_render()
 
 func _contact_pixel() -> Vector2:

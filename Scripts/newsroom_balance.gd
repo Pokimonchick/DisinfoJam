@@ -42,6 +42,8 @@ extends Resource
 @export_group("Вычитка")
 @export_range(1, 100, 1) var proofreading_unlock_day: int = 3
 @export_range(1.0, 100.0, 1.0) var starting_qualification: float = 70.0
+@export_range(0, 1000, 1) var proofreading_money_penalty_limit: int = 20
+@export_range(0, 100, 1) var proofreading_qualification_penalty_limit: int = 20
 
 @export_group("Вечер")
 @export var rent: int = 45

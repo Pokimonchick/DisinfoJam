@@ -198,6 +198,8 @@ func _apply_page(index: int) -> void:
 func _set_opacity(value: float) -> void:
 	if is_instance_valid(body):
 		body.self_modulate.a = value
+	if is_node_ready():
+		$Row.modulate.a = value
 	opacity_changed.emit(value)
 
 func _refresh_navigation() -> void:

@@ -63,7 +63,7 @@ func undo_last() -> bool:
 	strokes.pop_back()
 	return true
 
-func settlement() -> Dictionary:
+func settlement(money_penalty_limit := 20, qualification_penalty_limit := 20) -> Dictionary:
 	var corrected_ids: Dictionary = {}
 	var wrong_words: Dictionary = {}
 	var valid_ids: Dictionary = {}
@@ -79,7 +79,14 @@ func settlement() -> Dictionary:
 	var corrected := corrected_ids.size()
 	var missed := targets.size() - corrected
 	var wrong := wrong_words.size()
-	return {"corrected": corrected, "missed": missed, "wrong": wrong, "money": corrected * 2 - missed - wrong, "qualification": corrected - missed * 3 - wrong}
+	var penalties := penalty_breakdown(missed, wrong, money_penalty_limit, qualification_penalty_limit)
+	return {"corrected": corrected, "missed": missed, "wrong": wrong, "money": corrected * 2 - penalties.missed_money - penalties.wrong_money, "qualification": corrected - penalties.qualification}
+
+static func penalty_breakdown(missed: int, wrong: int, money_limit: int, qualification_limit: int) -> Dictionary:
+	# Cap the total deductions for this article, preserving correction rewards.
+	# Allocate missed-typo costs first so ledger categories match the actual debit.
+	var missed_money := mini(missed, maxi(0, money_limit))
+	return {"missed_money": missed_money, "wrong_money": mini(wrong, maxi(0, money_limit - missed_money)), "qualification": mini(missed * 3 + wrong, maxi(0, qualification_limit))}
 
 func to_data() -> Dictionary:
 	return {"version": VERSION, "article_id": article_id, "source_text": source_text, "display_text": display_text, "seed": seed, "targets": targets.duplicate(true), "strokes": strokes.duplicate(true)}

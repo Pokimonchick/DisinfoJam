@@ -17,6 +17,7 @@ signal interaction_changed
 @export_range(0.01, 0.5, 0.01) var lift_height := 0.1
 @export var rest_tilt_degrees := Vector3.ZERO
 @export var lift_tilt_degrees := Vector3(8, 0, -5)
+@export_range(0.1, 0.8, 0.01) var return_seconds := 0.34
 @export_enum("Pencil", "Eraser") var tool_mode := 0
 @export var model_contact := Vector3(-1.985, 0.11, 0)
 @export_range(4.0, 60.0, 1.0) var erase_radius := 20.0
@@ -41,6 +42,7 @@ var _motion: Tween
 var _lift := 0.0
 var _stroke_down := false
 var _gui_drag := false
+var _rest_camera := Transform3D.IDENTITY
 
 @onready var _render: SubViewport = $Render
 @onready var _camera: Camera3D = $Render/Camera
@@ -52,6 +54,7 @@ func _ready() -> void:
 	_shadow_rest_position = $Shadow.position
 	_model.rotation_degrees = rest_tilt_degrees
 	_update_perspective(position + size * 0.5)
+	_rest_camera = _camera.transform
 	$Render/Sun.rotation_degrees = Vector3(-55, 120, 0)
 	_refresh_enabled()
 	if not Engine.is_editor_hint():
@@ -107,9 +110,7 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 	elif event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-			if is_instance_valid(_surface):
-				_finish_action()
-			cancel_interaction()
+			return_to_rest()
 			get_viewport().set_input_as_handled()
 		elif event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
@@ -167,10 +168,34 @@ func move_pencil(viewport_point: Vector2) -> void:
 func contact_position() -> Vector2:
 	return get_global_transform_with_canvas() * _tip_pixel()
 
+func return_to_rest() -> void:
+	if not held:
+		return
+	if is_instance_valid(_surface):
+		_finish_action()
+		if tool_mode == 0:
+			_surface.drawing_enabled = false
+	if _motion and _motion.is_valid():
+		_motion.kill()
+	held = false
+	busy = true
+	_stroke_down = false
+	_gui_drag = false
+	_motion = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	_motion.tween_method(_return_step.bind(position, _lift, _camera.transform), 0.0, 1.0, return_seconds)
+	_motion.tween_callback(cancel_interaction)
+	interaction_changed.emit()
+
+func _return_step(progress: float, origin: Vector2, lift: float, camera: Transform3D) -> void:
+	position = origin.lerp(_rest_position, progress)
+	_set_lift(lerpf(lift, 0.0, progress))
+	_camera.transform = camera.interpolate_with(_rest_camera, progress)
+
 func cancel_interaction() -> void:
 	if not is_node_ready():
 		return
 	var was_held := held
+	var was_active := held or busy
 	if _motion and _motion.is_valid():
 		_motion.kill()
 	held = false
@@ -191,7 +216,7 @@ func cancel_interaction() -> void:
 	$Shadow.position = _shadow_rest_position
 	$Shadow.modulate.a = 1.0
 	_render.render_target_update_mode = SubViewport.UPDATE_ONCE
-	if was_held:
+	if was_active:
 		returned.emit()
 		interaction_changed.emit()
 

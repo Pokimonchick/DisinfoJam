@@ -89,6 +89,7 @@ func _run() -> void:
 	var brush_material := surface.material as ShaderMaterial
 	var source_material := source.material as ShaderMaterial
 	check(brush_material != source_material and float(brush_material.get_shader_parameter("pencil_grain_strength")) > 0.0 and float(source_material.get_shader_parameter("pencil_grain_strength")) == 0.0, "Pencil texture is isolated from source glyphs")
+	check(pager.previous.material == source_material and pager.counter.material == source_material and pager.next.material == source_material, "Page navigation shares the source ink reveal and absorption clock")
 	work._set_source_reveal(0.4)
 	check(is_equal_approx(float(brush_material.get_shader_parameter("reveal_progress")), 0.4) and is_equal_approx(float(source_material.get_shader_parameter("reveal_progress")), 0.4), "Source and textured marks reveal together")
 	work._set_source_reveal(1.0)
@@ -122,6 +123,7 @@ func _run() -> void:
 					visible += 1
 		check(visible > 30, "Native desk pencil renders visible 3D pixels")
 	work._open_choices(false)
+	check(work.stamp.visible and pencil.visible and eraser.visible, "Headline selection keeps all desk tools visible")
 	work._select_headline(0)
 	await _wait_choices(work)
 	check(work.stamp.enabled and pencil.interaction_enabled, "A selected draft permits either desk tool at rest")
@@ -148,6 +150,9 @@ func _run() -> void:
 	check(eraser.visible and session.qualification == 70 and work.get_node_or_null("Canvas/World/UndoStroke") == null, "Physical eraser replaces Undo and qualification settles only at publication")
 	await _button(point, true, MOUSE_BUTTON_RIGHT)
 	await _button(point, false, MOUSE_BUTTON_RIGHT)
+	check(not pencil.held and pencil.busy and not work.stamp.enabled and not eraser.interaction_enabled, "Right click starts a blocked pencil return without teleporting")
+	await create_timer(pencil.return_seconds + 0.05).timeout
+	check(not pencil.busy and pencil.position == work.pencil_rest_position, "Pencil return completes at its resting anchor")
 	var eraser_point := eraser.get_global_transform_with_canvas() * eraser.grab_rect.get_center()
 	await _button(eraser_point, true)
 	await _button(eraser_point, false)
@@ -168,6 +173,8 @@ func _run() -> void:
 	check(proof.strokes.is_empty() and proof.settlement().corrected == 0 and eraser.held, "Physical eraser removes the correction and its reward")
 	await _button(point, true, MOUSE_BUTTON_RIGHT)
 	await _button(point, false, MOUSE_BUTTON_RIGHT)
+	check(eraser.busy and not pencil.interaction_enabled, "Eraser return blocks pickup until the animated placement finishes")
+	await create_timer(eraser.return_seconds + 0.05).timeout
 	await _button(grip, true)
 	await _button(grip, false)
 	await _move(point - Vector2(10, 0))
@@ -214,6 +221,7 @@ func _run() -> void:
 	await _capture("marked")
 	await _button(point, true, MOUSE_BUTTON_RIGHT)
 	await _button(point, false, MOUSE_BUTTON_RIGHT)
+	await create_timer(pencil.return_seconds + 0.05).timeout
 	check(not pencil.held and pencil.position == work.pencil_rest_position and work.stamp.enabled, "Right click returns the pencil and re-enables the stamp")
 	check(pencil_model.rotation_degrees.is_equal_approx(pencil.rest_tilt_degrees), "Returning the pencil restores its angled resting pose")
 	var stamp_grip: Vector2 = work.stamp.get_global_transform_with_canvas() * Vector2(144, 105)
@@ -228,7 +236,7 @@ func _run() -> void:
 	check(pencil.begin_pickup(grip), "Pencil can be lifted before a chooser modal")
 	pencil.cancel_interaction()
 	work._open_choices(false)
-	check(not pencil.interaction_enabled and not pencil.begin_pickup(grip) and not work.stamp.enabled, "Headline chooser modal disables both tools")
+	check(pencil.visible and eraser.visible and work.stamp.visible and not pencil.interaction_enabled and not pencil.begin_pickup(grip) and not work.stamp.enabled, "Headline chooser keeps tools visible and disables their interaction")
 	work._hide_choices(false)
 	var unchanged := proof.to_data()
 	var unchanged_id := session.current_article().id

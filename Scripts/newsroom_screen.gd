@@ -132,13 +132,16 @@ func _create_source_pager() -> void:
 	)
 	source_pager.opacity_changed.connect(func(opacity: float): proofreading_surface.text_opacity = opacity)
 	source_pager.bind(%SourceText)
+	for ink_control in [source_pager.previous, source_pager.counter, source_pager.next]:
+		ink_control.material = _source_material
 	pencil.input_exclusions.assign([eraser, source_pager])
 	eraser.input_exclusions.assign([pencil, source_pager])
-	proofreading_surface.exclusions.assign([%Coffee.get_node("Cup"), %HeadlineField, source_pager])
+	# Coffee and navigation are drawn above the ink; paper beneath them stays writable.
+	proofreading_surface.exclusions.assign([%HeadlineField])
 	stamp_area.excluded_controls.append(stamp_area.get_path_to(source_pager))
 
 func _process(_delta: float) -> void:
-	$Canvas.motion_enabled = not popup.visible and _pending_result.is_empty() and not stamp.dragging and not stamp.busy and not pencil.held and not eraser.held and not (choices.visible and GameSettings.choice_overlay_enabled)
+	$Canvas.motion_enabled = not popup.visible and _pending_result.is_empty() and not stamp.dragging and not stamp.busy and not pencil.held and not pencil.busy and not eraser.held and not eraser.busy and not (choices.visible and GameSettings.choice_overlay_enabled)
 
 func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree() or not event is InputEventMouseButton:
@@ -180,8 +183,8 @@ func _update_choice_overlay() -> void:
 	var overlay_blocks := choices.visible and GameSettings.choice_overlay_enabled
 	%Drawer.visible = not overlay_blocks
 	%FinishShift.visible = not overlay_blocks
-	stamp.visible = not overlay_blocks
-	pencil.visible = session != null and session.proofreading_unlocked and not overlay_blocks
+	stamp.visible = true
+	pencil.visible = session != null and session.proofreading_unlocked
 	eraser.visible = pencil.visible
 	if session != null:
 		_refresh_actions()
@@ -224,18 +227,18 @@ func _refresh_actions() -> void:
 	var blocked := session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached() or _next_source != null
 	var overlay_blocks := choices.visible and GameSettings.choice_overlay_enabled
 	var turning := source_pager.turning
-	var tool_held := pencil.held or eraser.held
+	var tool_held := pencil.held or pencil.busy or eraser.held or eraser.busy
 	%HeadlineField.disabled = blocked or _choices_animating or overlay_blocks or tool_held or turning
 	var can_publish := not (blocked or selected_index < 0 or choices_open or _choices_animating or popup.visible or overlay_blocks or tool_held or turning)
 	stamp.set_enabled(can_publish)
 	stamp_area.set_available(can_publish)
 	pencil.enabled = session.proofreading_unlocked
-	pencil.visible = pencil.enabled and not overlay_blocks
+	pencil.visible = pencil.enabled
 	eraser.enabled = pencil.enabled
 	eraser.visible = pencil.visible
 	var tools_available := not (blocked or choices.visible or popup.visible or stamp.dragging or stamp.busy)
-	pencil.interaction_enabled = tools_available and not eraser.held
-	eraser.interaction_enabled = tools_available and not pencil.held
+	pencil.interaction_enabled = tools_available and not (eraser.held or eraser.busy)
+	eraser.interaction_enabled = tools_available and not (pencil.held or pencil.busy)
 	proofreading_surface.input_enabled = pencil.enabled and tools_available and not turning
 	%FinishShift.disabled = blocked or overlay_blocks or stamp.dragging or stamp.busy or tool_held or turning
 	%Coffee.get_node("Cup").disabled = blocked or not session.coffee_ready or session.coffee_used_today or session.health >= session.balance.maximum_stat or overlay_blocks or stamp.dragging or stamp.busy or tool_held or turning
@@ -376,7 +379,7 @@ func _toggle_choices() -> void:
 		_open_choices()
 
 func _open_choices(animate := true) -> void:
-	if session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached() or _next_source != null or session.current_article() == null or pencil.held or eraser.held:
+	if session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached() or _next_source != null or session.current_article() == null or pencil.held or pencil.busy or eraser.held or eraser.busy:
 		return
 	if _choice_tween:
 		_choice_tween.kill()

@@ -110,7 +110,7 @@ offset_bottom = 130.0
 script = ExtResource("pencil")
 grab_rect = Rect2(20, 40, 510, 60)
 lift_height = 0.22
-rest_tilt_degrees = Vector3(0, -8, 0)
+rest_tilt_degrees = Vector3(0, -18, 0)
 lift_tilt_degrees = Vector3(0, 55, 35)
 model_contact = Vector3(-1.985, 0.127, 0)
 

@@ -214,15 +214,16 @@ func publish_headline(display_index: int) -> bool:
 	money += last_result.money
 	_record_transaction("publication", last_result.money, "Публикация", combo_type, option.text)
 	if proofreading_unlocked and proofreading.article_id == article.id:
-		var corrections := proofreading.settlement()
+		var corrections := proofreading.settlement(balance.proofreading_money_penalty_limit, balance.proofreading_qualification_penalty_limit)
+		var penalties := ProofreadingState.penalty_breakdown(corrections.missed, corrections.wrong, balance.proofreading_money_penalty_limit, balance.proofreading_qualification_penalty_limit)
 		last_result["proofreading"] = corrections
 		last_result["publication_money"] = last_result.money
 		last_result.money += corrections.money
 		money += corrections.money
 		qualification = clampf(qualification + corrections.qualification, 0.0, balance.maximum_stat)
 		for transaction in [["proofreading_reward", corrections.corrected * 2, "Вычитка: исправления"],
-			["proofreading_missed", -corrections.missed, "Вычитка: пропущенные опечатки"],
-			["proofreading_wrong", -corrections.wrong, "Вычитка: неверные пометки"]]:
+			["proofreading_missed", -penalties.missed_money, "Вычитка: пропущенные опечатки"],
+			["proofreading_wrong", -penalties.wrong_money, "Вычитка: неверные пометки"]]:
 			if transaction[1] != 0:
 				_record_transaction(transaction[0], transaction[1], transaction[2], -1, option.text)
 	reputation = clampf(reputation + last_result.reputation, 0.0, balance.maximum_stat)

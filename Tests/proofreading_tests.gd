@@ -61,9 +61,50 @@ func _run() -> void:
 	var bad := data.duplicate(true)
 	bad.strokes[0].segments[0].points = [["bad", 0], [0, 0]]
 	check(not ProofreadingState.validate_data(bad), "Malformed coordinates are rejected")
+	_penalty_cap_checks()
 	await _surface_checks()
 	print("PROOFREADING TESTS: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)
+
+func _penalty_cap_checks() -> void:
+	var state := ProofreadingState.new()
+	state.prepare("penalty_cap", SOURCE.repeat(12), 74, true)
+	var wrong: Array = []
+	for word in ProofreadingState.words(state.display_text):
+		if word.start != state.targets[0].id:
+			wrong.append(word.start)
+	state.add_stroke(_stroke([], wrong))
+	check(state.settlement().money == -20 and state.settlement().qualification == -20, "All deductions of one article share the money and qualification caps")
+	var missed_penalties := ProofreadingState.penalty_breakdown(2, 100, 20, 20)
+	check(missed_penalties.missed_money + missed_penalties.wrong_money == 20 and missed_penalties.qualification == 20, "Missed typos use the same deduction budget as incorrect marks")
+	state.add_stroke(_stroke([state.targets[0].id]))
+	check(state.settlement().money == -18 and state.settlement().qualification == -19, "Correction rewards remain separate from the capped deductions")
+	check(state.settlement(8, 12).money == -6 and state.settlement(8, 12).qualification == -11, "Configured money and qualification limits are independent")
+	state.undo_last()
+	var session := NewsroomSession.new()
+	session.balance = NewsroomBalance.new()
+	session.reset(74)
+	var article := NewsArticle.from_row(session.articles[0].to_row())
+	article.id = state.article_id
+	article.source_text = state.source_text
+	article.provenance.clear()
+	session.articles.assign([article])
+	session._resolved_article = null
+	session.phase = NewsroomSession.Phase.WORK
+	session.day = 3
+	session.proofreading_unlocked = true
+	session.proofreading = state
+	var initial_money := session.money
+	check(session.publish_headline(0) and session.qualification == 50, "Publishing applies the capped qualification penalty")
+	var recorded_money := 0
+	var deductions := 0
+	for entry in session.finances.entries:
+		recorded_money += entry.amount
+		if entry.kind in ["proofreading_missed", "proofreading_wrong"]:
+			deductions -= entry.amount
+	check(deductions == 20 and recorded_money == session.money - initial_money, "The ledger records actual capped expenses and reconciles with the balance")
+	var money := session.money
+	check(not session.publish_headline(0) and session.money == money, "Repeated publication cannot charge the capped deductions twice")
 
 func _surface_checks() -> void:
 	root.mode = Window.MODE_WINDOWED

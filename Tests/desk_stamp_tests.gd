@@ -15,9 +15,9 @@ func check(value: bool, message: String) -> void:
 		failures += 1
 		push_error(message)
 
-func _button(point: Vector2, pressed: bool) -> void:
+func _button(point: Vector2, pressed: bool, button := MOUSE_BUTTON_LEFT) -> void:
 	var event := InputEventMouseButton.new()
-	event.button_index = MOUSE_BUTTON_LEFT
+	event.button_index = button
 	event.position = point
 	event.global_position = point
 	event.pressed = pressed
@@ -84,7 +84,9 @@ func _run() -> void:
 	area.excluded_controls = []
 	var inside_body := area.can_stamp(cup_overlap)
 	area.excluded_controls = exclusions
-	check(inside_body and not area.can_stamp(cup_overlap), "A seal touching the coffee cup is rejected even when it fits inside the article body")
+	check(inside_body and area.can_stamp(cup_overlap) and area.z_index < work.get_node("%Coffee").z_index, "Printing is allowed beneath the coffee while the cup remains above the ink")
+	var bottom_point := area.get_global_transform_with_canvas() * Vector2(area.size.x * 0.5, area.size.y - 6)
+	check(work.proofreading_surface._paper_contains(work.proofreading_surface._local_point(bottom_point)), "Pencil marks reach the lower paper margin")
 	await _capture("desk")
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
@@ -126,6 +128,13 @@ func _run() -> void:
 	await _button(grip, false)
 	await create_timer(0.4).timeout
 	check(not stamp.busy and stamp.position.is_equal_approx(rest) and game.session.total_published == 0, "Clicking beside the paper returns the stamp without publishing")
+	check(stamp.begin_drag(grip), "The stamp can be picked up for a right-click return")
+	stamp.move_drag(grip + Vector2(-200, 150))
+	await _button(grip, true, MOUSE_BUTTON_RIGHT)
+	check(stamp.busy and not stamp.dragging and not stamp.position.is_equal_approx(rest) and not area.preview.visible, "Right click animates stamp return and clears its preview")
+	await _button(grip, false, MOUSE_BUTTON_RIGHT)
+	await create_timer(stamp.return_seconds + 0.05).timeout
+	check(not stamp.busy and stamp.position.is_equal_approx(rest) and stamp.get_node("Render/Camera").transform.is_equal_approx(rest_view) and game.session.total_published == 0, "Animated cancellation restores stamp pose without publishing")
 
 	# Both transforms include the desk's scaling, rotation and parallax.
 	var world: Control = work.get_node("Canvas/World")
