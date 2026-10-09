@@ -28,7 +28,7 @@ enum DialogKind { NONE, RESULT }
 @export var source_page_scene: PackedScene = preload("res://Scenes/source_pager.tscn")
 @export_group("Proofreading")
 @export var pencil_rest_position := Vector2(800, 940)
-@export var eraser_rest_position := Vector2(1390, 895)
+@export var eraser_rest_position := Vector2(600, 940)
 @export_group("Audio")
 @export var headline_appear_sound: AudioStream = preload("res://Assets/Sounds/paper - Part_1.wav")
 @export_range(-40.0, 6.0, 0.5) var headline_appear_volume_db: float = 0.0
@@ -107,7 +107,7 @@ func _create_proofreading_tools() -> void:
 	)
 	pencil = preload("res://Scenes/desk_pencil.tscn").instantiate() as DeskPencil
 	pencil.position = pencil_rest_position
-	pencil.z_index = 60
+	pencil.z_index = 9
 	world.add_child(pencil)
 	pencil.set_surface(proofreading_surface)
 	pencil.interaction_changed.connect(_refresh_actions)

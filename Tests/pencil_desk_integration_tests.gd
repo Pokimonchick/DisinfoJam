@@ -92,6 +92,8 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	check(pencil.position == work.pencil_rest_position and pencil.position.y >= 930 and pencil.position.x >= 790, "Pencil rests in the bottom paper margin")
+	check(eraser.position.x + eraser.size.x < pencil.position.x, "Separate eraser rests to the left of the pencil without overlapping its grip")
+	check(pencil.z_index < work.get_node("Canvas/World/Shadows").z_index, "Desk shadows overlay the pencil at rest and while held")
 	await _capture("rest")
 	if DisplayServer.get_name() != "headless":
 		var model_image: Image = pencil.get_node("Render").get_texture().get_image()
@@ -116,6 +118,8 @@ func _run() -> void:
 			break
 	var point := source.get_global_transform_with_canvas() * (typo_rect.get_center() - Vector2(0, bar.value))
 	await _move(point - Vector2(10, 0))
+	await create_timer(0.25).timeout
+	check(pencil.contact_position().distance_to(point - Vector2(10, 0)) < 2, "Red-core model retains its contact point at the pointer after pickup rotation")
 	await _button(point - Vector2(10, 0), true)
 	await _move(point + Vector2(10, 0), true)
 	await _button(point + Vector2(10, 0), false)
@@ -176,6 +180,7 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	await _move(work.get_node("Canvas/World").get_global_transform_with_canvas() * Vector2(900, 980))
+	await create_timer(0.25).timeout
 	await _capture("marked")
 	await _button(point, true, MOUSE_BUTTON_RIGHT)
 	await _button(point, false, MOUSE_BUTTON_RIGHT)
