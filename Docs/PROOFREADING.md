@@ -4,26 +4,28 @@ Proofreading unlocks on shift 3 (`NewsroomBalance.proofreading_unlock_day`). The
 
 ## Scene integration and tuning
 
-`newsroom_screen.gd` creates `Canvas/World/Proofreading`, `Pencil` and `UndoStroke` at runtime. The surface covers the 1920x1080 desk; only `SourceText` is judged. Its `mouse_filter = IGNORE` preserves desk GUI interactions.
+`newsroom_screen.gd` creates `Canvas/World/Proofreading`, `Pencil` and `Eraser` at runtime. Only `SourceText` is judged. Writing is clipped to the rotated article body (`StampArea`), excluding the coffee, headline and page controls. Marks use z-index 4, below the seal and desk objects. The surface's `mouse_filter = IGNORE` preserves desk GUI interactions.
 
-- In `Scenes/newsroom_screen.tscn`, select the root and adjust **Pencil Rest Position** (`pencil_rest_position`, default `(800, 940)`) and **Source Ink Material** (`source_ink_material`). The material controls source/mark reveal and absorption and is duplicated per screen.
-- `Scenes/desk_pencil.tscn` is editable directly: `Render/ModelRoot` contains the muted red hexagonal barrel, exposed wood and graphite meshes; `Render/Camera`, `Render/Sun` and `Shadow` control presentation. The 550x130 control uses its own 3D SubViewport and works with Compatibility.
-- The root screen gates `pencil.enabled` using the session unlock flag, blocks `interaction_enabled` during stamp use/modals, and freezes tools through the existing interface lock on pause. Tool signals `picked_up`, `returned` and `interaction_changed` support mutual exclusion and parallax control.
+- The screen root exposes **Pencil Rest Position** `(800, 940)`, **Eraser Rest Position** `(1390, 895)` and **Source Ink Material**. The material controls source/mark reveal and absorption and is duplicated per screen.
+- `Scenes/desk_pencil.tscn`: `Render/ModelRoot/Barrel` has a wider six-sided body. Its material (`Shaders/worn_pencil.gdshader`) exposes paint/wood colors, wear and grain. Chips expose wood along edges and near the blunt end; smaller scratches run along the barrel. **Lift Tilt Degrees** `(0, 55, 35)` turns the resting horizontal pencil into its working pose. The square viewport leaves room for this rotation; the contact point stays under the pointer.
+- `Scenes/desk_eraser.tscn` uses the supplied model, converted with Blender to `Assets/Models/eraser.glb`. The original `C:/Users/User/Downloads/eraser.blend` was not modified. **Erase Radius** defaults to 22 desk pixels. Both tools reuse the same pickup, projection and input code with **Tool Mode** selecting pencil or eraser.
+- The screen unlocks both tools on shift 3, allows only one held tool, blocks them during stamp use/modals, and freezes them through the existing interface lock on pause. Resting viewports update once; only the held tool renders continuously.
 
 ```gdscript
-proofreading_surface.bind(%SourceText, session.proofreading)
+proofreading_surface.bind(%SourceText, session.proofreading, source_pager.character_offset)
 pencil.set_surface(proofreading_surface)
-pencil.input_exclusions.assign([undo_stroke, %SourceText.get_v_scroll_bar()])
-undo_stroke.pressed.connect(proofreading_surface.undo_last)
+pencil.input_exclusions.assign([eraser, source_pager])
+eraser.set_surface(proofreading_surface)
+eraser.input_exclusions.assign([pencil, source_pager])
 ```
 
-Bind when displaying/restoring an article, rather than on every HUD refresh. `bind()` assigns `display_text`, cancels an unfinished stroke and rebuilds geometry. `clear()` detaches the view while retaining the state object. `changed` requests session save/update through the screen.
+Bind when displaying/restoring an article, rather than on every HUD refresh. The two-argument `bind()` assigns `display_text`; with a page offset it keeps the pager's visible slice and maps geometry back to full-source characters. Binding cancels an unfinished stroke and rebuilds geometry. `clear()` detaches the view while retaining the state object. `changed` requests session save/update through the screen. Pagination is described in [ARTICLE_PAGES.md](ARTICLE_PAGES.md).
 
 ## Input and scoring
 
-Click the pencil to pick it up; moving the pointer carries its tip without holding a button. Hold LMB to draw, release to finish a stroke, and use RMB to finish the mark and return the pencil. **Отменить штрих** removes the last entire stroke. `input_exclusions: Array[Control]` passes native LMB clicks, drag motion and release to Undo and the source scrollbar while the pencil is held. Mouse-wheel scrolling also passes through. Scrolling finishes an active stroke; blocking/canceling the tool discards an unfinished stroke and preserves completed ones.
+Click a tool to pick it up; moving the pointer carries its contact point without holding a button. Hold LMB to draw/erase and release to finish. RMB returns the tool. The eraser replaces the Undo button: its circular brush splits intersected polylines and preserves untouched parts, then recalculates correction rewards and wrong-word penalties from the remaining marks. One save/update signal is emitted at the end of an erasing gesture. Page controls remain usable while holding either tool. Turning a page finishes the active gesture and briefly blocks writing/erasing. Pause/modals return the tools; completed marks remain.
 
-Each typo's target has 2.1 times its width and height (4.41 times its area). Crossing a correct word's central band accumulates a wrong mark after at least 35% of its width, with a 12px minimum; incidental touches and blank-space scribbles do not count. A stroke crossing a correct word only rewards a nearby typo if it also intersects that typo's actual bounds. Corrections and wrong-word penalties are deduplicated. Undo recalculates the result from remaining strokes.
+Each typo's target has 2.1 times its width and height (4.41 times its area). Crossing a correct word's central band accumulates a wrong mark after at least 35% of its width, with a 12px minimum; incidental touches and blank-space scribbles do not count. A stroke crossing a correct word only rewards a nearby typo if it also intersects that typo's actual bounds. Corrections and wrong-word penalties are deduplicated. Erasure recalculates the result from remaining strokes.
 
 `settlement()` returns `{corrected, missed, wrong, money, qualification}` and the session applies it once at actual stamp contact:
 
@@ -41,17 +43,17 @@ Godot 4.7.2 RichTextLabel has no `get_character_bounds`. Geometry uses its `get_
 
 ## State and saves
 
-`to_data()` produces a version-1 primitive dictionary containing `article_id`, `source_text`, `display_text`, `seed`, `targets` and `strokes`. `restore()` requires `validate_data()` and restores existing typos rather than generating new ones. Session/save integration preserves an unfinished article's generated text and marks at home and into the next shift. Live publication feedback retains source scroll and marks; the next article receives its own state.
+`to_data()` produces a version-1 primitive dictionary containing `article_id`, `source_text`, `display_text`, `seed`, `targets` and `strokes`. `restore()` requires `validate_data()` and restores existing typos rather than generating new ones. Session/save integration preserves an unfinished article's generated text and marks at home and into the next shift. Live publication feedback retains the reading page and marks; the next article receives its own state.
 
 - Target: `{id: start, start, length, original, typo}`. Offsets count characters, not bytes.
-- Stroke: `{segments, corrected: [target_id], wrong: [word_start]}`.
+- Stroke: `{segments, corrected: [target_id], wrong: [word_start], page_character}`. The optional page anchor is a full-source character offset and survives JSON restore. Legacy strokes without it remain accepted.
 - Segment: `{anchor: "desk" | "text", points: [[x, y], ...]}`. Desk coordinates are normalized by surface size. Text segments also store `character` (line start); x is normalized by label width and y is the offset from that line's top in line-height units.
 
-Text segments follow the actual scrollbar and clip to the visible source. Blank desk segments remain fixed. Mixed strokes share boundary points, save as one stroke and undo atomically. No nodes, resources or Vector2 values are serialized. Limits: 300 strokes per article and 6000 points per stroke.
+New strokes use fixed normalized coordinates and one page anchor for the entire mark, including blank-paper portions. Turning a page hides the entire mark; returning restores it without shifting fragments relative to the text. Older mixed-anchor strokes are grouped onto their originating sheet and clipped to the paper when drawn. No nodes, resources or Vector2 values are serialized. Limits remain 300 strokes per article and 6000 points per stroke.
 
 ## Focused checks
 
-- `Tests/proofreading_tests.gd`: deterministic corruption, deduplication, settlement, undo, JSON validation/restore, native word geometry, scrolling, mixed-stroke continuity, pickup and GUI exclusions.
-- `Tests/pencil_desk_integration_tests.gd`: actual third-shift scene, rendered pencil, drawing/Undo/RMB, stamp exclusion, pause/modal lock, home continuation and publication settlement without resetting live source scroll.
+- `Tests/proofreading_tests.gd`: deterministic corruption, deduplication, settlement, state undo, JSON validation/restore, native word geometry, paper/obstacle clipping, partial erasure, penalty removal, page anchors, pickup and GUI exclusions.
+- `Tests/pencil_desk_integration_tests.gd`: actual third-shift scene, rendered tools, pencil/eraser/RMB, whole-page marks and GUI navigation, mutual exclusion, pause/modal lock, home continuation and publication settlement without resetting the reading page.
 
 Run a selected suite with `godot --headless --path . --script res://Tests/proofreading_tests.gd`. For native inspection, omit `--headless` and add `--rendering-method gl_compatibility -- --capture`. Captures go to TEMP (`disinfo-proofreading.png` or `disinfo-pencil-desk-*.png`). Tests use isolated save slots and do not access the player's campaign file.

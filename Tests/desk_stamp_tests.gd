@@ -1,5 +1,7 @@
 extends SceneTree
 
+const Pager = preload("res://Scripts/source_pager.gd")
+
 var checks := 0
 var failures := 0
 var _test_path := "user://stamp_test_%d/campaign.json" % Time.get_ticks_usec()
@@ -154,9 +156,13 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	var source_scroll: VScrollBar = source.get_v_scroll_bar()
-	source_scroll.value = source_scroll.max_value * 0.55
-	var reading_scroll := source_scroll.value
-	check(reading_scroll > 0.0, "A long article can be scrolled before stamping")
+	var pager: Pager = work.source_pager
+	pager.go_to_character(int(published_article.source_text.length() * 0.55))
+	var reading_character := pager.capture_character()
+	var reading_text := source.text
+	check(reading_character > 0 and pager.visible and not source_scroll.visible and is_zero_approx(source_scroll.value), "A long article uses discrete sheets with no visible or moving scrollbar")
+	var footer_centre := pager.get_global_transform_with_canvas() * (pager.size * 0.5)
+	check(not area.can_stamp(footer_centre), "The page-control footer cannot receive a seal")
 	centre = source.get_global_transform_with_canvas() * Vector2(40, 175)
 	grip = stamp.get_global_transform_with_canvas() * Vector2(144, 105)
 	await _button(grip, true)
@@ -167,7 +173,7 @@ func _run() -> void:
 	check(stamp.busy and game.session.total_published == 0, "The second click starts the strike before applying consequences")
 	await create_timer(0.25).timeout
 	check(game.session.total_published == 1 and area.printed and area.imprint.visible and not work.popup.active, "Contact applies the publication once while the result note stays hidden")
-	check(is_equal_approx(source_scroll.value, reading_scroll), "Stamping a scrolled article does not move its reading position")
+	check(pager.capture_character() == reading_character and source.text == reading_text and not pager.enabled, "Stamping preserves the reading sheet and blocks further navigation")
 	var ink_centre := area.get_global_transform_with_canvas() * (area.imprint.position + area.imprint_size * 0.5)
 	check(ink_centre.distance_to(centre) < 0.1, "The new ink stays at the actual contact point over the article text")
 	var money: int = game.session.money
@@ -191,10 +197,11 @@ func _run() -> void:
 	check(work.popup.scale.x > opening_scale and work.popup.scale.x < 0.98, "The note is still approaching smoothly after the first part of its entrance")
 	await create_timer(0.55).timeout
 	check(work.popup.scale.is_equal_approx(Vector2.ONE), "The slower entrance finishes at the correct size")
-	check(is_equal_approx(source_scroll.value, reading_scroll), "Opening publication feedback keeps the article at its original scroll position")
+	check(pager.capture_character() == reading_character and source.text == reading_text, "Opening publication feedback keeps the original reading sheet")
 	await _capture("result")
 	work.restore_presentation(work.capture_presentation())
 	check(area.printed and area.imprint.visible and work.popup.active and game.session.total_published == 1, "Restoring a publication result restores the seal without replaying consequences")
+	check(pager.capture_character() == reading_character and source.text == reading_text, "Restoring publication feedback retains its saved reading sheet")
 	await _button(Vector2(1240, 680), true)
 	await _button(Vector2(1240, 680), false)
 	check(work.popup.active and not work.popup.is_opening() and work.popup.scale.is_equal_approx(Vector2.ONE) and game.session.awaiting_acknowledgement,
@@ -207,14 +214,14 @@ func _run() -> void:
 	if game.session.awaiting_acknowledgement:
 		await game.session.article_changed
 	await process_frame
-	check(not work.popup.visible and source.text == published_article.source_text and source.self_modulate.a > 0.0, "Closing feedback retains the old source for its fade-out")
+	check(not work.popup.visible and source.text == reading_text and pager.source_text == published_article.source_text and source.self_modulate.a > 0.0, "Closing feedback retains the old reading sheet for its fade-out")
 	work._open_choices(false)
 	check(not work.choices_open and not stamp.enabled, "A fading old article cannot accept choices or another publication")
 	await create_timer(area.absorption_seconds * 0.35).timeout
 	check(not area.printed and area.imprint.visible and work.selected_index == -1 and stamp.position.is_equal_approx(rest), "The next source unlocks the draft while the old ink remains visible during absorption")
 	var absorbing_progress := _ink_progress(area.imprint)
 	check(absorbing_progress > 0.0 and absorbing_progress < 1.0 and area.imprint.position.is_equal_approx(old_ink_position), "The old ink absorbs gradually at its original position")
-	check(source.text == published_article.source_text and is_equal_approx(_source_progress(source), absorbing_progress) and work.get_node("%SourceTitle").material == source.material, "Old title and source use an organic mask on the exact same clock as the ink")
+	check(source.text == reading_text and is_equal_approx(_source_progress(source), absorbing_progress) and work.get_node("%SourceTitle").material == source.material, "Old title and reading sheet use an organic mask on the exact same clock as the ink")
 	check(area.preview.material != area.imprint.material and is_zero_approx(_ink_progress(area.preview)), "The preview has an independent material and never inherits absorption")
 	await _capture("ink-absorbing")
 	game._toggle_pause()
@@ -226,7 +233,7 @@ func _run() -> void:
 	check(_ink_progress(area.imprint) > absorbing_progress and area.imprint.visible, "Unpausing resumes the remaining ink absorption")
 	await create_timer(area.absorption_seconds).timeout
 	check(not area.imprint.visible and is_equal_approx(_ink_progress(area.imprint), 1.0), "Absorption finishes with no old ink left on the next article")
-	check(source.text == game.session.current_article().source_text and source_scroll.value == 0.0 and not work.get_node("%HeadlineField").disabled, "The next source replaces old text at the top only after absorption, then enables choices")
+	check(pager.source_text == game.session.current_article().source_text and pager.page_index == 0 and source_scroll.value == 0.0 and not work.get_node("%HeadlineField").disabled, "The next source opens its first sheet only after absorption, then enables choices")
 	await create_timer(work.source_reveal_seconds).timeout
 	check(is_equal_approx(float((source.material as ShaderMaterial).get_shader_parameter("reveal_progress")), 1.0), "The next source finishes fully readable")
 	await _capture("next-article")
@@ -265,7 +272,7 @@ func _run() -> void:
 	check(area.imprint.visible and _ink_progress(area.imprint) > 0.0, "The next acknowledged result starts ink absorption again")
 	work.restore_presentation(work.capture_presentation())
 	check(not area.printed and not area.imprint.visible and is_zero_approx(_ink_progress(area.imprint)), "Restoring an unprinted draft clears transient ink immediately")
-	check(source.text == game.session.current_article().source_text and is_equal_approx(source.self_modulate.a, 1.0), "Restoring during a handover cancels the old source and displays the current article")
+	check(pager.source_text == game.session.current_article().source_text and pager.page_index == 0 and is_equal_approx(source.self_modulate.a, 1.0), "Restoring during a handover cancels the old source and displays the current article's first sheet")
 	await create_timer(area.absorption_seconds + 0.1).timeout
 	check(not area.imprint.visible, "An interrupted absorption cannot revive old ink after restoring a draft")
 

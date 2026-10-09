@@ -111,13 +111,13 @@ func _surface_checks() -> void:
 	surface.extend_stroke(viewport_point + Vector2(8, 0))
 	surface.finish_stroke()
 	check(state.settlement().corrected == 1, "An intentional mark corrects the typo")
-	check(state.strokes[-1].segments[0].anchor == "text", "Source strokes carry a text anchor")
+	check(state.strokes[-1].has("page_character"), "The complete source stroke carries one page anchor")
 	var segment: Dictionary = state.strokes[-1].segments[0]
-	var before := surface._segment_body_point(segment, segment.points[0])
+	var before := surface._segment_point(segment, segment.points[0])
 	var scroll_before := bar.value
 	bar.value = bar.value - 20 if bar.value > 20 else bar.value + 20
-	var after := surface._segment_body_point(segment, segment.points[0])
-	check(not is_equal_approx(scroll_before, bar.value) and is_equal_approx(before.y - after.y, bar.value - scroll_before), "Text anchored marks scroll by the actual scrollbar distance")
+	var after := surface._segment_point(segment, segment.points[0])
+	check(not is_equal_approx(scroll_before, bar.value) and before.is_equal_approx(after), "Page marks keep one physical position instead of shifting only text portions")
 	surface.undo_last()
 	bar.value = 0
 	viewport_point = label.get_global_transform_with_canvas() * correct_rect.get_center()
@@ -138,17 +138,49 @@ func _surface_checks() -> void:
 	surface.begin_stroke(start)
 	surface.extend_stroke(finish)
 	surface.finish_stroke()
-	var anchors: Dictionary = {}
-	for mixed in state.strokes[-1].segments:
-		anchors[mixed.anchor] = true
-	check(anchors.size() == 2, "A mixed stroke splits text and fixed desk portions")
-	var mixed_segments: Array = state.strokes[-1].segments
-	var text_segment: Dictionary = mixed_segments[0]
-	var desk_segment: Dictionary = mixed_segments[1]
-	var text_boundary := surface._surface_point(surface._segment_body_point(text_segment, text_segment.points[-1]))
-	var desk_boundary := Vector2(desk_segment.points[0][0], desk_segment.points[0][1]) * surface.size
-	check(text_boundary.distance_to(desk_boundary) < 0.01, "Mixed anchor portions share a continuous boundary before scrolling")
+	check(state.strokes[-1].segments.size() == 1 and state.strokes[-1].page_character == 0, "A stroke crossing text and blank paper remains one page-bound run")
 	check(surface.undo_last() and state.strokes.is_empty(), "One undo removes all portions of the mixed stroke")
+	surface.paper = paper
+	check(not surface.begin_stroke(Vector2(60, 100)), "Drawing cannot begin outside the article paper")
+	surface.begin_stroke(Vector2(150, 90))
+	surface.extend_stroke(Vector2(250, 90))
+	surface.finish_stroke()
+	check(surface.begin_erasure(Vector2(200, 90), 14), "An eraser gesture can start on blank article paper")
+	surface.finish_erasure()
+	check(state.strokes.size() == 1 and state.strokes[0].segments.size() == 2 and ProofreadingState.validate_data(state.to_data()), "Partial erasure keeps both remaining ends and a valid save")
+	surface.set_page_offset(1)
+	check(not surface._stroke_visible(state.strokes[0]), "Blank-paper marks also disappear on another page")
+	surface.set_page_offset(0)
+	check(surface._stroke_visible(state.strokes[0]), "Returning restores the complete page mark")
+	await process_frame
+	surface.undo_last()
+	surface.begin_stroke(Vector2(150, 90))
+	surface.extend_stroke(Vector2(20, 90))
+	surface.finish_stroke()
+	var edge_segment: Dictionary = state.strokes[-1].segments[0]
+	check(surface._segment_point(edge_segment, edge_segment.points[-1]).x >= paper.position.x, "A stroke crossing the paper edge is clipped rather than drawing on the desk")
+	surface.undo_last()
+	var obstacle := ColorRect.new()
+	obstacle.position = Vector2(180, 70)
+	obstacle.size = Vector2(40, 40)
+	desk.add_child(obstacle)
+	surface.exclusions.assign([obstacle])
+	check(not surface.begin_stroke(Vector2(200, 90)), "Foreground objects block the start of a mark")
+	surface.begin_stroke(Vector2(150, 90))
+	surface.extend_stroke(Vector2(250, 90))
+	surface.finish_stroke()
+	check(state.strokes[-1].segments.size() == 2, "Crossing an excluded object leaves a gap without reconnecting across it")
+	surface.undo_last()
+	surface.exclusions.clear()
+	obstacle.queue_free()
+	surface.begin_stroke(a)
+	surface.extend_stroke(b)
+	surface.finish_stroke()
+	check(state.settlement().wrong == 1, "The eraser fixture has a penalized word")
+	surface.begin_erasure(a, 24)
+	surface.extend_erasure(b, 24)
+	surface.finish_erasure()
+	check(state.settlement().wrong == 0 and state.strokes.is_empty(), "Erasing an incorrect underline removes its penalty")
 	var pencil: DeskPencil = load("res://Scenes/desk_pencil.tscn").instantiate()
 	pencil.position = Vector2(390, 440)
 	pencil.z_index = 10

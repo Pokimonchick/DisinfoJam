@@ -1,5 +1,7 @@
 extends SceneTree
 
+const Pager = preload("res://Scripts/source_pager.gd")
+
 var checks := 0
 var failures := 0
 var _test_path := "user://pencil_desk_test_%d/campaign.json" % Time.get_ticks_usec()
@@ -78,12 +80,17 @@ func _run() -> void:
 	await create_timer(0.35).timeout
 	await process_frame
 	var pencil: DeskPencil = work.pencil
+	var eraser: DeskPencil = work.eraser
 	var surface: ProofreadingSurface = work.proofreading_surface
 	var source: RichTextLabel = work.get_node("%SourceText")
 	var bar := source.get_v_scroll_bar()
+	var pager: Pager = work.source_pager
 	var proof := session.proofreading
 	check(session.day == 3 and work.visible and pencil.visible and pencil.enabled and surface.state == proof, "Third-shift desk binds the active proofreading state and exposes the pencil")
-	check(proof.targets.size() == 1 and source.text == proof.display_text and article.source_text == proof.source_text, "First proofreading article displays one guaranteed typo and preserves its source")
+	check(proof.targets.size() == 1 and pager.source_text == proof.display_text and article.source_text == proof.source_text, "First proofreading article contains one guaranteed typo across its sheets and preserves its source")
+	pager.go_to_character(int(proof.targets[0].start))
+	await process_frame
+	await process_frame
 	check(pencil.position == work.pencil_rest_position and pencil.position.y >= 930 and pencil.position.x >= 790, "Pencil rests in the bottom paper margin")
 	await _capture("rest")
 	if DisplayServer.get_name() != "headless":
@@ -107,8 +114,6 @@ func _run() -> void:
 		if word.typo:
 			typo_rect = word.rects[0]
 			break
-	bar.value = maxf(0, typo_rect.position.y - 50)
-	await process_frame
 	var point := source.get_global_transform_with_canvas() * (typo_rect.get_center() - Vector2(0, bar.value))
 	await _move(point - Vector2(10, 0))
 	await _button(point - Vector2(10, 0), true)
@@ -118,23 +123,49 @@ func _run() -> void:
 	if proof.strokes.is_empty():
 		quit(1)
 		return
-	check(not work.undo_stroke.disabled and session.qualification == 70, "Finished marks enable Undo and defer qualification settlement")
-	var undo_point: Vector2 = work.undo_stroke.get_global_transform_with_canvas() * (work.undo_stroke.size * 0.5)
-	await _move(undo_point)
-	await _button(undo_point, true)
-	await _button(undo_point, false)
-	check(proof.strokes.is_empty() and proof.settlement().corrected == 0 and pencil.held, "Actual Undo works while holding the pencil and reverses its correction")
+	check(eraser.visible and session.qualification == 70 and work.get_node_or_null("Canvas/World/UndoStroke") == null, "Physical eraser replaces Undo and qualification settles only at publication")
+	await _button(point, true, MOUSE_BUTTON_RIGHT)
+	await _button(point, false, MOUSE_BUTTON_RIGHT)
+	var eraser_point := eraser.get_global_transform_with_canvas() * eraser.grab_rect.get_center()
+	await _button(eraser_point, true)
+	await _button(eraser_point, false)
+	check(eraser.held and not pencil.interaction_enabled and not work.stamp.enabled, "Holding the eraser excludes pencil and stamp pickup")
+	await _move(point)
+	await _capture("eraser-held")
+	await _button(point, true)
+	await _button(point, false)
+	check(proof.strokes.is_empty() and proof.settlement().corrected == 0 and eraser.held, "Physical eraser removes the correction and its reward")
+	await _button(point, true, MOUSE_BUTTON_RIGHT)
+	await _button(point, false, MOUSE_BUTTON_RIGHT)
+	await _button(grip, true)
+	await _button(grip, false)
 	await _move(point - Vector2(10, 0))
 	await _button(point - Vector2(10, 0), true)
 	await _move(point + Vector2(10, 0), true)
 	await _button(point + Vector2(10, 0), false)
 	var original_marks := proof.to_data()
 	var anchored: Dictionary = proof.strokes[0].segments[0]
-	var before := surface._segment_body_point(anchored, anchored.points[0])
-	var old_scroll := bar.value
-	bar.value = old_scroll - 25 if old_scroll > 25 else old_scroll + 25
-	var after := surface._segment_body_point(anchored, anchored.points[0])
-	check(is_equal_approx(before.y - after.y, bar.value - old_scroll) and proof.to_data() == original_marks, "Integrated marks follow source scrolling without changing saved geometry")
+	var before := surface._segment_point(anchored, anchored.points[0])
+	var corrected_page := pager.capture_character()
+	pager.go_to_character(0 if corrected_page > 0 else proof.display_text.length() - 1)
+	await process_frame
+	await process_frame
+	check(not surface._stroke_visible(proof.strokes[0]) and proof.to_data() == original_marks, "The complete mark, including blank-paper portions, stays on its original sheet")
+	pager.go_to_character(corrected_page)
+	await process_frame
+	await process_frame
+	check(surface._stroke_visible(proof.strokes[0]) and surface._segment_point(anchored, anchored.points[0]).is_equal_approx(before), "Returning to the marked sheet restores its original position")
+	var reading_page := pager.page_index
+	var page_button := pager.previous if reading_page > 0 else pager.next
+	var page_point := page_button.get_global_transform_with_canvas() * (page_button.size * 0.5)
+	await _move(page_point)
+	await _button(page_point, true)
+	await _button(page_point, false)
+	await create_timer(pager.turn_seconds + 0.1).timeout
+	check(pencil.held and pager.page_index != reading_page and proof.to_data() == original_marks, "Native page buttons work with the pencil held and do not draw or alter corrections")
+	pager.go_to_character(corrected_page)
+	await process_frame
+	await process_frame
 	await _move(work.get_node("Canvas/World").get_global_transform_with_canvas() * Vector2(900, 980))
 	await _capture("marked")
 	await _button(point, true, MOUSE_BUTTON_RIGHT)
@@ -161,12 +192,12 @@ func _run() -> void:
 	check(session.phase == NewsroomSession.Phase.HOME and session.proofreading.to_data() == unchanged, "Going home retains the unfinished article's generated text and strokes")
 	session.start_shift()
 	await create_timer(0.35).timeout
-	check(session.day == 4 and session.current_article().id == unchanged_id and session.proofreading.to_data() == unchanged and surface.state == session.proofreading and source.text == unchanged.display_text, "The next shift resumes the same unfinished article and marks")
+	check(session.day == 4 and session.current_article().id == unchanged_id and session.proofreading.to_data() == unchanged and surface.state == session.proofreading and pager.source_text == unchanged.display_text, "The next shift resumes the same unfinished article and marks")
 	work._open_choices(false)
 	work._select_headline(0)
 	await _wait_choices(work)
-	bar.value = bar.max_value * 0.45
-	var reading_scroll := bar.value
+	pager.go_to_character(int(pager.source_text.length() * 0.45))
+	var reading_character := pager.capture_character()
 	var display_before := source.text
 	var marks_before := session.proofreading.to_data()
 	var money_before := session.money
@@ -179,7 +210,7 @@ func _run() -> void:
 	await create_timer(0.9).timeout
 	check(session.total_published == 1 and session.last_result.proofreading.corrected == 1 and session.qualification == qualification_before + 1, "Actual stamp contact settles the correction once")
 	check(session.money == money_before + session.last_result.money, "Stamp settlement records its publication and proofreading money together")
-	check(is_equal_approx(bar.value, reading_scroll) and source.text == display_before and session.proofreading.to_data() == marks_before, "Live publication result preserves reading scroll, display text and marks")
+	check(pager.capture_character() == reading_character and source.text == display_before and session.proofreading.to_data() == marks_before, "Live publication result preserves the reading sheet, display text and marks")
 	check(work.popup.active and not pencil.interaction_enabled and not work.stamp.enabled, "Publication feedback blocks both tools")
 	if "--capture" in OS.get_cmdline_user_args() and DisplayServer.get_name() != "headless":
 		await create_timer(work.popup.opening_seconds).timeout

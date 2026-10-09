@@ -7,7 +7,8 @@ signal returned
 signal interaction_changed
 
 @export_group("Perspective")
-@export_range(1.5, 6.0, 0.1) var camera_height := 3.0
+@export_range(1.5, 16.0, 0.1) var camera_height := 12.0
+@export_range(0.0, 3.0, 0.05) var camera_depth := 0.4
 @export_range(12.0, 40.0, 0.5) var field_of_view := 20.0
 @export_range(0.0, 2.0, 0.05) var perspective_strength := 0.5
 @export var perspective_center := Vector2(0.58, 0.48)
@@ -15,6 +16,9 @@ signal interaction_changed
 @export var grab_rect := Rect2(32, 40, 490, 50)
 @export_range(0.01, 0.5, 0.01) var lift_height := 0.1
 @export var lift_tilt_degrees := Vector3(8, 0, -5)
+@export_enum("Pencil", "Eraser") var tool_mode := 0
+@export var model_contact := Vector3(-1.985, 0.11, 0)
+@export_range(4.0, 60.0, 1.0) var erase_radius := 20.0
 var input_exclusions: Array[Control] = []
 
 var enabled := false:
@@ -30,12 +34,12 @@ var busy := false
 var _surface: ProofreadingSurface
 var _rest_position := Vector2.ZERO
 var _rest_rotation := 0.0
+var _shadow_rest_position := Vector2.ZERO
 var _tip_point := Vector2.ZERO
 var _motion: Tween
 var _lift := 0.0
 var _stroke_down := false
 var _gui_drag := false
-const MODEL_TIP := Vector3(-1.985, 0.07, 0)
 
 @onready var _render: SubViewport = $Render
 @onready var _camera: Camera3D = $Render/Camera
@@ -44,6 +48,7 @@ const MODEL_TIP := Vector3(-1.985, 0.07, 0)
 func _ready() -> void:
 	_rest_position = position
 	_rest_rotation = rotation
+	_shadow_rest_position = $Shadow.position
 	_update_perspective(position + size * 0.5)
 	$Render/Sun.rotation_degrees = Vector3(-55, 120, 0)
 	_refresh_enabled()
@@ -58,7 +63,8 @@ func _refresh_enabled() -> void:
 	if not is_node_ready():
 		return
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if enabled and interaction_enabled else Control.CURSOR_ARROW
-	tooltip_text = "Карандаш: нажми, чтобы взять; удерживай левую кнопку для пометок. Правая кнопка возвращает карандаш." if enabled and interaction_enabled and not held else ""
+	var hint := "Карандаш: нажми, чтобы взять; удерживай левую кнопку для пометок. Правая кнопка возвращает карандаш." if tool_mode == 0 else "Ластик: нажми, чтобы взять; удерживай левую кнопку, чтобы стирать пометки. Правая кнопка возвращает ластик."
+	tooltip_text = hint if enabled and interaction_enabled and not held else ""
 	if not enabled or not interaction_enabled:
 		cancel_interaction()
 
@@ -83,8 +89,8 @@ func begin_pickup(viewport_point: Vector2) -> bool:
 	_tip_point = viewport_point
 	_render.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	_motion = create_tween()
-	_motion.tween_method(_set_lift, 0.0, lift_height, 0.14).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	if is_instance_valid(_surface):
+	_motion.tween_method(_set_lift, 0.0, lift_height, 0.24).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	if tool_mode == 0 and is_instance_valid(_surface):
 		_surface.drawing_enabled = true
 	picked_up.emit()
 	interaction_changed.emit()
@@ -100,28 +106,28 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 			if is_instance_valid(_surface):
-				_surface.finish_stroke()
+				_finish_action()
 			cancel_interaction()
 			get_viewport().set_input_as_handled()
 		elif event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
 				if _over_input_exclusion(event.position):
 					if _stroke_down and is_instance_valid(_surface):
-						_surface.finish_stroke()
+						_finish_action()
 					_stroke_down = false
 					_gui_drag = true
 					return
-				_stroke_down = is_instance_valid(_surface) and _surface.begin_stroke(event.position)
+				_stroke_down = _begin_action(event.position)
 			else:
 				if _gui_drag:
 					_gui_drag = false
 					return
 				if _stroke_down and is_instance_valid(_surface):
-					_surface.extend_stroke(event.position)
-					_surface.finish_stroke()
+					_extend_action(event.position)
+					_finish_action()
 				_stroke_down = false
 			get_viewport().set_input_as_handled()
-		# Wheel events continue to the body RichTextLabel while the pencil is held.
+		# Other events continue to the reading controls while the pencil is held.
 
 func _over_input_exclusion(viewport_point: Vector2) -> bool:
 	for control in input_exclusions:
@@ -131,13 +137,30 @@ func _over_input_exclusion(viewport_point: Vector2) -> bool:
 				return true
 	return false
 
+func _begin_action(point: Vector2) -> bool:
+	if not is_instance_valid(_surface):
+		return false
+	return _surface.begin_stroke(point) if tool_mode == 0 else _surface.begin_erasure(point, erase_radius)
+
+func _extend_action(point: Vector2) -> void:
+	if tool_mode == 0:
+		_surface.extend_stroke(point)
+	else:
+		_surface.extend_erasure(point, erase_radius)
+
+func _finish_action() -> void:
+	if tool_mode == 0:
+		_surface.finish_stroke()
+	else:
+		_surface.finish_erasure()
+
 func move_pencil(viewport_point: Vector2) -> void:
 	if not held:
 		return
 	_tip_point = viewport_point
 	_place_tip()
 	if _stroke_down and is_instance_valid(_surface):
-		_surface.extend_stroke(viewport_point)
+		_extend_action(viewport_point)
 
 func contact_position() -> Vector2:
 	return get_global_transform_with_canvas() * _tip_pixel()
@@ -152,15 +175,18 @@ func cancel_interaction() -> void:
 	busy = false
 	_stroke_down = false
 	_gui_drag = false
-	if is_instance_valid(_surface):
-		_surface.drawing_enabled = false
+	if was_held and is_instance_valid(_surface):
+		if tool_mode == 0:
+			_surface.drawing_enabled = false
+		else:
+			_surface.finish_erasure()
 	position = _rest_position
 	rotation = _rest_rotation
 	_model.position.y = 0
 	_model.rotation_degrees = Vector3.ZERO
 	_lift = 0.0
 	_update_perspective(position + size * 0.5)
-	$Shadow.position = Vector2(-3, 5)
+	$Shadow.position = _shadow_rest_position
 	$Shadow.modulate.a = 1.0
 	_render.render_target_update_mode = SubViewport.UPDATE_ONCE
 	if was_held:
@@ -171,7 +197,7 @@ func _set_lift(value: float) -> void:
 	_lift = value
 	_model.position.y = value
 	_model.rotation_degrees = lift_tilt_degrees * clampf(value / maxf(lift_height, 0.001), 0, 1)
-	$Shadow.position = Vector2(-3, 5) + Vector2(-8, 8) * value / maxf(lift_height, 0.001)
+	$Shadow.position = _shadow_rest_position + Vector2(-8, 8) * value / maxf(lift_height, 0.001)
 	$Shadow.modulate.a = 1.0 - value * 1.5
 	if held:
 		_place_tip()
@@ -185,12 +211,13 @@ func _place_tip() -> void:
 	position = target - get_transform().basis_xform(_tip_pixel())
 
 func _tip_pixel() -> Vector2:
-	return _camera.unproject_position(_model.transform * MODEL_TIP) * size / Vector2(_render.size)
+	var image: TextureRect = $Image
+	return image.position + _camera.unproject_position(_model.transform * model_contact) * image.size / Vector2(_render.size)
 
 func _update_perspective(target: Vector2) -> void:
 	var parent_control := get_parent() as Control
 	var desk_size := parent_control.size if parent_control != null else Vector2(1920, 1080)
 	var relative := target / desk_size.max(Vector2.ONE) - perspective_center
 	_camera.fov = field_of_view
-	_camera.position = Vector3(-relative.x * perspective_strength, camera_height, 0.4 - relative.y * perspective_strength)
+	_camera.position = Vector3(-relative.x * perspective_strength, camera_height, camera_depth - relative.y * perspective_strength)
 	_camera.look_at(Vector3(0, 0.07, 0), Vector3(0, 0, -1))

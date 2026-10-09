@@ -3,7 +3,7 @@ extends Control
 
 signal changed
 
-@export var pencil_color := Color("953e3b", 0.87)
+@export var pencil_color := Color("c96d62", 0.82)
 @export_range(1.0, 6.0, 0.2) var line_width := 2.4
 
 var input_enabled := true:
@@ -11,6 +11,7 @@ var input_enabled := true:
 		input_enabled = value
 		if not value:
 			cancel_stroke()
+			finish_erasure()
 var drawing_enabled := false:
 	set(value):
 		drawing_enabled = value
@@ -18,6 +19,13 @@ var drawing_enabled := false:
 			cancel_stroke()
 var state: ProofreadingState
 var label: RichTextLabel
+var paper: Control
+var exclusions: Array[Control] = []
+var character_offset := 0
+var text_opacity := 1.0:
+	set(value):
+		text_opacity = value
+		queue_redraw()
 var _lines: Array = []
 var _words: Array = []
 var _segments: Array = []
@@ -28,11 +36,15 @@ var _core_corrected: Dictionary = {}
 var _wrong_coverage: Dictionary = {}
 var _geometry_dirty := false
 var _point_count := 0
+var _erasing := false
+var _erasure_changed := false
+var _erase_point := Vector2.ZERO
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-func bind(body: RichTextLabel, article_state: ProofreadingState) -> void:
+func bind(body: RichTextLabel, article_state: ProofreadingState, page_offset := -1) -> void:
+	finish_erasure()
 	cancel_stroke()
 	if is_instance_valid(label):
 		if label.resized.is_connected(_invalidate_geometry):
@@ -43,10 +55,12 @@ func bind(body: RichTextLabel, article_state: ProofreadingState) -> void:
 			label.get_v_scroll_bar().value_changed.disconnect(_scroll_changed)
 	label = body
 	state = article_state
+	character_offset = maxi(0, page_offset)
 	_lines.clear()
 	_words.clear()
 	if is_instance_valid(label) and state != null:
-		label.text = state.display_text
+		if page_offset < 0:
+			label.text = state.display_text
 		label.resized.connect(_invalidate_geometry)
 		label.theme_changed.connect(_invalidate_geometry)
 		label.get_v_scroll_bar().value_changed.connect(_scroll_changed)
@@ -55,6 +69,13 @@ func bind(body: RichTextLabel, article_state: ProofreadingState) -> void:
 
 func clear() -> void:
 	bind(null, null)
+
+func set_page_offset(offset: int) -> void:
+	finish_stroke()
+	finish_erasure()
+	character_offset = maxi(0, offset)
+	_invalidate_geometry()
+	queue_redraw()
 
 func _invalidate_geometry() -> void:
 	if _geometry_dirty:
@@ -79,22 +100,25 @@ func _rebuild_geometry() -> void:
 	var font := label.get_theme_font("normal_font")
 	var font_size := label.get_theme_font_size("normal_font_size")
 	var text_server := TextServerManager.get_primary_interface()
+	var visible_text := label.text
 	for index in label.get_line_count():
 		var span := label.get_line_range(index)
 		# Godot includes a virtual final paragraph separator in the final range.
-		var start := mini(span.x, state.display_text.length())
-		var end := mini(span.y, state.display_text.length())
-		while start < end and state.display_text[start] in ["\n", "\r"]:
+		var start := mini(span.x, visible_text.length())
+		var end := mini(span.y, visible_text.length())
+		while start < end and visible_text[start] in ["\n", "\r"]:
 			start += 1
-		while end > start and state.display_text[end - 1] in ["\n", "\r"]:
+		while end > start and visible_text[end - 1] in ["\n", "\r"]:
 			end -= 1
 		var shaped := TextLine.new()
-		shaped.add_string(state.display_text.substr(start, end - start), font, font_size)
-		_lines.append({"start": start, "end": end, "y": margin.y + label.get_line_offset(index), "height": float(label.get_line_height(index)), "x": margin.x, "width": float(label.get_line_width(index)), "shape": shaped})
+		shaped.add_string(visible_text.substr(start, end - start), font, font_size)
+		_lines.append({"start": start + character_offset, "end": end + character_offset, "y": margin.y + label.get_line_offset(index), "height": float(label.get_line_height(index)), "x": margin.x, "width": float(label.get_line_width(index)), "shape": shaped})
 	var target_ids: Dictionary = {}
 	for target in state.targets:
 		target_ids[int(target.id)] = true
 	for word in ProofreadingState.words(state.display_text):
+		if int(word.start + word.length) <= character_offset or int(word.start) >= character_offset + visible_text.length():
+			continue
 		var rects: Array = []
 		for line in _lines:
 			var first := maxi(int(word.start), int(line.start))
@@ -111,7 +135,7 @@ func begin_stroke(viewport_point: Vector2) -> bool:
 	if not input_enabled or not drawing_enabled or state == null or not can_process() or not is_visible_in_tree() or _geometry_dirty or state.strokes.size() >= ProofreadingState.MAX_STROKES:
 		return false
 	var point := _local_point(viewport_point)
-	if not Rect2(Vector2.ZERO, size).has_point(point):
+	if not _paper_contains(point):
 		return false
 	_segments.clear()
 	_corrected.clear()
@@ -120,13 +144,12 @@ func begin_stroke(viewport_point: Vector2) -> bool:
 	_point_count = 0
 	_drawing = true
 	_last_point = point
-	_append_point(point)
 	return true
 
 func extend_stroke(viewport_point: Vector2) -> void:
 	if not _drawing:
 		return
-	var point := _local_point(viewport_point).clamp(Vector2.ZERO, size)
+	var point := _local_point(viewport_point)
 	var distance := _last_point.distance_to(point)
 	if distance < 1.5:
 		return
@@ -137,8 +160,9 @@ func extend_stroke(viewport_point: Vector2) -> void:
 			finish_stroke()
 			return
 		var next := origin.lerp(point, float(index) / count)
-		_score_segment(_last_point, next)
-		_append_point(next)
+		for part in _paper_parts(_last_point, next):
+			_score_segment(part[0], part[1])
+			_append_paper_part(part[0], part[1])
 		_last_point = next
 	queue_redraw()
 
@@ -157,7 +181,7 @@ func finish_stroke() -> void:
 	# A deliberately crossed correct word must not reward its neighbour's margin.
 	var hits := _corrected.keys() if wrong.is_empty() else _core_corrected.keys()
 	if not segments.is_empty():
-		state.add_stroke({"segments": segments, "corrected": hits, "wrong": wrong})
+		state.add_stroke({"segments": segments, "corrected": hits, "wrong": wrong, "page_character": character_offset})
 		changed.emit()
 	_segments.clear()
 	queue_redraw()
@@ -175,6 +199,194 @@ func undo_last() -> bool:
 		return true
 	return false
 
+func _paper_contains(point: Vector2) -> bool:
+	return not _paper_parts(point, point + Vector2(0.001, 0)).is_empty()
+
+func _paper_parts(a: Vector2, b: Vector2) -> Array:
+	# Clip in the rotated paper's coordinates, then subtract foreground controls.
+	var transform := get_global_transform_with_canvas()
+	var paper_transform := paper.get_global_transform_with_canvas() if is_instance_valid(paper) else transform
+	var inverse := paper_transform.affine_inverse() * transform
+	var bounds := Rect2(Vector2.ZERO, paper.size if is_instance_valid(paper) else size).grow(-line_width * 0.5)
+	var clipped := _clip_segment(inverse * a, inverse * b, bounds)
+	if clipped.is_empty():
+		return []
+	var to_surface := transform.affine_inverse() * paper_transform
+	var parts: Array = [[to_surface * clipped[0], to_surface * clipped[1]]]
+	for obstacle in exclusions:
+		if not is_instance_valid(obstacle) or not obstacle.is_visible_in_tree():
+			continue
+		var to_obstacle := obstacle.get_global_transform_with_canvas().affine_inverse() * transform
+		var from_obstacle := to_obstacle.affine_inverse()
+		var kept: Array = []
+		for part in parts:
+			var p: Vector2 = to_obstacle * part[0]
+			var q: Vector2 = to_obstacle * part[1]
+			var blocked := _clip_segment(p, q, Rect2(Vector2.ZERO, obstacle.size).grow(line_width * 0.5))
+			if blocked.is_empty():
+				kept.append(part)
+			else:
+				if p.distance_to(blocked[0]) > 0.001:
+					kept.append([part[0], from_obstacle * blocked[0]])
+				if q.distance_to(blocked[1]) > 0.001:
+					kept.append([from_obstacle * blocked[1], part[1]])
+		parts = kept
+	return parts
+
+func _append_paper_part(a: Vector2, b: Vector2) -> void:
+	var p := a / size.max(Vector2.ONE)
+	var q := b / size.max(Vector2.ONE)
+	var first := [p.x, p.y]
+	var last := [q.x, q.y]
+	if _segments.is_empty() or _segment_point(_segments[-1], _segments[-1].points[-1]).distance_to(a) > 0.01:
+		_segments.append({"anchor": "desk", "points": [first, last]})
+		_point_count += 2
+	else:
+		_segments[-1].points.append(last)
+		_point_count += 1
+
+func _stroke_visible(stroke: Dictionary) -> bool:
+	var anchor: int = stroke.get("page_character", -1)
+	if anchor < 0:
+		# Older saves mixed text and desk anchors. Keep the whole mark on its
+		# originating sheet instead of letting its blank-paper pieces leak across.
+		anchor = 0
+		for segment in stroke.segments:
+			if segment.anchor == "text":
+				anchor = int(segment.character)
+				break
+	return is_instance_valid(label) and anchor >= character_offset and anchor < character_offset + maxi(1, label.text.length())
+
+func _segment_point(segment: Dictionary, point: Array) -> Vector2:
+	if segment.anchor == "desk":
+		return Vector2(point[0], point[1]) * size
+	return _surface_point(_segment_body_point(segment, point))
+
+func begin_erasure(viewport_point: Vector2, radius: float) -> bool:
+	if not input_enabled or state == null or _geometry_dirty or not can_process() or not is_visible_in_tree():
+		return false
+	var point := _local_point(viewport_point)
+	if not _paper_contains(point):
+		return false
+	finish_stroke()
+	_erasing = true
+	_erasure_changed = false
+	_erase_point = point
+	_erase_at(point, radius)
+	return true
+
+func extend_erasure(viewport_point: Vector2, radius: float) -> void:
+	if not _erasing or not input_enabled:
+		return
+	var point := _local_point(viewport_point)
+	var origin := _erase_point
+	var count := maxi(1, ceili(origin.distance_to(point) / maxf(2.0, radius * 0.5)))
+	for index in range(1, count + 1):
+		var centre := origin.lerp(point, float(index) / count)
+		if _paper_contains(centre):
+			_erase_at(centre, radius)
+	_erase_point = point
+
+func finish_erasure() -> void:
+	_erasing = false
+	if _erasure_changed:
+		_erasure_changed = false
+		changed.emit()
+
+func _erase_at(centre: Vector2, radius: float) -> void:
+	for index in range(state.strokes.size() - 1, -1, -1):
+		var stroke: Dictionary = state.strokes[index]
+		if not _stroke_visible(stroke):
+			continue
+		var remaining: Array = []
+		var touched := false
+		for segment in stroke.segments:
+			if not _segment_visible(segment):
+				remaining.append(segment)
+				continue
+			var fragments: Array = []
+			var run: Array = []
+			for point_index in range(1, segment.points.size()):
+				var a := _segment_point(segment, segment.points[point_index - 1])
+				var b := _segment_point(segment, segment.points[point_index])
+				var cut := _circle_interval(a, b, centre, radius)
+				if cut.is_empty():
+					if run.is_empty():
+						run.append(segment.points[point_index - 1])
+					run.append(segment.points[point_index])
+					continue
+				touched = true
+				var p := Vector2(segment.points[point_index - 1][0], segment.points[point_index - 1][1])
+				var q := Vector2(segment.points[point_index][0], segment.points[point_index][1])
+				if cut[0] > 0.00001:
+					if run.is_empty():
+						run.append(segment.points[point_index - 1])
+					var edge := p.lerp(q, cut[0])
+					run.append([edge.x, edge.y])
+				if run.size() >= 2:
+					fragments.append(run)
+				run = []
+				if cut[1] < 0.99999:
+					var edge := p.lerp(q, cut[1])
+					run = [[edge.x, edge.y], segment.points[point_index]]
+			if run.size() >= 2:
+				fragments.append(run)
+			for points in fragments:
+				var fragment: Dictionary = segment.duplicate()
+				fragment.points = points
+				remaining.append(fragment)
+		if not touched:
+			continue
+		var total := 0
+		for segment in remaining:
+			total += segment.points.size()
+		if total > ProofreadingState.MAX_POINTS:
+			# Preserve the original rather than deleting unrelated ink when the
+			# save's point budget cannot represent another split.
+			continue
+		_erasure_changed = true
+		if remaining.is_empty():
+			state.strokes.remove_at(index)
+		else:
+			stroke.segments = remaining
+			_rescore_stroke(stroke)
+	queue_redraw()
+
+static func _circle_interval(a: Vector2, b: Vector2, centre: Vector2, radius: float) -> Array:
+	var delta := b - a
+	var offset := a - centre
+	var length_squared := delta.length_squared()
+	if length_squared < 0.000001:
+		return [0.0, 1.0] if offset.length_squared() < radius * radius else []
+	var projection := offset.dot(delta)
+	var discriminant := projection * projection - length_squared * (offset.length_squared() - radius * radius)
+	if discriminant <= 0.0:
+		return []
+	var low := maxf(0.0, (-projection - sqrt(discriminant)) / length_squared)
+	var high := minf(1.0, (-projection + sqrt(discriminant)) / length_squared)
+	return [low, high] if high > low else []
+
+func _rescore_stroke(stroke: Dictionary) -> void:
+	_corrected.clear()
+	_core_corrected.clear()
+	_wrong_coverage.clear()
+	for segment in stroke.segments:
+		if not _segment_visible(segment):
+			continue
+		for index in range(1, segment.points.size()):
+			_score_segment(_segment_point(segment, segment.points[index - 1]), _segment_point(segment, segment.points[index]))
+	var wrong: Array = []
+	for word_start in _wrong_coverage:
+		if float(_wrong_coverage[word_start].length) >= float(_wrong_coverage[word_start].threshold):
+			wrong.append(word_start)
+	var preserved_corrected: Array = stroke.get("corrected", []).filter(func(id): return int(id) < character_offset or int(id) >= character_offset + label.text.length())
+	var preserved_wrong: Array = stroke.get("wrong", []).filter(func(id): return int(id) < character_offset or int(id) >= character_offset + label.text.length())
+	stroke.corrected = preserved_corrected + (_corrected.keys() if wrong.is_empty() else _core_corrected.keys())
+	stroke.wrong = preserved_wrong + wrong
+
+func _segment_visible(segment: Dictionary) -> bool:
+	return segment.anchor == "desk" or (is_instance_valid(label) and int(segment.character) >= character_offset and int(segment.character) < character_offset + label.text.length())
+
 func _local_point(viewport_point: Vector2) -> Vector2:
 	return get_global_transform_with_canvas().affine_inverse() * viewport_point
 
@@ -183,46 +395,6 @@ func _label_point(point: Vector2) -> Vector2:
 
 func _surface_point(body_point: Vector2) -> Vector2:
 	return get_global_transform_with_canvas().affine_inverse() * (label.get_global_transform_with_canvas() * body_point)
-
-func _append_point(point: Vector2) -> void:
-	_point_count += 1
-	var anchor := "desk"
-	var character := -1
-	var normalized := point / size.max(Vector2.ONE)
-	if is_instance_valid(label):
-		var body_point := _label_point(point)
-		var content_y := body_point.y + label.get_v_scroll_bar().value
-		if Rect2(Vector2.ZERO, label.size).has_point(body_point):
-			for line in _lines:
-				if content_y >= float(line.y) and content_y < float(line.y + line.height) and body_point.x >= float(line.x) and body_point.x <= float(line.x + line.width + 5.0) and int(line.start) < int(line.end):
-					anchor = "text"
-					character = int(line.start)
-					normalized = Vector2(body_point.x / maxf(1, label.size.x), (content_y - float(line.y)) / maxf(1, float(line.height)))
-					break
-	var data := [normalized.x, normalized.y]
-	if _segments.is_empty() or _segments[-1].anchor != anchor or int(_segments[-1].get("character", -1)) != character:
-		var segment := {"anchor": anchor, "points": [data]}
-		if anchor == "text":
-			segment["character"] = character
-		if not _segments.is_empty():
-			# Shared boundary points keep one physical stroke continuous before scrolling.
-			var boundary := _last_point.lerp(point, 0.5)
-			_segments[-1].points.append(_encode_point(boundary, _segments[-1]))
-			segment.points.push_front(_encode_point(boundary, segment))
-			_point_count += 2
-		_segments.append(segment)
-	else:
-		_segments[-1].points.append(data)
-
-func _encode_point(point: Vector2, segment: Dictionary) -> Array:
-	if segment.anchor == "desk":
-		var normalized := point / size.max(Vector2.ONE)
-		return [normalized.x, normalized.y]
-	var body_point := _label_point(point)
-	for line in _lines:
-		if int(segment.character) == int(line.start):
-			return [body_point.x / maxf(1, label.size.x), (body_point.y + label.get_v_scroll_bar().value - float(line.y)) / maxf(1, float(line.height))]
-	return [0.0, 0.0]
 
 func _score_segment(a: Vector2, b: Vector2) -> void:
 	if not is_instance_valid(label):
@@ -280,23 +452,28 @@ func _segment_body_point(segment: Dictionary, point: Array) -> Vector2:
 func _draw() -> void:
 	if state != null:
 		for stroke in state.strokes:
-			_draw_segments(stroke.segments)
-	_draw_segments(_segments)
+			if _stroke_visible(stroke):
+				_draw_segments(stroke.segments, not stroke.has("page_character"))
+	_draw_segments(_segments, false)
 
-func _draw_segments(segments: Array) -> void:
+func _draw_segments(segments: Array, legacy_clipping := true) -> void:
 	for segment in segments:
+		if not _segment_visible(segment):
+			continue
 		var points: Array = segment.points
 		if points.size() < 2:
 			continue
-		if segment.anchor == "desk":
+		var color := pencil_color
+		color.a *= text_opacity
+		if not legacy_clipping:
+			# New marks are already clipped when written: one draw call per run.
 			var polyline := PackedVector2Array()
 			for point in points:
 				polyline.append(Vector2(point[0], point[1]) * size)
-			draw_polyline(polyline, pencil_color, line_width, true)
-		elif is_instance_valid(label):
-			for index in range(1, points.size()):
-				var a := _segment_body_point(segment, points[index - 1])
-				var b := _segment_body_point(segment, points[index])
-				var clipped := _clip_segment(a, b, Rect2(Vector2.ZERO, label.size))
-				if clipped.size() == 2:
-					draw_line(_surface_point(clipped[0]), _surface_point(clipped[1]), pencil_color, line_width, true)
+			draw_polyline(polyline, color, line_width, true)
+			continue
+		for index in range(1, points.size()):
+			var a := _segment_point(segment, points[index - 1])
+			var b := _segment_point(segment, points[index])
+			for part in _paper_parts(a, b):
+				draw_line(part[0], part[1], color, line_width, true)

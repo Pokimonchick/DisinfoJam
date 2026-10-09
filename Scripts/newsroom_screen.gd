@@ -4,6 +4,7 @@ signal view_changed
 signal pause_requested
 
 const CHOICE_OVERLAY: PackedScene = preload("res://Scenes/headline_choice_overlay.tscn")
+const Pager = preload("res://Scripts/source_pager.gd")
 const NUMBER_ART: Array[Texture2D] = [
 	preload("res://Assets/Assets for new version of game/Untitled (22)/image 10.png"),
 	preload("res://Assets/Assets for new version of game/Untitled (22)/IMG_1370 1.png"),
@@ -24,8 +25,10 @@ enum DialogKind { NONE, RESULT }
 @export_group("Text motion")
 @export_range(0.0, 2.0, 0.05) var source_reveal_seconds := 1.8
 @export var source_ink_material: ShaderMaterial = preload("res://Data/source_ink.tres")
+@export var source_page_scene: PackedScene = preload("res://Scenes/source_pager.tscn")
 @export_group("Proofreading")
 @export var pencil_rest_position := Vector2(800, 940)
+@export var eraser_rest_position := Vector2(1390, 895)
 @export_group("Audio")
 @export var headline_appear_sound: AudioStream = preload("res://Assets/Sounds/paper - Part_1.wav")
 @export_range(-40.0, 6.0, 0.5) var headline_appear_volume_db: float = 0.0
@@ -47,9 +50,11 @@ var _result_delay: Tween
 var _source_reveal: Tween
 var _next_source: NewsArticle
 var _source_material: ShaderMaterial
+var _displayed_article_id := ""
+var source_pager: Pager
 var pencil: DeskPencil
 var proofreading_surface: ProofreadingSurface
-var undo_stroke: Button
+var eraser: DeskPencil
 @onready var cards: Array[Button] = [%Headline1, %Headline2, %Headline3]
 @onready var popup: DeskFocus = $Canvas/DeskFocus
 @onready var combo_burst: Control = %ComboBurst
@@ -62,6 +67,7 @@ func _ready() -> void:
 	for ink_item in [%SourceTitle, %SourceText, %ArticleNumber, %ArticleNumber.get_node("NumberArt")]:
 		ink_item.material = _source_material
 	_create_proofreading_tools()
+	_create_source_pager()
 	visibility_changed.connect(func(): _animate_source(is_visible_in_tree()))
 	stamp_area.absorption_progress_changed.connect(_on_source_absorption)
 	stamp_area.ink_time_changed.connect(func(time: float): _source_material.set_shader_parameter("ink_time", time))
@@ -90,8 +96,9 @@ func _create_proofreading_tools() -> void:
 	proofreading_surface = ProofreadingSurface.new()
 	proofreading_surface.name = "Proofreading"
 	proofreading_surface.size = $Canvas.design_size
-	proofreading_surface.z_index = 20
+	proofreading_surface.z_index = 4
 	proofreading_surface.material = _source_material
+	proofreading_surface.paper = stamp_area
 	world.add_child(proofreading_surface)
 	proofreading_surface.changed.connect(func():
 		if session != null:
@@ -104,27 +111,34 @@ func _create_proofreading_tools() -> void:
 	world.add_child(pencil)
 	pencil.set_surface(proofreading_surface)
 	pencil.interaction_changed.connect(_refresh_actions)
-	undo_stroke = Button.new()
-	undo_stroke.name = "UndoStroke"
-	undo_stroke.text = "Отменить штрих"
-	undo_stroke.tooltip_text = "Убрать последнюю пометку карандашом"
-	undo_stroke.position = Vector2(1380, 986)
-	undo_stroke.size = Vector2(230, 50)
-	undo_stroke.z_index = 65
-	undo_stroke.add_theme_font_size_override("font_size", 24)
-	var paper := StyleBoxFlat.new()
-	paper.bg_color = Color("eee0b8")
-	paper.border_color = Color("9b7650")
-	paper.set_border_width_all(1)
-	paper.set_corner_radius_all(2)
-	undo_stroke.add_theme_stylebox_override("normal", paper)
-	undo_stroke.add_theme_color_override("font_color", Color("544034"))
-	world.add_child(undo_stroke)
-	undo_stroke.pressed.connect(proofreading_surface.undo_last)
-	pencil.input_exclusions.assign([undo_stroke, %SourceText.get_v_scroll_bar()])
+	eraser = preload("res://Scenes/desk_eraser.tscn").instantiate() as DeskPencil
+	eraser.position = eraser_rest_position
+	eraser.z_index = 60
+	world.add_child(eraser)
+	eraser.set_surface(proofreading_surface)
+	eraser.interaction_changed.connect(_refresh_actions)
+
+func _create_source_pager() -> void:
+	source_pager = source_page_scene.instantiate() as Pager
+	$Canvas/World.add_child(source_pager)
+	source_pager.page_changed.connect(func(offset: int):
+		proofreading_surface.set_page_offset(offset)
+		_refresh_actions()
+		view_changed.emit()
+	)
+	source_pager.turning_changed.connect(func():
+		proofreading_surface.finish_stroke()
+		_refresh_actions()
+	)
+	source_pager.opacity_changed.connect(func(opacity: float): proofreading_surface.text_opacity = opacity)
+	source_pager.bind(%SourceText)
+	pencil.input_exclusions.assign([eraser, source_pager])
+	eraser.input_exclusions.assign([pencil, source_pager])
+	proofreading_surface.exclusions.assign([%Coffee.get_node("Cup"), %HeadlineField, source_pager])
+	stamp_area.excluded_controls.append(stamp_area.get_path_to(source_pager))
 
 func _process(_delta: float) -> void:
-	$Canvas.motion_enabled = not popup.visible and _pending_result.is_empty() and not stamp.dragging and not stamp.busy and not pencil.held and not (choices.visible and GameSettings.choice_overlay_enabled)
+	$Canvas.motion_enabled = not popup.visible and _pending_result.is_empty() and not stamp.dragging and not stamp.busy and not pencil.held and not eraser.held and not (choices.visible and GameSettings.choice_overlay_enabled)
 
 func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree() or not event is InputEventMouseButton:
@@ -168,7 +182,7 @@ func _update_choice_overlay() -> void:
 	%FinishShift.visible = not overlay_blocks
 	stamp.visible = not overlay_blocks
 	pencil.visible = session != null and session.proofreading_unlocked and not overlay_blocks
-	undo_stroke.visible = pencil.visible
+	eraser.visible = pencil.visible
 	if session != null:
 		_refresh_actions()
 
@@ -184,6 +198,7 @@ func bind(model: NewsroomSession) -> void:
 func _phase_changed() -> void:
 	if session.phase != NewsroomSession.Phase.WORK:
 		_next_source = null
+		source_pager.finish_turn()
 		_animate_source(false)
 		_clear_pending_result()
 		stamp_area.reset()
@@ -191,6 +206,7 @@ func _phase_changed() -> void:
 		popup_kind = DialogKind.NONE
 		_hide_choices(false)
 		pencil.cancel_interaction()
+		eraser.cancel_interaction()
 	_refresh_desk()
 
 func _refresh_desk() -> void:
@@ -207,18 +223,23 @@ func _refresh_actions() -> void:
 		return
 	var blocked := session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached() or _next_source != null
 	var overlay_blocks := choices.visible and GameSettings.choice_overlay_enabled
-	%HeadlineField.disabled = blocked or _choices_animating or overlay_blocks or pencil.held
-	var can_publish := not (blocked or selected_index < 0 or choices_open or _choices_animating or popup.visible or overlay_blocks or pencil.held)
+	var turning := source_pager.turning
+	var tool_held := pencil.held or eraser.held
+	%HeadlineField.disabled = blocked or _choices_animating or overlay_blocks or tool_held or turning
+	var can_publish := not (blocked or selected_index < 0 or choices_open or _choices_animating or popup.visible or overlay_blocks or tool_held or turning)
 	stamp.set_enabled(can_publish)
 	stamp_area.set_available(can_publish)
 	pencil.enabled = session.proofreading_unlocked
 	pencil.visible = pencil.enabled and not overlay_blocks
-	undo_stroke.visible = pencil.visible
-	pencil.interaction_enabled = not (blocked or choices.visible or popup.visible or stamp.dragging or stamp.busy)
-	proofreading_surface.input_enabled = pencil.enabled and pencil.interaction_enabled
-	undo_stroke.disabled = blocked or choices.visible or popup.visible or stamp.dragging or stamp.busy or session.proofreading.strokes.is_empty()
-	%FinishShift.disabled = blocked or overlay_blocks or stamp.dragging or stamp.busy or pencil.held
-	%Coffee.get_node("Cup").disabled = blocked or not session.coffee_ready or session.coffee_used_today or session.health >= session.balance.maximum_stat or overlay_blocks or stamp.dragging or stamp.busy or pencil.held
+	eraser.enabled = pencil.enabled
+	eraser.visible = pencil.visible
+	var tools_available := not (blocked or choices.visible or popup.visible or stamp.dragging or stamp.busy)
+	pencil.interaction_enabled = tools_available and not eraser.held
+	eraser.interaction_enabled = tools_available and not pencil.held
+	proofreading_surface.input_enabled = pencil.enabled and tools_available and not turning
+	%FinishShift.disabled = blocked or overlay_blocks or stamp.dragging or stamp.busy or tool_held or turning
+	%Coffee.get_node("Cup").disabled = blocked or not session.coffee_ready or session.coffee_used_today or session.health >= session.balance.maximum_stat or overlay_blocks or stamp.dragging or stamp.busy or tool_held or turning
+	source_pager.enabled = not (blocked or choices.visible or popup.visible or stamp.dragging or stamp.busy or _source_reveal != null)
 
 func _refresh_combo() -> void:
 	if session.combo_count == _shown_combo_count and session.combo_type == _shown_combo_type:
@@ -251,15 +272,17 @@ func _drink_coffee() -> void:
 func _display_source(article: NewsArticle, animate := false) -> void:
 	_next_source = null
 	if article == null:
+		_displayed_article_id = ""
 		%SourceTitle.text = "ВЫПУСК ГОТОВ"
-		%SourceText.text = "Все материалы разобраны. Можно сдать выпуск."
+		source_pager.set_source("Все материалы разобраны. Можно сдать выпуск.")
 		proofreading_surface.clear()
 		_animate_source(false)
 		return
+	_displayed_article_id = article.id
 	%SourceTitle.text = article.source_title
-	%SourceText.text = session.display_source_text(article)
+	source_pager.set_source(session.display_source_text(article))
 	if session.proofreading_unlocked and session.proofreading.article_id == article.id:
-		proofreading_surface.bind(%SourceText, session.proofreading)
+		proofreading_surface.bind(%SourceText, session.proofreading, source_pager.character_offset)
 	else:
 		proofreading_surface.clear()
 	%SourceText.scroll_to_line(0)
@@ -287,6 +310,11 @@ func _animate_source(animate := true) -> void:
 	if should_animate:
 		_source_reveal = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		_source_reveal.tween_method(_set_source_reveal, 0.0, 1.0, source_reveal_seconds)
+		_source_reveal.tween_callback(func():
+			_source_reveal = null
+			_refresh_actions()
+		)
+	_refresh_actions()
 
 func _set_source_reveal(progress: float) -> void:
 	_source_material.set_shader_parameter("reveal_progress", progress)
@@ -322,6 +350,7 @@ func show_article(absorb_ink := true) -> void:
 	_clear_pending_result()
 	stamp.cancel_interaction()
 	pencil.cancel_interaction()
+	eraser.cancel_interaction()
 	popup.reset()
 	popup_kind = DialogKind.NONE
 	_hide_choices(false)
@@ -342,7 +371,7 @@ func _toggle_choices() -> void:
 		_open_choices()
 
 func _open_choices(animate := true) -> void:
-	if session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached() or _next_source != null or session.current_article() == null or pencil.held:
+	if session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached() or _next_source != null or session.current_article() == null or pencil.held or eraser.held:
 		return
 	if _choice_tween:
 		_choice_tween.kill()
@@ -489,8 +518,8 @@ func _show_result(result: Dictionary) -> void:
 	for article in session.articles:
 		if article.id == result.get("article_id", ""):
 			var resolved := ArticleSequence.resolve(article, session.story_choices, session.journal)
-			# Reloads need the published source; a live result keeps its scroll position.
-			if %SourceTitle.text != resolved.source_title or %SourceText.text != result.get("source_text", session.display_source_text(resolved)):
+			# Reloads need the published source; a live result keeps the reading page.
+			if %SourceTitle.text != resolved.source_title or source_pager.source_text != result.get("source_text", session.display_source_text(resolved)):
 				_display_source(resolved)
 			break
 	%HeadlineField.set_headline(result.headline)
@@ -517,7 +546,8 @@ func _show_result(result: Dictionary) -> void:
 func capture_presentation() -> Dictionary:
 	return {"layout_version": 2, "dialog": "result" if popup_kind == DialogKind.RESULT else "none",
 		"selected_index": selected_index,
-		"choices_open": choices_open, "drawer_expanded": %Drawer.expanded}
+		"choices_open": choices_open, "drawer_expanded": %Drawer.expanded,
+		"source_article_id": _displayed_article_id, "source_character": source_pager.capture_character()}
 
 func restore_presentation(data: Dictionary) -> void:
 	show_article(false)
@@ -526,6 +556,7 @@ func restore_presentation(data: Dictionary) -> void:
 	if session.awaiting_acknowledgement:
 		stamp_area.restore_result()
 		_show_result(session.last_result)
+		_restore_source_page(data)
 		return
 	var dialog := str(data.get("dialog", "none"))
 	var legacy := int(data.get("layout_version", 1)) < 2
@@ -539,4 +570,10 @@ func restore_presentation(data: Dictionary) -> void:
 		%HeadlineField.set_headline(session.option_at(selected_index).text)
 	if bool(data.get("choices_open", false)) and dialog != "confirm":
 		_open_choices(false)
+	_restore_source_page(data)
 	_refresh_actions()
+
+func _restore_source_page(data: Dictionary) -> void:
+	var anchor = data.get("source_character", 0)
+	if data.get("source_article_id", "") == _displayed_article_id and (anchor is int or anchor is float) and is_finite(float(anchor)):
+		source_pager.go_to_character(int(clampf(float(anchor), 0.0, source_pager.source_text.length())))

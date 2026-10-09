@@ -451,7 +451,7 @@ func _present_tutorial_step() -> void:
 			for suffix in ["Title", "Value", "Bar", "Help"]:
 				targets.append(work.get_node(panel + stat + suffix))
 		else:
-			var paths := {"source": "%SourceText", "headline": "%HeadlineField", "stamp": "%Stamp", "publish": "%StampArea", "coffee": "%Coffee", "finish": "%FinishShift", "combo": "%ComboBurst", "pencil": "Canvas/World/Pencil", "undo": "Canvas/World/UndoStroke"}
+			var paths := {"source": "%SourceText", "headline": "%HeadlineField", "stamp": "%Stamp", "publish": "%StampArea", "coffee": "%Coffee", "finish": "%FinishShift", "combo": "%ComboBurst", "pencil": "Canvas/World/Pencil", "eraser": "Canvas/World/Eraser"}
 			targets.append(work.get_node(paths[step.target]))
 			if step.target == "source":
 				targets.append(work.get_node("%SourceTitle"))

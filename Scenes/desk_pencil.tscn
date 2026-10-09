@@ -1,7 +1,8 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://Scripts/desk_pencil.gd" id="pencil"]
 [ext_resource type="Shader" path="res://Shaders/note_shadow.gdshader" id="shadow"]
+[ext_resource type="Shader" path="res://Shaders/worn_pencil.gdshader" id="wear"]
 
 [sub_resource type="ViewportTexture" id="Texture"]
 viewport_path = NodePath("Render")
@@ -21,9 +22,12 @@ ambient_light_energy = 0.65
 resource_local_to_scene = true
 environment = SubResource("Environment")
 
-[sub_resource type="StandardMaterial3D" id="Paint"]
-albedo_color = Color(0.44, 0.16, 0.14, 1)
-roughness = 0.72
+[sub_resource type="ShaderMaterial" id="Paint"]
+shader = ExtResource("wear")
+shader_parameter/paint_color = Color(0.56, 0.24, 0.20, 1)
+shader_parameter/wood_color = Color(0.73, 0.62, 0.43, 1)
+shader_parameter/wear = 0.65
+shader_parameter/grain_strength = 0.18
 
 [sub_resource type="StandardMaterial3D" id="Wood"]
 albedo_color = Color(0.67, 0.46, 0.28, 1)
@@ -35,8 +39,8 @@ roughness = 0.64
 
 [sub_resource type="CylinderMesh" id="Barrel"]
 material = SubResource("Paint")
-top_radius = 0.062
-bottom_radius = 0.062
+top_radius = 0.105
+bottom_radius = 0.105
 height = 3.3
 radial_segments = 6
 rings = 1
@@ -44,7 +48,7 @@ rings = 1
 [sub_resource type="CylinderMesh" id="TipWood"]
 material = SubResource("Wood")
 top_radius = 0.012
-bottom_radius = 0.062
+bottom_radius = 0.105
 height = 0.29
 radial_segments = 6
 rings = 1
@@ -59,8 +63,8 @@ rings = 1
 
 [sub_resource type="CylinderMesh" id="EndWood"]
 material = SubResource("Wood")
-top_radius = 0.062
-bottom_radius = 0.062
+top_radius = 0.105
+bottom_radius = 0.105
 height = 0.008
 radial_segments = 6
 rings = 1
@@ -78,20 +82,24 @@ editor_description = "Красный деревянный карандаш. Кл
 offset_right = 550.0
 offset_bottom = 130.0
 script = ExtResource("pencil")
+grab_rect = Rect2(20, 40, 510, 60)
+lift_height = 0.22
+lift_tilt_degrees = Vector3(0, 55, 35)
 
 [node name="Shadow" type="TextureRect" parent="."]
 material = SubResource("ShadowMaterial")
 offset_left = -3.0
-offset_top = 5.0
+offset_top = -205.0
 offset_right = 547.0
-offset_bottom = 135.0
+offset_bottom = 345.0
 mouse_filter = 2
 texture = SubResource("Texture")
 expand_mode = 1
 
 [node name="Image" type="TextureRect" parent="."]
+offset_top = -210.0
 offset_right = 550.0
-offset_bottom = 130.0
+offset_bottom = 340.0
 mouse_filter = 2
 texture = SubResource("Texture")
 expand_mode = 1
@@ -100,12 +108,12 @@ expand_mode = 1
 transparent_bg = true
 world_3d = SubResource("World")
 gui_disable_input = true
-size = Vector2i(1100, 260)
+size = Vector2i(1100, 1100)
 msaa_3d = 1
 render_target_update_mode = 1
 
 [node name="Camera" type="Camera3D" parent="Render"]
-position = Vector3(0, 3, 0.4)
+position = Vector3(0, 12, 0.4)
 current = true
 fov = 20.0
 
@@ -116,26 +124,26 @@ light_energy = 1.1
 [node name="ModelRoot" type="Node3D" parent="Render"]
 
 [node name="Barrel" type="MeshInstance3D" parent="Render/ModelRoot"]
-position = Vector3(0, 0.07, 0)
+position = Vector3(0, 0.11, 0)
 rotation = Vector3(0, 0, 1.5707963)
 mesh = SubResource("Barrel")
 
 [node name="TipWood" type="MeshInstance3D" parent="Render/ModelRoot"]
-position = Vector3(-1.795, 0.07, 0)
+position = Vector3(-1.795, 0.11, 0)
 rotation = Vector3(0, 0, 1.5707963)
 mesh = SubResource("TipWood")
 
 [node name="TipLead" type="MeshInstance3D" parent="Render/ModelRoot"]
-position = Vector3(-1.9625, 0.07, 0)
+position = Vector3(-1.9625, 0.11, 0)
 rotation = Vector3(0, 0, 1.5707963)
 mesh = SubResource("TipLead")
 
 [node name="EndWood" type="MeshInstance3D" parent="Render/ModelRoot"]
-position = Vector3(1.654, 0.07, 0)
+position = Vector3(1.654, 0.11, 0)
 rotation = Vector3(0, 0, 1.5707963)
 mesh = SubResource("EndWood")
 
 [node name="EndLead" type="MeshInstance3D" parent="Render/ModelRoot"]
-position = Vector3(1.66, 0.07, 0)
+position = Vector3(1.66, 0.11, 0)
 rotation = Vector3(0, 0, 1.5707963)
 mesh = SubResource("EndLead")

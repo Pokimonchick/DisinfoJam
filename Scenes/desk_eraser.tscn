@@ -1,0 +1,75 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://Scripts/desk_pencil.gd" id="tool"]
+[ext_resource type="PackedScene" path="res://Assets/Models/eraser.glb" id="model"]
+[ext_resource type="Shader" path="res://Shaders/note_shadow.gdshader" id="shadow"]
+
+[sub_resource type="ViewportTexture" id="Texture"]
+viewport_path = NodePath("Render")
+
+[sub_resource type="ShaderMaterial" id="ShadowMaterial"]
+resource_local_to_scene = true
+shader = ExtResource("shadow")
+shader_parameter/shadow_strength = 0.26
+shader_parameter/blur_pixels = 3.0
+
+[sub_resource type="Environment" id="Environment"]
+ambient_light_source = 3
+ambient_light_color = Color(1, 0.91, 0.8, 1)
+ambient_light_energy = 0.65
+
+[sub_resource type="World3D" id="World"]
+resource_local_to_scene = true
+environment = SubResource("Environment")
+
+[node name="Eraser" type="Control"]
+editor_description = "Ластик: взять нажатием, стирать с зажатой ЛКМ, положить правой кнопкой."
+offset_right = 180.0
+offset_bottom = 180.0
+script = ExtResource("tool")
+camera_height = 5.0
+camera_depth = 1.6
+grab_rect = Rect2(20, 45, 140, 85)
+lift_height = 0.12
+lift_tilt_degrees = Vector3(5, -12, 5)
+tool_mode = 1
+model_contact = Vector3(0, -0.2, 0)
+erase_radius = 22.0
+
+[node name="Shadow" type="TextureRect" parent="."]
+material = SubResource("ShadowMaterial")
+offset_left = -3.0
+offset_top = 5.0
+offset_right = 177.0
+offset_bottom = 185.0
+mouse_filter = 2
+texture = SubResource("Texture")
+expand_mode = 1
+
+[node name="Image" type="TextureRect" parent="."]
+offset_right = 180.0
+offset_bottom = 180.0
+mouse_filter = 2
+texture = SubResource("Texture")
+expand_mode = 1
+
+[node name="Render" type="SubViewport" parent="."]
+transparent_bg = true
+world_3d = SubResource("World")
+gui_disable_input = true
+size = Vector2i(360, 360)
+msaa_3d = 1
+render_target_update_mode = 1
+
+[node name="Camera" type="Camera3D" parent="Render"]
+position = Vector3(0, 5, 1.6)
+current = true
+fov = 20.0
+
+[node name="Sun" type="DirectionalLight3D" parent="Render"]
+light_color = Color(1, 0.93, 0.8, 1)
+light_energy = 1.1
+
+[node name="ModelRoot" type="Node3D" parent="Render"]
+
+[node name="Model" parent="Render/ModelRoot" instance=ExtResource("model")]

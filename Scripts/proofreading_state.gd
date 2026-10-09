@@ -98,6 +98,8 @@ func restore(data: Dictionary) -> void:
 		for key in ["id", "start", "length"]:
 			target[key] = int(target[key])
 	for stroke in strokes:
+		if stroke.has("page_character"):
+			stroke.page_character = int(stroke.page_character)
 		for segment in stroke.segments:
 			if segment.anchor == "text":
 				segment.character = int(segment.character)
@@ -154,6 +156,8 @@ static func _integer(value: Variant) -> bool:
 	return value is int or (value is float and is_finite(value) and value == floor(value))
 
 static func _valid_stroke(stroke: Dictionary, text_length: int) -> bool:
+	if stroke.has("page_character") and (not _integer(stroke.page_character) or int(stroke.page_character) < 0 or int(stroke.page_character) >= maxi(1, text_length)):
+		return false
 	if not stroke.get("segments") is Array or stroke.segments.is_empty() or stroke.segments.size() > MAX_POINTS:
 		return false
 	var total := 0
