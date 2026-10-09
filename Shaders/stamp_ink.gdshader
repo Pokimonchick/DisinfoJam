@@ -4,6 +4,7 @@ render_mode blend_mul, unshaded;
 uniform float paper_cutoff : hint_range(0.0, 0.3) = 0.08;
 uniform float edge_softness : hint_range(0.01, 0.3) = 0.12;
 uniform float ink_opacity : hint_range(0.0, 1.0) = 0.95;
+uniform vec4 pigment_color : source_color = vec4(0.7137255, 0.1607843, 0.0941176, 0.98);
 uniform float absorption_progress : hint_range(0.0, 1.0) = 0.0;
 uniform float absorption_spread_pixels : hint_range(0.0, 4.0) = 3.0;
 uniform float absorption_grain : hint_range(0.0, 1.0) = 0.35;
@@ -45,7 +46,8 @@ vec4 red_ink(vec4 source) {
 	// Extract red pigment, never the cream backing of the supplied PNG.
 	float redness = max(source.r - max(source.g, source.b), 0.0);
 	float mask = smoothstep(paper_cutoff, paper_cutoff + edge_softness, redness) * source.a;
-	return vec4(source.rgb * mask, mask);
+	float coverage = mask * pigment_color.a;
+	return vec4(pigment_color.rgb * coverage, coverage);
 }
 
 void fragment() {

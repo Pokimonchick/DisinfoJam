@@ -23,24 +23,24 @@ func _draw() -> void:
 	var middle := size.y * 0.5
 	if length < 2.0:
 		return
-	_stroke(length, middle - 2.0, Color("ad9770", 0.55), 2.0, 0.5)
-	_stroke(length, middle + 3.0, Color("ad9770", 0.32), 1.0, 2.2)
+	_stroke(length, middle - 2.0, Color("ad9770", 0.55), 4.0, 0.5)
+	_stroke(length, middle + 3.0, Color("ad9770", 0.32), 2.0, 2.2)
 	var fraction := clampf((value - min_value) / maxf(max_value - min_value, 1.0), 0.0, 1.0)
 	var filled := length * fraction
 	if filled < 2.0:
 		return
 	var shade := ink_color
 	shade.a = 0.32
-	_stroke(filled, middle, shade, 11.0, 0.8)
+	_stroke(filled, middle, shade, 22.0, 0.8)
 	shade.a = 0.78
-	_stroke(filled, middle - 0.5, shade, 6.0, 1.6)
+	_stroke(filled, middle - 0.5, shade, 12.0, 1.6)
 	shade.a = 0.52
-	_stroke(filled, middle - 3.0, shade, 1.0, 3.1)
-	_stroke(filled, middle + 3.5, shade, 1.0, 4.4)
+	_stroke(filled, middle - 3.0, shade, 2.0, 3.1)
+	_stroke(filled, middle + 3.5, shade, 2.0, 4.4)
 	for index in range(int(filled / 9.0)):
 		var x := float(index) * 9.0 + 4.0
 		var y := middle + sin(x * 0.73) * 3.0
-		draw_line(Vector2(x, y), Vector2(minf(x + 2.5, filled), y + 0.5), Color(1.0, 0.94, 0.78, 0.25), 1.0)
+		draw_line(Vector2(x, y), Vector2(minf(x + 2.5, filled), y + 0.5), Color(1.0, 0.94, 0.78, 0.25), 2.0)
 
 
 func _stroke(length: float, y: float, color: Color, thickness: float, phase: float) -> void:

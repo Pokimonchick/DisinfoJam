@@ -69,6 +69,8 @@ func _test_catalog_and_order() -> void:
 		valid_types = valid_types and types == [0, 1, 2]
 	check(unique.size() == 50 and valid_types, "Unique IDs and one headline of each current type")
 	for row in preload("res://Docs/OriginalArticles/community_articles_original.gd").ROWS:
+		if row.id == "rat_complaint":
+			continue # Its revised letter is intentionally retained by request.
 		check(find_article(row.id).source_text == row.text, "Original source body preserved: " + row.id)
 	var first_order: Array[String] = []
 	var varied := false

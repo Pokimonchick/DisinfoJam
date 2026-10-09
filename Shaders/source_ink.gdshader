@@ -3,6 +3,8 @@ render_mode unshaded;
 
 uniform float absorption_progress : hint_range(0.0, 1.0) = 0.0;
 uniform float reveal_progress : hint_range(0.0, 1.0) = 1.0;
+uniform float page_absorption_progress : hint_range(0.0, 1.0) = 0.0;
+uniform float page_reveal_progress : hint_range(0.0, 1.0) = 1.0;
 uniform float blotch_scale : hint_range(10.0, 240.0) = 120.0;
 uniform float blotch_softness : hint_range(0.01, 0.5) = 0.28;
 uniform float blotch_motion : hint_range(0.0, 2.0) = 0.28;
@@ -47,20 +49,28 @@ void fragment() {
 	if (pencil_grain_strength > 0.0) {
 		// Fixed paper fibers leave small dry gaps without an animated grain pattern.
 		vec2 paper = pencil_paper_position / max(pencil_grain_scale, 0.4);
-		float fleck = hash(floor(paper));
-		float fibers = noise(paper * vec2(0.35, 1.2));
-		float coverage = mix(0.35, 1.0, smoothstep(0.06, 0.38, fleck));
-		coverage *= mix(0.90, 1.0, fibers);
-		COLOR.a *= mix(1.0, coverage, pencil_grain_strength);
-		COLOR.rgb *= mix(1.0, 0.94 + fibers * 0.06, pencil_grain_strength);
+		// Two-dimensional rotated fields avoid grid columns or bands along a
+		// stroke. Grain is fixed on paper, independent of mouse speed and TIME.
+		vec2 grain = mat2(vec2(0.89157, 0.45289), vec2(-0.45289, 0.89157)) * paper;
+		float fibers = noise(grain * vec2(0.41, 1.07) + vec2(9.7, 17.1));
+		float pores = noise(grain * 1.65 + vec2(fibers * 0.7, fibers * fibers * 0.9));
+		float tooth = pores * 0.8 + fibers * 0.2;
+		float threshold = mix(0.11, 0.29, pencil_grain_strength);
+		// Coverage reaches zero: these gaps expose the actual paper beneath.
+		COLOR.a *= smoothstep(threshold - 0.065, threshold + 0.065, tooth);
+		COLOR.rgb *= mix(0.92, 1.0, fibers);
 	}
 	// Fully readable text needs no procedural noise during ordinary reading.
-	if (absorption_progress > 0.0 || reveal_progress < 1.0) {
+	if (absorption_progress > 0.0 || reveal_progress < 1.0 || page_absorption_progress > 0.0 || page_reveal_progress < 1.0) {
 		float field = blotches((ink_canvas_position - ink_origin) / max(blotch_scale, 1.0));
 		float dissolve = mix(-blotch_softness, 1.0 + blotch_softness, clamp(absorption_progress, 0.0, 1.0));
 		float reveal = mix(-blotch_softness, 1.0 + blotch_softness, clamp(reveal_progress, 0.0, 1.0));
 		float remaining = 1.0 - smoothstep(field - blotch_softness, field + blotch_softness, dissolve);
 		float appearing = smoothstep(field - blotch_softness, field + blotch_softness, reveal);
+		float page_dissolve = mix(-blotch_softness, 1.0 + blotch_softness, clamp(page_absorption_progress, 0.0, 1.0));
+		float page_reveal = mix(-blotch_softness, 1.0 + blotch_softness, clamp(page_reveal_progress, 0.0, 1.0));
+		remaining *= 1.0 - smoothstep(field - blotch_softness, field + blotch_softness, page_dissolve);
+		appearing *= smoothstep(field - blotch_softness, field + blotch_softness, page_reveal);
 		// Broad partial coverage leaves pale pigment before reaching bare paper.
 		COLOR.a *= pow(clamp(remaining * appearing, 0.0, 1.0), pigment_falloff);
 	}

@@ -726,7 +726,7 @@ static func _validate_save(sections: Dictionary) -> bool:
 	if guidance.get("stage", "").is_empty() and step != 0:
 		return false
 	if guidance.get("stage", "") == "pencil":
-		if sections.run.phase != "work" or not sections.run.get("proofreading_unlocked", int(sections.run.day) >= 3) or step >= INTERFACE_LESSONS.pencil().size() or guidance.get("pencil_done", false):
+		if sections.run.phase != "work" or not sections.run.get("proofreading_unlocked", int(sections.run.day) >= preload("res://Data/mvp_balance.tres").proofreading_unlock_day) or step >= INTERFACE_LESSONS.pencil().size() or guidance.get("pencil_done", false):
 			return false
 	var newsroom: Dictionary = presentation.get("newsroom", {})
 	var selected_index: Variant = newsroom.get("selected_index", -1)
@@ -772,7 +772,7 @@ static func _validate_save(sections: Dictionary) -> bool:
 					if run.phase != "ended" or not run.ending in ["victory", "goal_missed"]:
 						return false
 				elif episode == "day_2":
-					# Existing saves may still contain this conversation before shift 2.
+					# The conversation is now a morning scene; older saves may be at home.
 					if int(run.day) != 2 or not run.phase in ["work", "home"]:
 						return false
 				elif run.phase != "work" or CHAPTER.episode_for_day(int(run.day)) != episode:

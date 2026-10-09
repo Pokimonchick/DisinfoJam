@@ -5,7 +5,7 @@ Bripolis is a city of anthropomorphic animals governed by cats in the 1990s. Aut
 ## Catalog and provenance
 
 - `Data/article_catalog.gd` combines 24 base stories, eight user stories and 18 new Codex stories: **50 articles / 150 headlines**.
-- `Data/community_articles.gd` preserves all eight original source bodies. Codex adapted duplicate headline types so each article offers facts, sensation and state support.
+- `Data/community_articles.gd` preserves the user stories, with the revised letter from Mr Mur retained by request. Codex adapted duplicate headline types so each article offers facts, sensation and state support. Mur's first two headlines retain their original wording; the third adds a cat-tail joke while keeping its inspection-support meaning and effects.
 - `Data/bripolis_articles.gd` contains the 18 new stories with explicit `provenance` (`author: Codex`, `kind: authored`). This is fictional authored content; it uses no network generation.
 - `Data/story_chains.gd` contains Codex continuations around the user stories. Only source text changes; the shared plot, evidence and outcomes stay intact.
 - `Docs/OriginalArticles/community_articles_original.gd` is an exact copy from before the headline adaptation. It is excluded from the live catalog but is read during legacy-save recovery to identify old stable headline indices.

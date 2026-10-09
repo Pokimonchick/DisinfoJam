@@ -75,9 +75,10 @@ func _refresh() -> void:
 		_set_meter(%QualificationBar, %QualificationValue, session.qualification, Color("64697c"))
 		%QualificationHint.text = "ВЫЧИТКА ИСТОЧНИКА ДОСТУПНА"
 	%QualificationHelp.tooltip_text = preload("res://Scripts/stat_descriptions.gd").text_for("qualification", session.balance)
-	var balance_y := 950.0 if qualification_visible else 790.0
-	%MoneyValue.position.y = balance_y
-	$SlidingPanel/MoneyTitle.position.y = balance_y
+	var balance_y := 934.0 if qualification_visible else 784.0
+	$SlidingPanel/BalanceCard.position.y = balance_y
+	%MoneyValue.position.y = balance_y + 12.0
+	$SlidingPanel/MoneyTitle.position.y = balance_y + 12.0
 	var support: StatBenefit = session.balance.reader_support
 	var support_text := support.ready_text if session.reputation >= support.threshold else support.locked_text
 	%ReputationHint.text = support.formatted(support_text)

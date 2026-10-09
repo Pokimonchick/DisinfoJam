@@ -17,6 +17,11 @@ signal ink_time_changed(time: float)
 		if is_node_ready():
 			_configure_imprint()
 @export_range(0.0, 3.0, 0.05) var absorption_seconds := 1.8
+@export var ink_color := Color("b62918", 0.98):
+	set(value):
+		ink_color = value
+		if is_node_ready():
+			_refresh_ink_color()
 
 var printed := false
 var ink_time := 0.0
@@ -29,7 +34,12 @@ var _absorption: Tween
 
 func _ready() -> void:
 	_configure_imprint()
+	_refresh_ink_color()
 	reset()
+
+func _refresh_ink_color() -> void:
+	for seal in [preview, imprint]:
+		(seal.material as ShaderMaterial).set_shader_parameter("pigment_color", ink_color)
 
 func _process(delta: float) -> void:
 	if Engine.is_editor_hint():

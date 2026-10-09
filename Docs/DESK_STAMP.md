@@ -3,11 +3,13 @@
 The stamp replaces the publication button. Click its handle with the left mouse
 button, move the cursor over the article body, then click again to print.
 Releasing the first click keeps the stamp attached to the cursor.
-The full seal must fit within that area and avoid the headline and visible cup.
+The full seal must fit within that area and avoid the headline and paginator.
+Ink can pass beneath the coffee; the cup's higher layer covers it.
 A faint preview and darker field corners appear at valid positions.
-Consequences apply once at the end of the downward stroke, using the existing
-`NewsroomSession.publish_headline()` rules. The result note waits until the stamp
-returns to rest, waits for the configured `Result Delay Seconds`, and approaches over 0.7 seconds
+Stamp contact starts proofreading recognition when unlocked; consequences apply
+once after its frame-sized calculation, using `NewsroomSession.publish_headline()`.
+The result note waits for calculation to finish and for `Result Delay Seconds`
+to elapse after the stamp returns to rest, then approaches over 0.7 seconds
 with smooth acceleration and deceleration. Passive stamina loss stays paused
 through this wait and the result. Pausing also pauses the pending result delay.
 Closing the note fades the whole paper while it returns to its origin; publication
@@ -38,13 +40,15 @@ Choosing a headline and reading a result prevent further stamping.
   the central text column. A seal must still fit fully inside the paper body.
   `Imprint Size` (224 x 224 by default, including the PNG's transparent margins)
   approximates the round base's visible diameter. `Imprint Angle Degrees` sets the seal
-  footprint. `Excluded Controls` reject overlap with the cup and headline even
+  footprint. `Excluded Controls` reject overlap with the headline and paginator even
   if the print area is moved. The full rotated footprint is checked.
   `Absorption Seconds` (1.8 by default) controls the old seal's disappearance
   when advancing to the next article; zero makes it immediate.
 - `Assets/Desk/stamp_approved.png`: the supplied red mouse seal. `stamp_ink.gdshader`
   removes its neutral paper background during drawing and multiplies only the
   red ink over the existing article; the original PNG is preserved.
+  `StampArea.Ink Color` supplies the pigment; the desk synchronizes it with
+  `ProofreadingSurface.Pencil Color` (`#b62918`, alpha 0.98).
   Preview and imprint have separate local materials. The imprint's shader
   parameters `Absorption Spread Pixels` and `Absorption Grain` adjust subtle
   edge diffusion and paper pores without adding a background. `Blotch Scale`,

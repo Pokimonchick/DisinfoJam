@@ -143,3 +143,31 @@ static func apply(articles: Array[NewsArticle]) -> int:
 					changed += 1
 				break
 	return changed
+
+static func restore_requested_headlines(articles: Array[NewsArticle], first_unpublished: int, history: Array) -> int:
+	# Refresh the requested Mur headline only in an untouched, unpublished draft.
+	# Published results and manually edited sources/options retain their meaning.
+	var published: Dictionary = {}
+	for entry in history:
+		published[str(entry.get("article_id", ""))] = true
+	var row: Dictionary = {}
+	for current in preload("res://Data/community_articles.gd").ROWS:
+		if current.id == "rat_complaint":
+			row = current
+			break
+	for index in range(first_unpublished, articles.size()):
+		var saved: NewsArticle = articles[index]
+		if saved.id != "rat_complaint" or published.has(saved.id) or not saved.provenance.is_empty():
+			continue
+		if saved.source_title != row.source or saved.source_text != row.text or saved.headlines.size() != 3:
+			continue
+		var option: HeadlineOption = saved.headlines[2]
+		if not option.text in ["Не будем отвергать санитарную проверку по непроверенной жалобе", "Суп со вкусом крысиной шерсти! Успейте попробовать пока повара не уволили!"]:
+			continue
+		if [option.money, option.reputation, option.loyalty, option.editorial_type] != [27, 6, 8, 2]:
+			continue
+		if option.explanation != "Вы поддержали проверку вместо назначения виновного по одному письму. Жалоба не объявлена ложной, читатели ценят осторожность, санитарное бюро одобряет доверие к процедуре.":
+			continue
+		saved.headlines[2] = NewsArticle.from_row(row).headlines[2]
+		return 1
+	return 0

@@ -4,9 +4,17 @@ extends Control
 signal changed
 
 const Evaluation = preload("res://Scripts/proofreading_evaluation.gd")
+const Brush = preload("res://Scripts/proofreading_brush.gd")
 
-@export var pencil_color := Color("b62918", 0.98)
-@export_range(1.0, 6.0, 0.2) var line_width := 2.8
+@export var pencil_color := Color("b62918", 0.98):
+	set(value):
+		pencil_color = value
+		queue_redraw()
+@export_range(1.0, 6.0, 0.2) var line_width := 2.8:
+	set(value):
+		line_width = value
+		if is_node_ready():
+			_invalidate_brush_cache()
 @export_range(0.0, 1.0, 0.05) var grain_strength := 0.75:
 	set(value):
 		grain_strength = value
@@ -15,6 +23,12 @@ const Evaluation = preload("res://Scripts/proofreading_evaluation.gd")
 	set(value):
 		grain_scale = value
 		_refresh_brush_material()
+@export_range(0.1, 1.0, 0.05) var edge_softness := 0.45:
+	set(value):
+		edge_softness = value
+		if is_node_ready():
+			_invalidate_brush_cache()
+@export_range(0.1, 3.0, 0.1) var render_budget_ms := 1.0
 
 var input_enabled := true:
 	set(value):
@@ -46,11 +60,15 @@ var _point_count := 0
 var _erasing := false
 var _erasure_changed := false
 var _erase_point := Vector2.ZERO
+var _render_cache: Array = []
+var _live_brushes: Array = []
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if material == null:
 		set_ink_material(preload("res://Data/source_ink.tres"))
+	resized.connect(_invalidate_brush_cache)
+	set_process(false)
 
 func set_ink_material(ink: ShaderMaterial) -> void:
 	# The brush has its own grain; source glyphs retain their unchanged material.
@@ -75,6 +93,7 @@ func bind(body: RichTextLabel, article_state: ProofreadingState, page_offset := 
 	label = body
 	state = article_state
 	character_offset = maxi(0, page_offset)
+	_invalidate_brush_cache()
 	_lines.clear()
 	_words.clear()
 	if is_instance_valid(label) and state != null:
@@ -100,6 +119,8 @@ func set_page_offset(offset: int) -> void:
 	finish_stroke()
 	finish_erasure()
 	character_offset = maxi(0, offset)
+	_invalidate_legacy_brushes()
+	set_process(true)
 	_invalidate_geometry()
 	queue_redraw()
 
@@ -107,12 +128,16 @@ func _invalidate_geometry() -> void:
 	if _geometry_dirty:
 		return
 	_geometry_dirty = true
+	_invalidate_legacy_brushes()
+	set_process(true)
 	_rebuild_geometry.call_deferred()
 
 func _scroll_changed(_value: float) -> void:
 	# A scrolling wheel does not join points at two different scroll positions.
 	if _drawing:
 		finish_stroke()
+	_invalidate_legacy_brushes()
+	set_process(true)
 	queue_redraw()
 
 func _rebuild_geometry() -> void:
@@ -164,6 +189,7 @@ func begin_stroke(viewport_point: Vector2) -> bool:
 	if not _paper_contains(point):
 		return false
 	_segments.clear()
+	_live_brushes.clear()
 	_point_count = 0
 	_drawing = true
 	_last_point = point
@@ -186,30 +212,41 @@ func extend_stroke(viewport_point: Vector2) -> void:
 		for part in _paper_parts(_last_point, next):
 			_append_paper_part(part[0], part[1])
 		_last_point = next
+	_sync_live_brushes()
+	set_process(true)
 	queue_redraw()
 
 func finish_stroke() -> void:
 	if not _drawing:
 		return
 	_drawing = false
+	_sync_live_brushes()
 	var segments: Array = []
 	for segment in _segments:
 		if segment.points.size() >= 2:
 			segments.append(segment)
 	if not segments.is_empty():
+		var before := state.strokes.size()
 		state.add_stroke({"segments": segments, "corrected": [], "wrong": [], "page_character": character_offset})
+		_render_cache.resize(state.strokes.size())
+		if state.strokes.size() > before:
+			_render_cache[-1] = {"stroke": state.strokes[-1], "brushes": _live_brushes.duplicate(), "prepared": true}
 		changed.emit()
 	_segments.clear()
+	_live_brushes.clear()
+	set_process(true)
 	queue_redraw()
 
 func cancel_stroke() -> void:
 	_drawing = false
 	_segments.clear()
+	_live_brushes.clear()
 	queue_redraw()
 
 func undo_last() -> bool:
 	cancel_stroke()
 	if state != null and state.undo_last():
+		_render_cache.resize(state.strokes.size())
 		queue_redraw()
 		changed.emit()
 		return true
@@ -363,11 +400,16 @@ func _erase_between(origin: Vector2, finish: Vector2, radius: float) -> void:
 		_erasure_changed = true
 		if remaining.is_empty():
 			state.strokes.remove_at(index)
+			if index < _render_cache.size():
+				_render_cache.remove_at(index)
 		else:
 			stroke.segments = remaining
+			if index < _render_cache.size():
+				_render_cache[index] = null
 			# Legacy cached classifications are no longer valid after an edit.
 			stroke.corrected = []
 			stroke.wrong = []
+	set_process(true)
 	queue_redraw()
 
 static func _capsule_interval(a: Vector2, b: Vector2, origin: Vector2, finish: Vector2, radius: float) -> Vector2:
@@ -436,31 +478,107 @@ func _segment_body_point(segment: Dictionary, point: Array) -> Vector2:
 			return Vector2(float(point[0]) * label.size.x, float(line.y) + float(point[1]) * float(line.height) - label.get_v_scroll_bar().value)
 	return Vector2(-10000, -10000)
 
-func _draw() -> void:
-	if state != null:
-		for stroke in state.strokes:
-			if _stroke_visible(stroke):
-				_draw_segments(stroke.segments, not stroke.has("page_character"))
-	_draw_segments(_segments, false)
+func _invalidate_brush_cache() -> void:
+	_render_cache.clear()
+	_live_brushes.clear()
+	set_process(true)
+	queue_redraw()
 
-func _draw_segments(segments: Array, legacy_clipping := true) -> void:
-	for segment in segments:
-		if not _segment_visible(segment):
+func _invalidate_legacy_brushes() -> void:
+	if state == null:
+		return
+	for index in mini(_render_cache.size(), state.strokes.size()):
+		if not state.strokes[index].has("page_character"):
+			_render_cache[index] = null
+
+func _new_brush(points: Array):
+	var brush := Brush.new()
+	brush.configure(points, size, line_width, edge_softness)
+	return brush
+
+func _sync_live_brushes() -> void:
+	while _live_brushes.size() < _segments.size():
+		_live_brushes.append(_new_brush(_segments[_live_brushes.size()].points))
+
+func _prepare_view(view: Dictionary, deadline: int) -> void:
+	var segments: Array = view.segments
+	while int(view.segment) < segments.size() and Time.get_ticks_usec() < deadline:
+		var segment: Dictionary = segments[int(view.segment)]
+		if not _segment_visible(segment) or segment.points.size() < 2:
+			view.segment += 1
+			view.point = 1
+			view.run = []
 			continue
-		var points: Array = segment.points
-		if points.size() < 2:
+		if not view.legacy:
+			view.brushes.append(_new_brush(segment.points))
+			view.segment += 1
 			continue
-		var color := pencil_color
-		color.a *= text_opacity
-		if not legacy_clipping:
-			# New marks are already clipped when written: one draw call per run.
-			var polyline := PackedVector2Array()
-			for point in points:
-				polyline.append(Vector2(point[0], point[1]) * size)
-			draw_polyline(polyline, color, line_width, true)
+		if int(view.point) >= segment.points.size():
+			view.segment += 1
+			view.point = 1
+			view.run = []
 			continue
-		for index in range(1, points.size()):
-			var a := _segment_point(segment, points[index - 1])
-			var b := _segment_point(segment, points[index])
-			for part in _paper_parts(a, b):
-				draw_line(part[0], part[1], color, line_width, true)
+		var a := _segment_point(segment, segment.points[int(view.point) - 1])
+		var b := _segment_point(segment, segment.points[int(view.point)])
+		for part in _paper_parts(a, b):
+			var first: Vector2 = part[0] / size.max(Vector2.ONE)
+			var last: Vector2 = part[1] / size.max(Vector2.ONE)
+			if view.run.is_empty() or Vector2(view.run[-1][0], view.run[-1][1]).distance_to(first) > 0.00001:
+				view.run = [[first.x, first.y]]
+				view.brushes.append(_new_brush(view.run))
+			view.run.append([last.x, last.y])
+		view.point += 1
+	view.prepared = int(view.segment) >= segments.size()
+
+func _process(_delta: float) -> void:
+	if state == null:
+		set_process(false)
+		return
+	var deadline := Time.get_ticks_usec() + roundi(render_budget_ms * 1000.0)
+	var updated := false
+	var pending := false
+	_sync_live_brushes()
+	# The held tip gets priority over background reconstruction after a load.
+	for brush in _live_brushes:
+		if brush.pending():
+			updated = brush.advance(deadline) or updated
+			pending = brush.pending() or pending
+	_render_cache.resize(state.strokes.size())
+	for index in state.strokes.size():
+		var stroke: Dictionary = state.strokes[index]
+		if not _stroke_visible(stroke):
+			continue
+		if _render_cache[index] == null or not is_same(_render_cache[index].stroke, stroke):
+			_render_cache[index] = {"stroke": stroke, "segments": stroke.segments, "legacy": not stroke.has("page_character"), "brushes": [], "segment": 0, "point": 1, "run": [], "prepared": false}
+		var view: Dictionary = _render_cache[index]
+		if not view.prepared and not _geometry_dirty:
+			_prepare_view(view, deadline)
+		pending = not view.prepared or pending
+		for brush in view.brushes:
+			if brush.pending():
+				updated = brush.advance(deadline) or updated
+				pending = brush.pending() or pending
+	if updated:
+		queue_redraw()
+	set_process(pending)
+
+func _draw() -> void:
+	var color := pencil_color
+	color.a *= text_opacity
+	if state != null:
+		if _render_cache.size() != state.strokes.size():
+			set_process(true)
+		for index in mini(_render_cache.size(), state.strokes.size()):
+			if _stroke_visible(state.strokes[index]) and _render_cache[index] != null:
+				if is_same(_render_cache[index].stroke, state.strokes[index]):
+					_draw_brushes(_render_cache[index].brushes, color)
+				else:
+					set_process(true)
+	_draw_brushes(_live_brushes, color)
+
+func _draw_brushes(brushes: Array, color: Color) -> void:
+	for brush in brushes:
+		for mesh in brush.meshes:
+			draw_mesh(mesh, null, Transform2D.IDENTITY, color)
+		if brush.tail != null:
+			draw_mesh(brush.tail, null, Transform2D.IDENTITY, color)

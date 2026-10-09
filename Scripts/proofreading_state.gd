@@ -1,7 +1,9 @@
 class_name ProofreadingState
 extends RefCounted
 
-const VERSION := 1
+const VERSION := 2
+const MAX_TARGETS := 5
+const LETTERS := "абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
 const MAX_STROKES := 300
 const MAX_POINTS := 6000
 
@@ -30,19 +32,32 @@ func prepare(id: String, source: String, random_seed: int, guaranteed: bool = fa
 			for index in range(1, text.length() - 1):
 				if text[index] != text[index + 1]:
 					positions.append(index)
-			if not positions.is_empty():
-				word["positions"] = positions
-				candidates.append(word)
-	var count := mini(1 if guaranteed else random.randi_range(0, 2), candidates.size())
+			word["positions"] = positions
+			candidates.append(word)
+	var count := mini(1 if guaranteed else random.randi_range(0, MAX_TARGETS), candidates.size())
+	var chosen_words: Array = []
 	for index in count:
 		var chosen: Dictionary = candidates.pop_at(random.randi_range(0, candidates.size() - 1))
 		var original: String = chosen.text
-		var swap: int = chosen.positions[random.randi_range(0, chosen.positions.size() - 1)]
-		var typo := original.substr(0, swap) + original[swap + 1] + original[swap] + original.substr(swap + 2)
-		var start: int = chosen.start
-		display_text = display_text.substr(0, start) + typo + display_text.substr(start + original.length())
-		targets.append({"id": start, "start": start, "length": original.length(), "original": original, "typo": typo})
-	targets.sort_custom(func(a: Dictionary, b: Dictionary): return a.start < b.start)
+		if chosen.positions.is_empty() or random.randf() < 0.5:
+			var at := random.randi_range(1, original.length() - 1)
+			chosen["typo"] = original.substr(0, at) + LETTERS[random.randi_range(0, LETTERS.length() - 1)] + original.substr(at)
+		else:
+			var swap: int = chosen.positions[random.randi_range(0, chosen.positions.size() - 1)]
+			chosen["typo"] = original.substr(0, swap) + original[swap + 1] + original[swap] + original.substr(swap + 2)
+		chosen_words.append(chosen)
+	chosen_words.sort_custom(func(a: Dictionary, b: Dictionary): return a.start < b.start)
+	# Added letters shift later display offsets. Keep source and displayed word
+	# positions separate so paging, hit areas and saved marks use the visible text.
+	display_text = ""
+	var cursor := 0
+	for chosen in chosen_words:
+		display_text += source.substr(cursor, int(chosen.start) - cursor)
+		var start := display_text.length()
+		display_text += chosen.typo
+		targets.append({"id": start, "start": start, "source_start": int(chosen.start), "length": chosen.typo.length(), "original": chosen.text, "typo": chosen.typo})
+		cursor = int(chosen.start + chosen.length)
+	display_text += source.substr(cursor)
 
 static func words(text: String) -> Array:
 	var matcher := RegEx.new()
@@ -113,8 +128,10 @@ func restore(data: Dictionary) -> void:
 	strokes = data.strokes.duplicate(true)
 	# JSON decodes integer-valued numbers as floats; keep the in-memory schema stable.
 	for target in targets:
-		for key in ["id", "start", "length"]:
+		target["source_start"] = int(target.start) if int(data.version) == 1 else int(target.source_start)
+		for key in ["id", "start", "source_start", "length"]:
 			target[key] = int(target[key])
+	targets.sort_custom(func(a: Dictionary, b: Dictionary): return a.source_start < b.source_start)
 	for stroke in strokes:
 		if stroke.has("page_character"):
 			stroke.page_character = int(stroke.page_character)
@@ -125,20 +142,23 @@ func restore(data: Dictionary) -> void:
 			stroke[key] = stroke.get(key, []).map(func(value): return int(value))
 
 static func validate_data(data: Dictionary) -> bool:
-	if not _integer(data.get("version")) or int(data.version) != VERSION:
+	if not _integer(data.get("version")) or int(data.version) not in [1, VERSION]:
 		return false
 	for key in ["article_id", "source_text", "display_text"]:
 		if not data.get(key) is String:
 			return false
 	if not _integer(data.get("seed")) or not data.get("targets") is Array or not data.get("strokes") is Array:
 		return false
-	if data.targets.size() > 2 or data.strokes.size() > MAX_STROKES or data.source_text.length() != data.display_text.length():
+	var legacy := int(data.version) == 1
+	if data.targets.size() > (2 if legacy else MAX_TARGETS) or data.strokes.size() > MAX_STROKES:
 		return false
-	var rebuilt: String = data.source_text
+	if legacy and data.source_text.length() != data.display_text.length():
+		return false
+	var ordered: Array = []
 	var seen: Dictionary = {}
-	var word_starts: Dictionary = {}
+	var source_words: Dictionary = {}
 	for word in words(data.source_text):
-		word_starts[int(word.start)] = word
+		source_words[int(word.start)] = word
 	for target in data.targets:
 		if not target is Dictionary:
 			return false
@@ -147,18 +167,42 @@ static func validate_data(data: Dictionary) -> bool:
 				return false
 		if not target.get("original") is String or not target.get("typo") is String:
 			return false
+		if not legacy and not _integer(target.get("source_start")):
+			return false
 		var start := int(target.start)
+		var source_start := int(target.get("source_start", start)) if not legacy else start
 		var length := int(target.length)
-		if start < 0 or length < 5 or start + length > rebuilt.length() or int(target.id) != start or seen.has(start):
+		var original: String = target.original
+		var typo: String = target.typo
+		if start < 0 or length < 5 or start + length > data.display_text.length() or int(target.id) != start or seen.has(start):
 			return false
-		if target.original.length() != length or target.typo.length() != length or data.source_text.substr(start, length) != target.original or target.original == target.typo:
+		if typo.length() != length or original.length() < 5 or length not in [original.length(), original.length() + (0 if legacy else 1)] or original == typo:
 			return false
-		if not word_starts.has(start) or int(word_starts[start].length) != length or target.original != target.original.to_lower():
+		if not source_words.has(source_start) or int(source_words[source_start].length) != original.length() or source_words[source_start].text != original or original != original.to_lower():
 			return false
+		if not legacy:
+			for letter in typo:
+				if letter not in LETTERS:
+					return false
 		seen[start] = true
-		rebuilt = rebuilt.substr(0, start) + target.typo + rebuilt.substr(start + length)
+		ordered.append({"start": start, "source_start": source_start, "original": original, "typo": typo})
+	ordered.sort_custom(func(a: Dictionary, b: Dictionary): return a.source_start < b.source_start)
+	var rebuilt := ""
+	var cursor := 0
+	for target in ordered:
+		if int(target.source_start) < cursor:
+			return false
+		rebuilt += data.source_text.substr(cursor, int(target.source_start) - cursor)
+		if rebuilt.length() != int(target.start):
+			return false
+		rebuilt += target.typo
+		cursor = int(target.source_start) + target.original.length()
+	rebuilt += data.source_text.substr(cursor)
 	if rebuilt != data.display_text:
 		return false
+	var word_starts: Dictionary = {}
+	for word in words(data.display_text):
+		word_starts[int(word.start)] = word
 	for stroke in data.strokes:
 		if not stroke is Dictionary or not _valid_stroke(stroke, rebuilt.length()):
 			return false

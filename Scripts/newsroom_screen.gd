@@ -52,6 +52,7 @@ var _result_delay: Tween
 var _source_reveal: Tween
 var _next_source: NewsArticle
 var _source_material: ShaderMaterial
+var _page_material: ShaderMaterial
 var _displayed_article_id := ""
 var source_pager: Pager
 var pencil: DeskPencil
@@ -73,7 +74,9 @@ var evaluating_publication: bool:
 
 func _ready() -> void:
 	_source_material = source_ink_material.duplicate(true) as ShaderMaterial
-	for ink_item in [%SourceTitle, %SourceText, %ArticleNumber, %ArticleNumber.get_node("NumberArt")]:
+	_page_material = _source_material.duplicate() as ShaderMaterial
+	%SourceText.material = _page_material
+	for ink_item in [%SourceTitle, %ArticleNumber, %ArticleNumber.get_node("NumberArt")]:
 		ink_item.material = _source_material
 	_create_proofreading_tools()
 	_create_source_pager()
@@ -113,6 +116,7 @@ func _create_proofreading_tools() -> void:
 	proofreading_surface.set_ink_material(_source_material)
 	proofreading_surface.paper = stamp_area
 	world.add_child(proofreading_surface)
+	stamp_area.ink_color = proofreading_surface.pencil_color
 	proofreading_surface.changed.connect(func():
 		if session != null:
 			session.proofreading_changed()
@@ -143,10 +147,13 @@ func _create_source_pager() -> void:
 		proofreading_surface.finish_stroke()
 		_refresh_actions()
 	)
-	source_pager.opacity_changed.connect(func(opacity: float): proofreading_surface.text_opacity = opacity)
+	source_pager.ink_progress_changed.connect(func(absorption: float, reveal: float):
+		_set_page_ink_parameter("page_absorption_progress", absorption)
+		_set_page_ink_parameter("page_reveal_progress", reveal)
+	)
 	source_pager.bind(%SourceText)
 	for ink_control in [source_pager.previous, source_pager.counter, source_pager.next]:
-		ink_control.material = _source_material
+		ink_control.material = _page_material
 	pencil.input_exclusions.assign([eraser, source_pager])
 	eraser.input_exclusions.assign([pencil, source_pager])
 	# Coffee and navigation are drawn above the ink; paper beneath them stays writable.
@@ -342,6 +349,12 @@ func _set_source_reveal(progress: float) -> void:
 
 func _set_source_ink_parameter(parameter: StringName, value: Variant) -> void:
 	_source_material.set_shader_parameter(parameter, value)
+	_page_material.set_shader_parameter(parameter, value)
+	if is_instance_valid(proofreading_surface):
+		(proofreading_surface.material as ShaderMaterial).set_shader_parameter(parameter, value)
+
+func _set_page_ink_parameter(parameter: StringName, value: Variant) -> void:
+	_page_material.set_shader_parameter(parameter, value)
 	if is_instance_valid(proofreading_surface):
 		(proofreading_surface.material as ShaderMaterial).set_shader_parameter(parameter, value)
 

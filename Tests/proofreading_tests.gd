@@ -26,18 +26,23 @@ func _run() -> void:
 	second.prepare("article", SOURCE, 74, true)
 	check(second.to_data() == state.to_data(), "Seeded corruption is deterministic")
 	var counts: Dictionary = {}
-	for random_seed in 40:
+	var inserted := false
+	var swapped := false
+	for random_seed in 100:
 		second.prepare("article", SOURCE, random_seed)
 		counts[second.targets.size()] = true
-		check(second.targets.size() <= 2 and ProofreadingState.validate_data(second.to_data()), "Normal preparation keeps zero to two valid targets")
-	check(counts.size() == 3, "Ordinary articles can contain zero, one or two typos")
+		check(second.targets.size() <= 5 and ProofreadingState.validate_data(second.to_data()), "Normal preparation keeps zero to five valid targets")
+		for typo in second.targets:
+			inserted = inserted or typo.typo.length() == typo.original.length() + 1
+			swapped = swapped or typo.typo.length() == typo.original.length()
+	check(counts.size() == 6 and inserted and swapped, "Articles can contain every count from zero to five, with both added letters and swaps")
 	check(state.settlement() == {"corrected": 0, "missed": 1, "wrong": 0, "money": -1, "qualification": -3}, "Each missed typo penalizes only at settlement")
 	state.add_stroke(_stroke([target.id]))
 	check(state.settlement().money == 2 and state.settlement().qualification == 1, "A correction earns two money and one qualification")
 	state.add_stroke(_stroke([target.id]))
 	check(state.settlement().corrected == 1, "Repeated correction is rewarded once")
 	var wrong_start := -1
-	for word in ProofreadingState.words(SOURCE):
+	for word in ProofreadingState.words(state.display_text):
 		if int(word.start) != int(target.id):
 			wrong_start = int(word.start)
 			break
@@ -61,10 +66,35 @@ func _run() -> void:
 	var bad := data.duplicate(true)
 	bad.strokes[0].segments[0].points = [["bad", 0], [0, 0]]
 	check(not ProofreadingState.validate_data(bad), "Malformed coordinates are rejected")
+	_insertion_save_checks()
 	_penalty_cap_checks()
 	await _surface_checks()
 	print("PROOFREADING TESTS: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)
+
+func _insertion_save_checks() -> void:
+	# Deliberately insert before another target: display offsets must shift while
+	# original word offsets remain stable, including cached v1 mark compatibility.
+	var source := "жители редакторы города"
+	var data := {"version": 2, "article_id": "insertions", "source_text": source, "display_text": "життели редаккторы города", "seed": 12,
+		"targets": [{"id": 0, "start": 0, "source_start": 0, "length": 7, "original": "жители", "typo": "життели"}, {"id": 8, "start": 8, "source_start": 7, "length": 10, "original": "редакторы", "typo": "редаккторы"}], "strokes": [_stroke([8], [19])]}
+	check(ProofreadingState.validate_data(data), "Inserted letters shift subsequent target and correct-word positions")
+	var state := ProofreadingState.new()
+	state.restore(JSON.parse_string(JSON.stringify(data)))
+	check(state.to_data() == data and state.settlement().corrected == 1 and state.settlement().wrong == 1, "Insertion targets and displayed mark positions survive JSON restore")
+	var invalid := data.duplicate(true)
+	invalid.targets[1].start = 7
+	invalid.targets[1].id = 7
+	check(not ProofreadingState.validate_data(invalid), "A later target with an unshifted display position is rejected")
+	invalid = data.duplicate(true)
+	invalid.targets[0].typo = "жит!ели"
+	invalid.display_text = "жит!ели редаккторы города"
+	check(not ProofreadingState.validate_data(invalid), "Inserted corruption cannot introduce special symbols")
+	var legacy := {"version": 1, "article_id": "legacy", "source_text": source, "display_text": "жтиели редакторы города", "seed": 12,
+		"targets": [{"id": 0, "start": 0, "length": 6, "original": "жители", "typo": "жтиели"}], "strokes": [_stroke([0], [7])]}
+	check(ProofreadingState.validate_data(legacy), "A released version-1 swap and its marks remain valid")
+	state.restore(legacy)
+	check(state.display_text == legacy.display_text and state.targets[0].source_start == 0 and state.to_data().version == 2 and ProofreadingState.validate_data(state.to_data()) and state.settlement().money == 1, "Legacy data migrates its positions without regenerating text or rewards")
 
 func _penalty_cap_checks() -> void:
 	var state := ProofreadingState.new()

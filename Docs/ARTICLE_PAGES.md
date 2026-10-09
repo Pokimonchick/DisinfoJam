@@ -11,7 +11,7 @@ The article number and selected headline refer to the whole article.
   `newsroom_screen.gd` instances the scene as `Canvas/World/SourcePages`, beside
   the existing `SourceText`; the desk scene's authored layout is preserved.
 - The screen's **Source Page Scene** accepts the page-control scene. In that
-  scene, **Turn Seconds** defaults to 0.24, **Footer Gap** to 20 canvas pixels,
+  scene, **Turn Seconds** defaults to 0.6, **Footer Gap** to 20 canvas pixels,
   and **Paragraph Fill Minimum** to 0.55. Button styling uses muted paper/olive
   colors. `Row` contains the two buttons and the counter.
 - A hidden, non-threaded RichTextLabel shapes the full plain-text source with
@@ -22,9 +22,14 @@ The article number and selected headline refer to the whole article.
   edges are omitted from the view; the complete `source_text` is preserved.
   The last sheet starts at the top with no duplicated earlier lines. Layout is
   calculated on a new source, resize or theme change, rather than every frame.
-- Page changes fade the body and all marks on that sheet together. Blank-paper
-  portions share the same page anchor as the rest of the stroke. The longer organic ink effect remains reserved
-  for changing articles, including the article number and actual seal.
+- Page changes absorb and reveal the body, all marks and the paginator through
+  the same flowing ink mask. The old sheet disappears before the hidden content
+  swap; the next sheet then appears. Blank-paper portions share the same page
+  anchor as the rest of the stroke. The article title, number and seal stay stable
+  during page turns; their longer ink transition runs when changing articles.
+- Separate `page_absorption_progress` / `page_reveal_progress` uniforms preserve
+  the article's own transition. The body/paginator share one local material;
+  the brush has its own grain-enabled copy with synchronized progress.
 
 ## Tools and saves
 
@@ -46,7 +51,8 @@ reading position. Character anchors survive a different pagination layout;
 the article ID prevents a stale page from being applied to another material.
 Saving during a page turn retains its destination. Older saves without these
 optional fields start on the first sheet. Typos, mark IDs and qualification
-settlement keep their existing schema and values. Live publication feedback
+settlement retain their values; the current typo schema is documented in
+[PROOFREADING.md](PROOFREADING.md). Live publication feedback
 does not reset the current sheet.
 
 Native layout API: [RichTextLabel](https://docs.godotengine.org/en/stable/classes/class_richtextlabel.html).

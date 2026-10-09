@@ -188,9 +188,11 @@ static func restore(session: NewsroomSession, sections: Dictionary) -> bool:
 	_restore_story_choices(session, run)
 	if not sections.content.has("sequence_version"):
 		_migrate_queue(session)
+	preload("res://Data/legacy_article_balance.gd").restore_requested_headlines(session.articles, session.article_cursor, session.journal)
 	session._resolved_article = null
-	if not run.has("proofreading_unlocked"):
-		session.proofreading_unlocked = session.day >= session.balance.proofreading_unlock_day
+	# Moving the pencil lesson earlier also opens it in an existing second-shift
+	# draft. Preserve generated text, qualification and any published result.
+	session.proofreading_unlocked = session.proofreading_unlocked or session.day >= session.balance.proofreading_unlock_day
 	if run.has("proofreading"):
 		session.proofreading.restore(run.proofreading)
 	if not session.awaiting_acknowledgement and session.phase in [NewsroomSession.Phase.WORK, NewsroomSession.Phase.HOME]:

@@ -230,7 +230,7 @@ func _run() -> void:
 	check(not area.printed and area.imprint.visible and work.selected_index == -1 and stamp.position.is_equal_approx(rest), "The next source unlocks the draft while the old ink remains visible during absorption")
 	var absorbing_progress := _ink_progress(area.imprint)
 	check(absorbing_progress > 0.0 and absorbing_progress < 1.0 and area.imprint.position.is_equal_approx(old_ink_position), "The old ink absorbs gradually at its original position")
-	check(source.text == reading_text and is_equal_approx(_source_progress(source), absorbing_progress) and work.get_node("%SourceTitle").material == source.material, "Old title and reading sheet use an organic mask on the exact same clock as the ink")
+	check(source.text == reading_text and is_equal_approx(_source_progress(source), absorbing_progress) and is_equal_approx(_source_progress(work.get_node("%SourceTitle")), absorbing_progress), "Old title and reading sheet use an organic mask on the exact same clock as the ink")
 	check(area.preview.material != area.imprint.material and is_zero_approx(_ink_progress(area.preview)), "The preview has an independent material and never inherits absorption")
 	await _capture("ink-absorbing")
 	game._toggle_pause()

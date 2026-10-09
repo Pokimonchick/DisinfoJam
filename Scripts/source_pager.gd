@@ -4,8 +4,9 @@ extends Control
 signal page_changed(character_offset: int)
 signal turning_changed
 signal opacity_changed(opacity: float)
+signal ink_progress_changed(absorption: float, reveal: float)
 
-@export_range(0.0, 1.0, 0.01) var turn_seconds := 0.24
+@export_range(0.0, 1.0, 0.01) var turn_seconds := 0.6
 @export_range(0.0, 60.0, 1.0) var footer_gap := 20.0
 @export_range(0.3, 0.9, 0.05) var paragraph_fill_minimum := 0.55
 
@@ -159,9 +160,14 @@ func turn_to(index: int) -> void:
 	_refresh_navigation()
 	turning_changed.emit()
 	_motion = create_tween().set_pause_mode(Tween.TWEEN_PAUSE_BOUND).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_motion.tween_method(_set_opacity, 1.0, 0.0, turn_seconds * 0.5)
-	_motion.tween_callback(func(): _apply_page(_target_page))
-	_motion.tween_method(_set_opacity, 0.0, 1.0, turn_seconds * 0.5)
+	_motion.tween_method(_set_absorption, 0.0, 1.0, turn_seconds * 0.5)
+	_motion.tween_callback(func():
+		# Both masks hide the ink while text, page marks and counter switch.
+		_set_ink_progress(1.0, 0.0)
+		_apply_page(_target_page)
+		_set_ink_progress(0.0, 0.0)
+	)
+	_motion.tween_method(_set_reveal, 0.0, 1.0, turn_seconds * 0.5)
 	_motion.tween_callback(func():
 		_motion = null
 		_target_page = -1
@@ -184,7 +190,7 @@ func _stop_turn() -> void:
 	_target_page = -1
 	var was_turning := turning
 	turning = false
-	_set_opacity(1.0)
+	_set_ink_progress(0.0, 1.0)
 	if was_turning:
 		_refresh_navigation()
 		turning_changed.emit()
@@ -205,12 +211,19 @@ func _apply_page(index: int) -> void:
 	_refresh_navigation()
 	page_changed.emit(character_offset)
 
-func _set_opacity(value: float) -> void:
+func _set_absorption(value: float) -> void:
+	_set_ink_progress(value, 1.0)
+
+func _set_reveal(value: float) -> void:
+	_set_ink_progress(0.0, value)
+
+func _set_ink_progress(absorption: float, reveal: float) -> void:
 	if is_instance_valid(body):
-		body.self_modulate.a = value
+		body.self_modulate.a = 1.0
 	if is_node_ready():
-		$Row.modulate.a = value
-	opacity_changed.emit(value)
+		$Row.modulate.a = 1.0
+	opacity_changed.emit(1.0)
+	ink_progress_changed.emit(absorption, reveal)
 
 func _refresh_navigation() -> void:
 	if not is_node_ready():

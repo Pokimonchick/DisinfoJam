@@ -57,7 +57,7 @@ func _run() -> void:
 	await create_timer(0.35).timeout
 	var work = game.work
 	var session: NewsroomSession = game.session
-	check(not work.pencil.visible and not session.proofreading_unlocked, "The pencil is absent before the third shift")
+	check(not work.pencil.visible and not session.proofreading_unlocked, "The pencil is absent during the first shift")
 	game._pencil_tutorial_done = true
 	game._seen_stories.assign(game.CHAPTER.EPISODES.keys())
 	work.source_reveal_seconds = 0
@@ -87,6 +87,7 @@ func _run() -> void:
 	var proof := session.proofreading
 	var brush_material := surface.material as ShaderMaterial
 	var source_material := source.material as ShaderMaterial
+	check(work.stamp_area.ink_color == surface.pencil_color and (work.stamp_area.imprint.material as ShaderMaterial).get_shader_parameter("pigment_color") == surface.pencil_color and (work.stamp_area.preview.material as ShaderMaterial).get_shader_parameter("pigment_color") == surface.pencil_color, "Stamp and preview use the pencil's lighter red pigment")
 	check(brush_material != source_material and float(brush_material.get_shader_parameter("pencil_grain_strength")) > 0.0 and float(source_material.get_shader_parameter("pencil_grain_strength")) == 0.0, "Pencil texture is isolated from source glyphs")
 	check(pager.previous.material == source_material and pager.counter.material == source_material and pager.next.material == source_material, "Page navigation shares the source ink reveal and absorption clock")
 	work._set_source_reveal(0.4)
@@ -210,8 +211,14 @@ func _run() -> void:
 	await _move(page_point)
 	await _button(page_point, true)
 	await _button(page_point, false)
+	await create_timer(pager.turn_seconds * 0.2).timeout
+	var page_absorption := float(source_material.get_shader_parameter("page_absorption_progress"))
+	check(pager.turning and page_absorption > 0.0 and is_equal_approx(page_absorption, float(brush_material.get_shader_parameter("page_absorption_progress"))) and is_equal_approx(source.self_modulate.a, 1.0), "Reading text, pencil marks and page controls absorb through the same ink mask")
+	check(is_zero_approx(float((work.get_node("%SourceTitle").material as ShaderMaterial).get_shader_parameter("page_absorption_progress"))) and is_zero_approx(float((work.get_node("%ArticleNumber").material as ShaderMaterial).get_shader_parameter("page_absorption_progress"))), "Article title and number stay stable while turning an internal sheet")
+	await _capture("page-turn")
 	await create_timer(pager.turn_seconds + 0.1).timeout
 	check(pencil.held and pager.page_index != reading_page and proof.to_data() == original_marks, "Native page buttons work with the pencil held and do not draw or alter corrections")
+	check(is_zero_approx(float(source_material.get_shader_parameter("page_absorption_progress"))) and is_equal_approx(float(brush_material.get_shader_parameter("page_reveal_progress")), 1.0), "The destination sheet and its marks finish fully readable")
 	pager.go_to_character(corrected_page)
 	await process_frame
 	await process_frame

@@ -66,23 +66,27 @@ func _run() -> void:
 	hud.size = Vector2(1380, 152)
 	canvas.add_child(hud)
 	hud.bind(model)
-	model.day = 2
+	model.day = 1
 	model.changed.emit()
-	check(not drawer.get_node("%QualificationBar").visible and not hud.get_node("%QualificationGroup").visible, "Qualification stays hidden before day three")
-	model.day = 3
+	check(not drawer.get_node("%QualificationBar").visible and not hud.get_node("%QualificationGroup").visible, "Qualification stays hidden during the first shift")
+	model.day = 2
 	model.set("qualification", 61.0)
 	model.set("proofreading_unlocked", true)
 	model.money = 80
 	model.changed.emit()
 	await process_frame
-	check(drawer.get_node("%QualificationBar").visible and hud.get_node("%QualificationGroup").visible, "Day three reveals qualification in both displays")
+	check(drawer.get_node("%QualificationBar").visible and hud.get_node("%QualificationGroup").visible, "The second shift shows unlocked qualification in both displays")
 	check(drawer.get_node("%QualificationValue").text == "61 / 100" and hud.get_node("%QualificationValue").text == "61 / 100", "Both qualification displays use the session value")
 	check(drawer.get_node("%QualificationHint").text.contains("ДОСТУПНА") and not drawer.get_node("%QualificationHint").text.contains("НЕДОСТУПНА"), "The drawer reflects unlocked proofreading")
 	for stat: String in ["Health", "Reputation", "Loyalty", "Qualification"]:
 		var title: Label = drawer.get_node("SlidingPanel/" + stat + "Title")
 		var value: Label = drawer.get_node("SlidingPanel/" + stat + "Value")
 		check(is_equal_approx(title.position.y + title.size.y * 0.5, value.position.y + value.size.y * 0.5), stat + " title and value share a row center")
-	check(not drawer.get_node("SlidingPanel/BalanceCard").visible, "The large dark balance card is removed from presentation")
+	var balance_card: Control = drawer.get_node("SlidingPanel/BalanceCard")
+	var qualification_hint: Control = drawer.get_node("%QualificationHint")
+	var paper: Control = drawer.get_node("SlidingPanel/Paper")
+	check(balance_card.visible, "The compact paper balance card is visible")
+	check(balance_card.get_rect().position.y >= qualification_hint.get_rect().end.y and paper.get_rect().encloses(balance_card.get_rect()), "The balance card fits below qualification inside the paper")
 	check(drawer.get_node("%MoneyValue").get_theme_color("font_color") == Color("587148"), "A positive balance uses green ink")
 	model.money = -20
 	model.changed.emit()
