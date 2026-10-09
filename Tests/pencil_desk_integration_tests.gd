@@ -62,7 +62,6 @@ func _run() -> void:
 	game._seen_stories.assign(game.CHAPTER.EPISODES.keys())
 	work.source_reveal_seconds = 0
 	work.result_delay_seconds = 0.05
-	work.set_process(false)
 	work.get_node("Canvas").set_process(false)
 	var article := NewsArticle.from_row(session.articles[0].to_row())
 	article.id = "pencil_fixture_first"
@@ -143,7 +142,7 @@ func _run() -> void:
 	await _button(point - Vector2(10, 0), true)
 	await _move(point + Vector2(10, 0), true)
 	await _button(point + Vector2(10, 0), false)
-	check(proof.strokes.size() == 1 and proof.settlement().corrected == 1 and pencil.held, "Held LMB draws a text correction and release preserves the held pencil")
+	check(proof.strokes.size() == 1 and proof.strokes[0].corrected.is_empty() and proof.strokes[0].wrong.is_empty() and pencil.held, "Held LMB saves an unclassified mark and release preserves the held pencil")
 	if proof.strokes.is_empty():
 		quit(1)
 		return
@@ -189,7 +188,7 @@ func _run() -> void:
 	for index in range(1, 25):
 		await _move(desk_transform * Vector2(1100 + index * 6, 980 + sin(index * 0.45) * 12), true)
 	await _button(desk_transform * Vector2(1244, 980 + sin(24 * 0.45) * 12), false)
-	check(proof.strokes.size() == 2 and proof.settlement().corrected == 1 and proof.settlement().wrong == 0, "Textured blank-paper strokes preserve the correction reward and cause no penalty")
+	check(proof.strokes.size() == 2 and proof.strokes[1].corrected.is_empty() and proof.strokes[1].wrong.is_empty(), "Text and blank-paper strokes remain unclassified before stamp contact")
 	await _move(desk_transform * Vector2(1470, 570))
 	await create_timer(0.25).timeout
 	await _capture("brush")
@@ -249,21 +248,55 @@ func _run() -> void:
 	work._open_choices(false)
 	work._select_headline(0)
 	await _wait_choices(work)
-	pager.go_to_character(int(pager.source_text.length() * 0.45))
+	pager.go_to_character(0 if corrected_page > 0 else pager.source_text.length() - 1)
+	await process_frame
+	await process_frame
+	check(not surface._stroke_visible(proof.strokes[0]), "Publication fixture views a different sheet from the typo correction")
 	var reading_character := pager.capture_character()
 	var display_before := source.text
 	var marks_before := session.proofreading.to_data()
+	var saved_marks := ProofreadingState.new()
+	saved_marks.restore(JSON.parse_string(JSON.stringify(marks_before)))
 	var money_before := session.money
 	var qualification_before := session.qualification
+	work.proofreading_budget_ms = 0.001
 	var contact := source.get_global_transform_with_canvas() * Vector2(120, 170)
 	stamp_grip = work.stamp.get_global_transform_with_canvas() * Vector2(144, 105)
 	check(work.stamp.begin_drag(stamp_grip), "Resumed article can be picked up for publication")
 	work.stamp.move_drag(stamp_grip + contact - work.stamp.contact_position())
 	work.stamp.finish_drag()
+	await create_timer(0.25).timeout
+	check(work.evaluating_publication and work.stamp_area.printed and session.total_published == 0 and session.money == money_before, "Contact starts deferred evaluation without partial publication rewards")
+	check(not pencil.interaction_enabled and work.get_node("%FinishShift").disabled and not pager.enabled, "Evaluation locks drawing, pagination and shift completion")
+	var active_job = work._evaluation
+	work._publish_selected()
+	check(work._evaluation == active_job, "Repeated contact cannot start a second evaluation")
+	var health_before := session.health
+	game._process(1.0)
+	check(session.health == health_before, "Assessment time does not drain stamina")
+	var draft_save := NewsroomSaveData.capture(session)
+	var restored_draft := NewsroomSession.new()
+	check(NewsroomSaveData.restore(restored_draft, draft_save) and restored_draft.total_published == 0 and not restored_draft.awaiting_acknowledgement and restored_draft.proofreading.to_data() == marks_before, "Saving during evaluation restores an unpublished draft without partial accounting")
+	game._toggle_pause()
+	var progress: int = active_job.processed_segments
+	await create_timer(0.08).timeout
+	check(work.evaluating_publication and active_job.processed_segments == progress and session.total_published == 0, "Pause freezes recognition before publication")
+	game._toggle_pause()
+	game._show_menu()
+	check(game.view == game.View.MENU and not work.evaluating_publication and not work.stamp_area.printed and session.total_published == 0 and session.money == money_before, "Leaving for the menu cancels assessment without settling the article")
+	game._continue_run()
+	await create_timer(0.35).timeout
+	proof = session.proofreading
+	check(game.view == game.View.WORK and not work.evaluating_publication and proof.to_data() == saved_marks.to_data() and pager.capture_character() == reading_character and not session.awaiting_acknowledgement, "Continue restores raw marks, draft and reading page without restarting assessment")
+	stamp_grip = work.stamp.get_global_transform_with_canvas() * Vector2(144, 105)
+	check(work.stamp.begin_drag(stamp_grip), "Restored draft can be stamped again after a cancelled assessment")
+	work.stamp.move_drag(stamp_grip + contact - work.stamp.contact_position())
+	work.stamp.finish_drag()
+	work.proofreading_budget_ms = 2.0
 	await create_timer(0.9).timeout
-	check(session.total_published == 1 and session.last_result.proofreading.corrected == 1 and session.qualification == qualification_before + 1, "Actual stamp contact settles the correction once")
+	check(session.total_published == 1 and session.last_result.proofreading.corrected == 1 and session.qualification == qualification_before + 1, "Completing stamp evaluation settles a correction from another sheet once")
 	check(session.money == money_before + session.last_result.money, "Stamp settlement records its publication and proofreading money together")
-	check(pager.capture_character() == reading_character and source.text == display_before and session.proofreading.to_data() == marks_before, "Live publication result preserves the reading sheet, display text and marks")
+	check(pager.capture_character() == reading_character and source.text == display_before and session.proofreading.to_data() == saved_marks.to_data(), "Live publication result preserves the reading sheet, display text and marks")
 	check(work.popup.active and not pencil.interaction_enabled and not work.stamp.enabled, "Publication feedback blocks both tools")
 	if "--capture" in OS.get_cmdline_user_args() and DisplayServer.get_name() != "headless":
 		await create_timer(work.popup.opening_seconds).timeout

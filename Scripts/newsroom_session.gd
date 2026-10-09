@@ -184,7 +184,7 @@ func option_at(display_index: int) -> HeadlineOption:
 	return current_article().headlines[option_order[display_index]]
 
 
-func publish_headline(display_index: int) -> bool:
+func publish_headline(display_index: int, proofreading_counts: Dictionary = {}) -> bool:
 	if phase != Phase.WORK or awaiting_acknowledgement or publication_limit_reached():
 		return false
 	var option := option_at(display_index)
@@ -214,7 +214,7 @@ func publish_headline(display_index: int) -> bool:
 	money += last_result.money
 	_record_transaction("publication", last_result.money, "Публикация", combo_type, option.text)
 	if proofreading_unlocked and proofreading.article_id == article.id:
-		var corrections := proofreading.settlement(balance.proofreading_money_penalty_limit, balance.proofreading_qualification_penalty_limit)
+		var corrections := proofreading.settlement(balance.proofreading_money_penalty_limit, balance.proofreading_qualification_penalty_limit, proofreading_counts)
 		var penalties := ProofreadingState.penalty_breakdown(corrections.missed, corrections.wrong, balance.proofreading_money_penalty_limit, balance.proofreading_qualification_penalty_limit)
 		last_result["proofreading"] = corrections
 		last_result["publication_money"] = last_result.money

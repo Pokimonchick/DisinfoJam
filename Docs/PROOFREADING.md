@@ -25,11 +25,13 @@ Bind when displaying/restoring an article, rather than on every HUD refresh. The
 
 ## Input and scoring
 
-Click a tool to pick it up; moving the pointer carries its contact point without holding a button. Hold LMB to draw/erase and release to finish. RMB returns the tool. The eraser replaces the Undo button: its circular brush splits intersected polylines and preserves untouched parts, then recalculates correction rewards and wrong-word penalties from the remaining marks. One save/update signal is emitted at the end of an erasing gesture. Page controls remain usable while holding either tool. Turning a page finishes the active gesture and briefly blocks writing/erasing. Pause/modals return the tools; completed marks remain.
+Click a tool to pick it up; moving the pointer carries its contact point without holding a button. Hold LMB to draw/erase and release to finish. RMB returns the tool. The eraser replaces the Undo button: its circular nose sweeps one capsule per mouse movement, splits intersected polylines and preserves untouched parts. Drawing and erasure edit geometry only; one save/update signal is emitted at the end of an erasing gesture. Page controls remain usable while holding either tool. Turning a page finishes the active gesture and briefly blocks writing/erasing. Pause/modals return the tools; completed marks remain.
 
-Each typo's target has 2.1 times its width and height (4.41 times its area). Crossing a correct word's central band accumulates a wrong mark after at least 35% of its width, with a 12px minimum; incidental touches and blank-space scribbles do not count. A stroke crossing a correct word only rewards a nearby typo if it also intersects that typo's actual bounds. Corrections and wrong-word penalties are deduplicated. Erasure recalculates the result from remaining strokes.
+Recognition begins only at stamp contact. `ProofreadingEvaluation` measures every marked sheet in a hidden label, indexes word bounds in 64px cells and evaluates the remaining segments in frame-sized portions. **Proofreading Budget Ms** on the screen defaults to 2ms; it is a soft budget checked between operations. The visible reading page stays unchanged. While the job runs, writing, paging and publication actions are locked and stamina does not drain; pause also pauses recognition. Leaving the desk cancels the job, preserving an unpublished draft. No partial awards or classifications enter the save.
 
-`settlement()` returns `{corrected, missed, wrong, money, qualification}` and the session applies it once at actual stamp contact:
+Each typo's target has 2.1 times its width and height (4.41 times its area). Crossing a correct word's central band accumulates a wrong mark after at least 35% of its width, with a 12px minimum; incidental touches and blank-space scribbles do not count. A stroke crossing a correct word only rewards a nearby typo if it also intersects that typo's actual bounds. Corrections and wrong-word penalties are deduplicated across strokes and pages.
+
+`settlement()` returns `{corrected, missed, wrong, money, qualification}` and the session applies it once after the stamp's recognition job completes:
 
 | Publication outcome | Money | Qualification |
 | --- | ---: | ---: |
@@ -52,14 +54,14 @@ Godot 4.7.2 RichTextLabel has no `get_character_bounds`. Geometry uses its `get_
 `to_data()` produces a version-1 primitive dictionary containing `article_id`, `source_text`, `display_text`, `seed`, `targets` and `strokes`. `restore()` requires `validate_data()` and restores existing typos rather than generating new ones. Session/save integration preserves an unfinished article's generated text and marks at home and into the next shift. Live publication feedback retains the reading page and marks; the next article receives its own state.
 
 - Target: `{id: start, start, length, original, typo}`. Offsets count characters, not bytes.
-- Stroke: `{segments, corrected: [target_id], wrong: [word_start], page_character}`. The optional page anchor is a full-source character offset and survives JSON restore. Legacy strokes without it remain accepted.
+- Stroke: `{segments, corrected: [], wrong: [], page_character}`. New marks store geometry without classifications. Legacy cached classifications remain accepted for compatibility but publication computes a fresh result. The optional page anchor is a full-source character offset and survives JSON restore. Legacy strokes without it remain accepted.
 - Segment: `{anchor: "desk" | "text", points: [[x, y], ...]}`. Desk coordinates are normalized by surface size. Text segments also store `character` (line start); x is normalized by label width and y is the offset from that line's top in line-height units.
 
 New strokes use fixed normalized coordinates and one page anchor for the entire mark, including blank-paper portions. Turning a page hides the entire mark; returning restores it without shifting fragments relative to the text. Older mixed-anchor strokes are grouped onto their originating sheet and clipped to the paper when drawn. No nodes, resources or Vector2 values are serialized. Limits remain 300 strokes per article and 6000 points per stroke.
 
 ## Focused checks
 
-- `Tests/proofreading_tests.gd`: deterministic corruption, deduplication, settlement, state undo, JSON validation/restore, native word geometry, paper/obstacle clipping, partial erasure, penalty removal, page anchors, pickup and GUI exclusions.
-- `Tests/pencil_desk_integration_tests.gd`: actual third-shift scene, rendered tools and resting angle, pencil/eraser/RMB pose restoration, brush material isolation and synchronized ink transitions, blank-paper scoring, whole-page marks and GUI navigation, mutual exclusion, pause/modal lock, home continuation and publication settlement without resetting the reading page.
+- `Tests/proofreading_tests.gd`: deterministic corruption, deduplication, settlement, state undo, JSON validation/restore, native word geometry, paper/obstacle clipping, swept erasure, recognition across pages, dense-sheet timing, pickup and GUI exclusions.
+- `Tests/pencil_desk_integration_tests.gd`: actual desk scene, rendered tools and resting angle, pencil/eraser/RMB pose restoration, brush material isolation and synchronized ink transitions, blank-paper scoring, whole-page marks and GUI navigation, mutual exclusion, pause/modal lock, home continuation, cancelled assessment through menu/Continue and publication settlement without resetting the reading page.
 
 Run a selected suite with `godot --headless --path . --script res://Tests/proofreading_tests.gd`. For native inspection, omit `--headless` and add `--rendering-method gl_compatibility -- --capture`. Captures go to TEMP (`disinfo-proofreading.png` or `disinfo-pencil-desk-*.png`). Tests use isolated save slots and do not access the player's campaign file.

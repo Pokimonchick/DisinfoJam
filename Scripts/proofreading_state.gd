@@ -63,22 +63,33 @@ func undo_last() -> bool:
 	strokes.pop_back()
 	return true
 
-func settlement(money_penalty_limit := 20, qualification_penalty_limit := 20) -> Dictionary:
+static func stroke_page_anchor(stroke: Dictionary) -> int:
+	if stroke.has("page_character"):
+		return int(stroke.page_character)
+	# Old mixed-anchor marks belong to their first text line, or the first sheet.
+	for segment in stroke.segments:
+		if segment.anchor == "text":
+			return int(segment.character)
+	return 0
+
+func settlement(money_penalty_limit := 20, qualification_penalty_limit := 20, evaluated_counts: Dictionary = {}) -> Dictionary:
 	var corrected_ids: Dictionary = {}
 	var wrong_words: Dictionary = {}
 	var valid_ids: Dictionary = {}
 	for target in targets:
 		valid_ids[int(target.id)] = true
-	for stroke in strokes:
-		for target_id in stroke.get("corrected", []):
-			if valid_ids.has(int(target_id)):
-				corrected_ids[int(target_id)] = true
-		for word_start in stroke.get("wrong", []):
-			if not valid_ids.has(int(word_start)):
-				wrong_words[int(word_start)] = true
-	var corrected := corrected_ids.size()
+	if evaluated_counts.is_empty():
+		# Compatibility for already-classified data and callers without scene geometry.
+		for stroke in strokes:
+			for target_id in stroke.get("corrected", []):
+				if valid_ids.has(int(target_id)):
+					corrected_ids[int(target_id)] = true
+			for word_start in stroke.get("wrong", []):
+				if not valid_ids.has(int(word_start)):
+					wrong_words[int(word_start)] = true
+	var corrected := clampi(int(evaluated_counts.get("corrected", corrected_ids.size())), 0, targets.size())
 	var missed := targets.size() - corrected
-	var wrong := wrong_words.size()
+	var wrong := maxi(0, int(evaluated_counts.get("wrong", wrong_words.size())))
 	var penalties := penalty_breakdown(missed, wrong, money_penalty_limit, qualification_penalty_limit)
 	return {"corrected": corrected, "missed": missed, "wrong": wrong, "money": corrected * 2 - penalties.missed_money - penalties.wrong_money, "qualification": corrected - penalties.qualification}
 

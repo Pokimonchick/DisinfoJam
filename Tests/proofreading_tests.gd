@@ -151,7 +151,8 @@ func _surface_checks() -> void:
 	check(surface.begin_stroke(viewport_point - Vector2(8, 0)), "Held pencil can start a stroke over rotated source text")
 	surface.extend_stroke(viewport_point + Vector2(8, 0))
 	surface.finish_stroke()
-	check(state.settlement().corrected == 1, "An intentional mark corrects the typo")
+	check(state.strokes[-1].corrected.is_empty() and state.strokes[-1].wrong.is_empty(), "Drawing stores geometry without recognizing words")
+	check((await _evaluate(surface)).corrected == 1, "Publication evaluation recognizes an intentional typo correction")
 	check(state.strokes[-1].has("page_character"), "The complete source stroke carries one page anchor")
 	var segment: Dictionary = state.strokes[-1].segments[0]
 	var before := surface._segment_point(segment, segment.points[0])
@@ -165,14 +166,14 @@ func _surface_checks() -> void:
 	surface.begin_stroke(viewport_point)
 	surface.extend_stroke(viewport_point + Vector2(3, 0))
 	surface.finish_stroke()
-	check(state.settlement().wrong == 0, "Incidental touches of a few characters are not punished")
+	check((await _evaluate(surface)).wrong == 0, "Incidental touches of a few characters are not punished")
 	surface.undo_last()
 	var a := label.get_global_transform_with_canvas() * Vector2(correct_rect.position.x, correct_rect.get_center().y)
 	var b := label.get_global_transform_with_canvas() * Vector2(correct_rect.end.x, correct_rect.get_center().y)
 	surface.begin_stroke(a)
 	surface.extend_stroke(b)
 	surface.finish_stroke()
-	check(state.settlement().wrong == 1, "Crossing a correct word counts as one incorrect mark")
+	check((await _evaluate(surface)).wrong == 1, "Crossing a correct word counts as one incorrect mark")
 	surface.undo_last()
 	var start := label.get_global_transform_with_canvas() * Vector2(10, 15)
 	var finish := label.get_global_transform_with_canvas() * Vector2(-90, 15)
@@ -217,11 +218,12 @@ func _surface_checks() -> void:
 	surface.begin_stroke(a)
 	surface.extend_stroke(b)
 	surface.finish_stroke()
-	check(state.settlement().wrong == 1, "The eraser fixture has a penalized word")
+	check((await _evaluate(surface)).wrong == 1, "The eraser fixture has a penalized word")
 	surface.begin_erasure(a, 24)
 	surface.extend_erasure(b, 24)
 	surface.finish_erasure()
-	check(state.settlement().wrong == 0 and state.strokes.is_empty(), "Erasing an incorrect underline removes its penalty")
+	check((await _evaluate(surface)).wrong == 0 and state.strokes.is_empty(), "Erased marks are absent from publication evaluation")
+	await _dense_checks(surface, label, state)
 	var pencil: DeskPencil = load("res://Scenes/desk_pencil.tscn").instantiate()
 	pencil.position = Vector2(390, 440)
 	pencil.z_index = 10
@@ -276,4 +278,83 @@ func _button_event(point: Vector2, pressed: bool) -> void:
 	event.global_position = point
 	event.pressed = pressed
 	root.push_input(event, true)
+	await process_frame
+
+func _evaluate(surface: ProofreadingSurface) -> Dictionary:
+	var evaluation = surface.create_evaluation()
+	while not evaluation.advance():
+		await process_frame
+	var result := surface.state.settlement(20, 20, evaluation.counts)
+	evaluation.dispose()
+	return result
+
+func _dense_checks(surface: ProofreadingSurface, label: RichTextLabel, state: ProofreadingState) -> void:
+	var original_text := state.source_text
+	var original_position := label.position
+	var original_rotation := label.rotation
+	var original_size := label.size
+	var original_font_size := label.get_theme_font_size("normal_font_size")
+	var original_paper := surface.paper
+	state.prepare("dense", "Редакторы проверяют сообщения жителей города. Рабочие обсуждают строительство городской школы. ".repeat(10), 4, true)
+	label.position = Vector2(120, 160)
+	label.rotation = 0.0
+	label.size = Vector2(1040, 440)
+	label.add_theme_font_size_override("normal_font_size", 28)
+	surface.paper = null
+	surface.bind(label, state)
+	await process_frame
+	await process_frame
+	var points: Array = []
+	for index in 600:
+		var sweep := float(index % 30) / 29.0
+		var x := 200.0 + (sweep if (index / 30) % 2 == 0 else 1.0 - sweep) * 860.0
+		points.append([x / 1280.0, (220.0 + float(index / 30) * 10.0) / 720.0])
+	for count in [1, 4, 12]:
+		state.strokes.clear()
+		for index in count:
+			state.add_stroke({"segments": [{"anchor": "desk", "points": points}], "corrected": [], "wrong": [], "page_character": 0})
+		var started := Time.get_ticks_usec()
+		surface._erase_at(Vector2(640, 290), 28)
+		print("ERASE strokes=%d points=%d elapsed_ms=%.2f" % [count, count * points.size(), (Time.get_ticks_usec() - started) / 1000.0])
+		check(state.strokes.size() == count and state.strokes[0].corrected.is_empty() and state.strokes[0].wrong.is_empty(), "Dense erasure preserves geometry without scoring")
+	var snapshot := state.to_data()
+	var evaluation = surface.create_evaluation()
+	check(not evaluation.advance(1) and not evaluation.done, "Dense evaluation yields rather than processing all marks at contact")
+	var batches := 1
+	var maximum_batch := 0
+	var total_usec := 0
+	while not evaluation.done:
+		var started := Time.get_ticks_usec()
+		evaluation.advance(2000)
+		var elapsed := Time.get_ticks_usec() - started
+		maximum_batch = maxi(maximum_batch, elapsed)
+		total_usec += elapsed
+		batches += 1
+		if not evaluation.done:
+			await process_frame
+	print("EVALUATE segments=%d batches=%d cpu_ms=%.2f max_batch_ms=%.2f" % [evaluation.processed_segments, batches, total_usec / 1000.0, maximum_batch / 1000.0])
+	check(batches > 2 and evaluation.counts.wrong > 0 and state.to_data() == snapshot, "Batched evaluation recognizes dense marks without modifying saved geometry")
+	var counts: Dictionary = evaluation.counts.duplicate()
+	check(evaluation.advance() and evaluation.counts == counts, "A completed evaluation does not run or accumulate twice")
+	var result := state.settlement(20, 20, counts)
+	check(result.money >= -20 and result.qualification >= -20, "Deferred recognition preserves article penalty caps")
+	evaluation.dispose()
+	state.restore(snapshot)
+	var erase_started := Time.get_ticks_usec()
+	surface.begin_erasure(Vector2(300, 290), 28)
+	surface.extend_erasure(Vector2(1000, 290), 28)
+	surface.finish_erasure()
+	print("ERASE fast_sweep_ms=%.2f" % ((Time.get_ticks_usec() - erase_started) / 1000.0))
+	check(ProofreadingState.validate_data(state.to_data()), "Fast dense erasure keeps a valid fragmented drawing")
+	var horizontal := ProofreadingSurface._capsule_interval(Vector2(100, 100), Vector2(300, 100), Vector2(150, 100), Vector2(250, 100), 10)
+	check(horizontal.is_equal_approx(Vector2(0.2, 0.8)), "One fast sweep includes the round nose at both ends")
+	check(ProofreadingSurface._capsule_interval(Vector2(100, 125), Vector2(300, 125), Vector2(150, 100), Vector2(250, 100), 10).x < 0.0, "A swept eraser preserves marks beyond its nose width")
+	label.position = original_position
+	label.rotation = original_rotation
+	label.size = original_size
+	label.add_theme_font_size_override("normal_font_size", original_font_size)
+	surface.paper = original_paper
+	state.prepare("geometry", original_text, 4, true)
+	surface.bind(label, state)
+	await process_frame
 	await process_frame

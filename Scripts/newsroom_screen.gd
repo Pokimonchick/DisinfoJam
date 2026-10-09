@@ -5,6 +5,7 @@ signal pause_requested
 
 const CHOICE_OVERLAY: PackedScene = preload("res://Scenes/headline_choice_overlay.tscn")
 const Pager = preload("res://Scripts/source_pager.gd")
+const Evaluation = preload("res://Scripts/proofreading_evaluation.gd")
 const NUMBER_ART: Array[Texture2D] = [
 	preload("res://Assets/Assets for new version of game/Untitled (22)/image 10.png"),
 	preload("res://Assets/Assets for new version of game/Untitled (22)/IMG_1370 1.png"),
@@ -29,6 +30,7 @@ enum DialogKind { NONE, RESULT }
 @export_group("Proofreading")
 @export var pencil_rest_position := Vector2(800, 940)
 @export var eraser_rest_position := Vector2(600, 940)
+@export_range(0.1, 4.0, 0.1) var proofreading_budget_ms := 2.0
 @export_group("Audio")
 @export var headline_appear_sound: AudioStream = preload("res://Assets/Sounds/paper - Part_1.wav")
 @export_range(-40.0, 6.0, 0.5) var headline_appear_volume_db: float = 0.0
@@ -55,6 +57,13 @@ var source_pager: Pager
 var pencil: DeskPencil
 var proofreading_surface: ProofreadingSurface
 var eraser: DeskPencil
+var _evaluation: Evaluation
+var _publication_index := -1
+var _publication_article_id := ""
+var _publication_state: ProofreadingState
+var evaluating_publication: bool:
+	get:
+		return _evaluation != null
 @onready var cards: Array[Button] = [%Headline1, %Headline2, %Headline3]
 @onready var popup: DeskFocus = $Canvas/DeskFocus
 @onready var combo_burst: Control = %ComboBurst
@@ -68,7 +77,11 @@ func _ready() -> void:
 		ink_item.material = _source_material
 	_create_proofreading_tools()
 	_create_source_pager()
-	visibility_changed.connect(func(): _animate_source(is_visible_in_tree()))
+	visibility_changed.connect(func():
+		if not is_visible_in_tree():
+			_cancel_publication_evaluation(true)
+		_animate_source(is_visible_in_tree())
+	)
 	stamp_area.absorption_progress_changed.connect(_on_source_absorption)
 	stamp_area.ink_time_changed.connect(func(time: float): _set_source_ink_parameter("ink_time", time))
 	_choice_overlay = CHOICE_OVERLAY.instantiate() as Control
@@ -141,7 +154,11 @@ func _create_source_pager() -> void:
 	stamp_area.excluded_controls.append(stamp_area.get_path_to(source_pager))
 
 func _process(_delta: float) -> void:
-	$Canvas.motion_enabled = not popup.visible and _pending_result.is_empty() and not stamp.dragging and not stamp.busy and not pencil.held and not pencil.busy and not eraser.held and not eraser.busy and not (choices.visible and GameSettings.choice_overlay_enabled)
+	_advance_publication_evaluation()
+	$Canvas.motion_enabled = not evaluating_publication and not popup.visible and _pending_result.is_empty() and not stamp.dragging and not stamp.busy and not pencil.held and not pencil.busy and not eraser.held and not eraser.busy and not (choices.visible and GameSettings.choice_overlay_enabled)
+
+func _exit_tree() -> void:
+	_cancel_publication_evaluation()
 
 func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree() or not event is InputEventMouseButton:
@@ -200,6 +217,7 @@ func bind(model: NewsroomSession) -> void:
 
 func _phase_changed() -> void:
 	if session.phase != NewsroomSession.Phase.WORK:
+		_cancel_publication_evaluation()
 		_next_source = null
 		source_pager.finish_turn()
 		_animate_source(false)
@@ -224,7 +242,7 @@ func _refresh_desk() -> void:
 func _refresh_actions() -> void:
 	if session == null:
 		return
-	var blocked := session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached() or _next_source != null
+	var blocked := evaluating_publication or session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached() or _next_source != null
 	var overlay_blocks := choices.visible and GameSettings.choice_overlay_enabled
 	var turning := source_pager.turning
 	var tool_held := pencil.held or pencil.busy or eraser.held or eraser.busy
@@ -345,6 +363,7 @@ func _set_issue_number(number: int) -> void:
 		%ArticleNumber.get_node("NumberArt").texture = NUMBER_ART[number - 1]
 
 func show_article(absorb_ink := true) -> void:
+	_cancel_publication_evaluation()
 	# Restores and new runs can reach this while the session is still IDLE.
 	var fade_previous := absorb_ink and session.phase == NewsroomSession.Phase.WORK and is_visible_in_tree() and stamp_area.printed and stamp_area.imprint.visible and stamp_area.absorption_seconds > 0.0
 	_next_source = null
@@ -469,9 +488,44 @@ func _on_primary() -> void:
 		_close_focus()
 
 func _publish_selected() -> void:
-	if not can_process() or not is_visible_in_tree() or selected_index < 0 or choices_open or _choices_animating or popup.visible:
+	if not can_process() or not is_visible_in_tree() or evaluating_publication or session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or selected_index < 0 or choices_open or _choices_animating or popup.visible:
 		return
-	session.publish_headline(selected_index)
+	var article := session.current_article()
+	if article == null or session.publication_limit_reached():
+		return
+	if session.proofreading_unlocked and session.proofreading.article_id == article.id and not session.proofreading.strokes.is_empty():
+		_publication_index = selected_index
+		_publication_article_id = article.id
+		_publication_state = session.proofreading
+		_evaluation = proofreading_surface.create_evaluation(source_pager.page_ranges())
+		_refresh_actions()
+	else:
+		session.publish_headline(selected_index, {"corrected": 0, "wrong": 0})
+
+func _advance_publication_evaluation() -> void:
+	if _evaluation == null:
+		return
+	var article := session.current_article()
+	if session.phase != NewsroomSession.Phase.WORK or session.proofreading != _publication_state or article == null or article.id != _publication_article_id:
+		_cancel_publication_evaluation(true)
+		return
+	if not _evaluation.advance(roundi(proofreading_budget_ms * 1000.0)):
+		return
+	# Only a complete assessment reaches the session. An interrupted job leaves
+	# an unpublished draft in saves, without partial rewards or stale hit caches.
+	session.publish_headline(_publication_index, _evaluation.counts)
+	_cancel_publication_evaluation()
+	_refresh_actions()
+
+func _cancel_publication_evaluation(clear_imprint := false) -> void:
+	if _evaluation != null:
+		_evaluation.dispose()
+		_evaluation = null
+		if clear_imprint:
+			stamp_area.reset()
+	_publication_index = -1
+	_publication_article_id = ""
+	_publication_state = null
 
 func _close_focus() -> void:
 	if not popup.active:
@@ -493,9 +547,11 @@ func _colored_result_delta(value: int, suffix := "") -> String:
 	return "[color=%s][b]%+d%s[/b][/color]" % [color, value, suffix]
 
 func _on_published(result: Dictionary) -> void:
-	if stamp.busy:
-		# Effects apply at contact; the note waits until the stamp is resting.
+	if stamp.busy or evaluating_publication:
+		# A large assessment may finish after the stamp has already returned.
 		_pending_result = result.duplicate(true)
+		if not stamp.busy:
+			_start_result_delay()
 	else:
 		_show_result(result)
 

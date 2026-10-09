@@ -138,6 +138,16 @@ func capture_character() -> int:
 		return 0
 	return _pages[_target_page if _target_page >= 0 else page_index].x
 
+func page_ranges() -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	for span in _pages:
+		while span.x < span.y and source_text[span.x] in ["\n", "\r"]:
+			span.x += 1
+		while span.y > span.x and source_text[span.y - 1] in ["\n", "\r"]:
+			span.y -= 1
+		result.append(span)
+	return result
+
 func turn_to(index: int) -> void:
 	if not enabled or turning or not can_process() or not is_visible_in_tree() or index < 0 or index >= _pages.size() or index == page_index:
 		return

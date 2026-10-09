@@ -96,9 +96,9 @@ func _ready() -> void:
 	_show_menu()
 
 func _process(delta: float) -> void:
-	if view == View.WORK and not paused and not transitioning and not _interface_blocked():
+	if view == View.WORK and not paused and not transitioning and not _interface_blocked() and not work.evaluating_publication:
 		_check_stamina_warning()
-	if view == View.WORK and not paused and not transitioning and not _interface_blocked():
+	if view == View.WORK and not paused and not transitioning and not _interface_blocked() and not work.evaluating_publication:
 		session.tick_work(delta)
 	elif view == View.HOME and not paused and not transitioning and not _interface_blocked():
 		home.tick_home(delta)
