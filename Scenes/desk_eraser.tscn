@@ -24,31 +24,31 @@ environment = SubResource("Environment")
 
 [node name="Eraser" type="Control"]
 editor_description = "Ластик: взять нажатием, стирать с зажатой ЛКМ, положить правой кнопкой."
-offset_right = 180.0
-offset_bottom = 180.0
+offset_right = 144.0
+offset_bottom = 144.0
 script = ExtResource("tool")
 camera_height = 5.0
 camera_depth = 1.6
-grab_rect = Rect2(20, 45, 140, 85)
+grab_rect = Rect2(16, 36, 112, 68)
 lift_height = 0.12
 lift_tilt_degrees = Vector3(5, -12, 5)
 tool_mode = 1
-model_contact = Vector3(0, -0.2, 0)
-erase_radius = 22.0
+model_contact = Vector3(-0.60, -0.20, 0)
+erase_radius = 18.0
 
 [node name="Shadow" type="TextureRect" parent="."]
 material = SubResource("ShadowMaterial")
 offset_left = -3.0
 offset_top = 5.0
-offset_right = 177.0
-offset_bottom = 185.0
+offset_right = 141.0
+offset_bottom = 149.0
 mouse_filter = 2
 texture = SubResource("Texture")
 expand_mode = 1
 
 [node name="Image" type="TextureRect" parent="."]
-offset_right = 180.0
-offset_bottom = 180.0
+offset_right = 144.0
+offset_bottom = 144.0
 mouse_filter = 2
 texture = SubResource("Texture")
 expand_mode = 1

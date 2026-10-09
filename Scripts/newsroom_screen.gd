@@ -113,7 +113,7 @@ func _create_proofreading_tools() -> void:
 	pencil.interaction_changed.connect(_refresh_actions)
 	eraser = preload("res://Scenes/desk_eraser.tscn").instantiate() as DeskPencil
 	eraser.position = eraser_rest_position
-	eraser.z_index = 60
+	eraser.z_index = 9
 	world.add_child(eraser)
 	eraser.set_surface(proofreading_surface)
 	eraser.interaction_changed.connect(_refresh_actions)

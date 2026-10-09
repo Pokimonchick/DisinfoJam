@@ -131,6 +131,15 @@ func _run() -> void:
 	await _button(eraser_point, false)
 	check(eraser.held and not pencil.interaction_enabled and not work.stamp.enabled, "Holding the eraser excludes pencil and stamp pickup")
 	await _move(point)
+	await create_timer(0.25).timeout
+	check(eraser.contact_position().distance_to(point) < 2, "Lifted eraser nose stays aligned with the erasing pointer")
+	var eraser_image: TextureRect = eraser.get_node("Image")
+	var eraser_camera: Camera3D = eraser.get_node("Render/Camera")
+	var eraser_model: Node3D = eraser.get_node("Render/ModelRoot")
+	var model_center := eraser_image.position + eraser_camera.unproject_position(eraser_model.position) * eraser_image.size / Vector2(eraser.get_node("Render").size)
+	var visual_center := eraser.get_global_transform_with_canvas() * model_center
+	check(visual_center.distance_to(point) > eraser.erase_radius, "Eraser grip is outside the brush; only its nose erases")
+	check(eraser.z_index < work.get_node("Canvas/World/Shadows").z_index, "Desk shadows overlay the eraser")
 	await _capture("eraser-held")
 	await _button(point, true)
 	await _button(point, false)
