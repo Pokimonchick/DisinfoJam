@@ -40,7 +40,7 @@ Choosing a headline and reading a result prevent further stamping.
   approximates the round base's visible diameter. `Imprint Angle Degrees` sets the seal
   footprint. `Excluded Controls` reject overlap with the cup and headline even
   if the print area is moved. The full rotated footprint is checked.
-  `Absorption Seconds` (0.8 by default) controls the old seal's disappearance
+  `Absorption Seconds` (1.8 by default) controls the old seal's disappearance
   when advancing to the next article; zero makes it immediate.
 - `Assets/Desk/stamp_approved.png`: the supplied red mouse seal. `stamp_ink.gdshader`
   removes its neutral paper background during drawing and multiplies only the
@@ -49,6 +49,9 @@ Choosing a headline and reading a result prevent further stamping.
   parameters `Absorption Spread Pixels` and `Absorption Grain` adjust subtle
   edge diffusion and paper pores without adding a background. `Blotch Scale`,
   `Blotch Softness` and `Blotch Motion` tune patch size, edge softness and flow.
+  `Pigment Falloff` controls intermediate density: higher values leave a paler
+  trace. Broad soft patches fade locally through partial opacity; the resting
+  seal and fully revealed text retain their original appearance.
 - `Scenes/desk_stamp.tscn`: transparent 640 x 640 3D render, camera and warm light.
   `Model Scene` accepts a replacement `PackedScene` with its underside at local
   `y = 0`; the initial model is `Scenes/desk_stamp_model.tscn`.
@@ -62,9 +65,12 @@ Choosing a headline and reading a result prevent further stamping.
 - `Scenes/newsroom_screen.tscn` root, `Result Delay Seconds`: wait after returning.
 - `Canvas/DeskFocus`, `Opening Seconds` / `Closing Seconds`: result note entrance
   and fade-out duration (0.7 / 0.45 seconds initially).
-- Newsroom root, `Source Reveal Seconds`: new article ink reveal (0.45 seconds).
+- Newsroom root, `Source Reveal Seconds`: new article ink reveal (1.8 seconds).
   `Source Ink Material` defaults to `Data/source_ink.tres`; its `Blotch Scale`
-  is in canvas pixels, with `Blotch Softness` and `Blotch Motion` for fine tuning.
+  is in canvas pixels, with `Blotch Softness`, `Blotch Motion` and
+  `Pigment Falloff` for fine tuning.
+  Article number artwork and its text fallback share this material and transition;
+  the next number replaces the old one only after absorption finishes.
   `StampArea` supplies a shared pause-safe ink clock. Progress/time uniforms are
   driven by gameplay, while style parameters remain editable in the inspector.
   Source text stays readable while the first spotlight lesson freezes the desk.

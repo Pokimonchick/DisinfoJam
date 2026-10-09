@@ -5,11 +5,12 @@ uniform float paper_cutoff : hint_range(0.0, 0.3) = 0.08;
 uniform float edge_softness : hint_range(0.01, 0.3) = 0.12;
 uniform float ink_opacity : hint_range(0.0, 1.0) = 0.95;
 uniform float absorption_progress : hint_range(0.0, 1.0) = 0.0;
-uniform float absorption_spread_pixels : hint_range(0.0, 4.0) = 1.25;
+uniform float absorption_spread_pixels : hint_range(0.0, 4.0) = 3.0;
 uniform float absorption_grain : hint_range(0.0, 1.0) = 0.35;
-uniform float blotch_scale : hint_range(1.0, 16.0) = 4.5;
-uniform float blotch_softness : hint_range(0.01, 0.3) = 0.09;
-uniform float blotch_motion : hint_range(0.0, 2.0) = 0.45;
+uniform float blotch_scale : hint_range(1.0, 16.0) = 3.0;
+uniform float blotch_softness : hint_range(0.01, 0.5) = 0.28;
+uniform float blotch_motion : hint_range(0.0, 2.0) = 0.28;
+uniform float pigment_falloff : hint_range(0.5, 3.0) = 1.5;
 uniform float ink_time = 0.0;
 
 varying float item_alpha;
@@ -34,10 +35,10 @@ float blotches(vec2 point) {
 	float time = ink_time * blotch_motion;
 	vec2 flow = vec2(noise(point * 0.7 + vec2(time * 0.3, -time * 0.2)),
 		noise(point * 0.7 + vec2(8.1, 3.7) - time * 0.25));
-	vec2 warped = point + flow * 1.6;
+	vec2 warped = point + flow * 1.2;
 	float broad = noise(warped + vec2(time * 0.18, -time * 0.14));
 	float detail = noise(warped * 2.4 + vec2(-time * 0.22, time * 0.17));
-	return clamp(mix(broad, broad * 0.65 + detail * 0.35, absorption_grain), 0.0, 1.0);
+	return clamp(mix(broad, broad * 0.7 + detail * 0.3, absorption_grain), 0.0, 1.0);
 }
 
 vec4 red_ink(vec4 source) {
@@ -62,6 +63,7 @@ void fragment() {
 		float field = blotches(UV * blotch_scale);
 		float threshold = mix(-blotch_softness, 1.0 + blotch_softness, progress);
 		remaining = 1.0 - smoothstep(field - blotch_softness, field + blotch_softness, threshold);
+		remaining = pow(clamp(remaining, 0.0, 1.0), pigment_falloff);
 	}
 	vec3 ink_color = ink.rgb / max(ink.a, 0.0001);
 	// White is neutral for Multiply, including transparent paper and end state.

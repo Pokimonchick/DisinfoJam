@@ -16,7 +16,7 @@ signal ink_time_changed(time: float)
 		imprint_angle_degrees = value
 		if is_node_ready():
 			_configure_imprint()
-@export_range(0.0, 3.0, 0.05) var absorption_seconds := 0.8
+@export_range(0.0, 3.0, 0.05) var absorption_seconds := 1.8
 
 var printed := false
 var ink_time := 0.0

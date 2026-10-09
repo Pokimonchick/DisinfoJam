@@ -22,7 +22,7 @@ enum DialogKind { NONE, RESULT }
 @export_group("Publication result")
 @export_range(0.0, 5.0, 0.1) var result_delay_seconds := 0.5
 @export_group("Text motion")
-@export_range(0.0, 2.0, 0.05) var source_reveal_seconds := 0.45
+@export_range(0.0, 2.0, 0.05) var source_reveal_seconds := 1.8
 @export var source_ink_material: ShaderMaterial = preload("res://Data/source_ink.tres")
 @export_group("Proofreading")
 @export var pencil_rest_position := Vector2(800, 940)
@@ -59,8 +59,8 @@ var undo_stroke: Button
 
 func _ready() -> void:
 	_source_material = source_ink_material.duplicate(true) as ShaderMaterial
-	for label in [%SourceTitle, %SourceText]:
-		label.material = _source_material
+	for ink_item in [%SourceTitle, %SourceText, %ArticleNumber, %ArticleNumber.get_node("NumberArt")]:
+		ink_item.material = _source_material
 	_create_proofreading_tools()
 	visibility_changed.connect(func(): _animate_source(is_visible_in_tree()))
 	stamp_area.absorption_progress_changed.connect(_on_source_absorption)
@@ -294,7 +294,7 @@ func _set_source_reveal(progress: float) -> void:
 func _on_source_absorption(progress: float) -> void:
 	if _next_source == null:
 		return
-	# One clock fades the old source and the actual stamped ink together.
+	# One clock fades the old source, article number and actual stamped ink together.
 	_source_material.set_shader_parameter("absorption_progress", progress)
 	if progress >= 1.0:
 		_display_source(_next_source, true)
