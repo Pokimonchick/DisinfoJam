@@ -15,6 +15,7 @@ signal interaction_changed
 @export_group("Interaction")
 @export var grab_rect := Rect2(32, 40, 490, 50)
 @export_range(0.01, 0.5, 0.01) var lift_height := 0.1
+@export var rest_tilt_degrees := Vector3.ZERO
 @export var lift_tilt_degrees := Vector3(8, 0, -5)
 @export_enum("Pencil", "Eraser") var tool_mode := 0
 @export var model_contact := Vector3(-1.985, 0.11, 0)
@@ -49,6 +50,7 @@ func _ready() -> void:
 	_rest_position = position
 	_rest_rotation = rotation
 	_shadow_rest_position = $Shadow.position
+	_model.rotation_degrees = rest_tilt_degrees
 	_update_perspective(position + size * 0.5)
 	$Render/Sun.rotation_degrees = Vector3(-55, 120, 0)
 	_refresh_enabled()
@@ -183,7 +185,7 @@ func cancel_interaction() -> void:
 	position = _rest_position
 	rotation = _rest_rotation
 	_model.position.y = 0
-	_model.rotation_degrees = Vector3.ZERO
+	_model.rotation_degrees = rest_tilt_degrees
 	_lift = 0.0
 	_update_perspective(position + size * 0.5)
 	$Shadow.position = _shadow_rest_position
@@ -196,7 +198,7 @@ func cancel_interaction() -> void:
 func _set_lift(value: float) -> void:
 	_lift = value
 	_model.position.y = value
-	_model.rotation_degrees = lift_tilt_degrees * clampf(value / maxf(lift_height, 0.001), 0, 1)
+	_model.rotation_degrees = rest_tilt_degrees.lerp(lift_tilt_degrees, clampf(value / maxf(lift_height, 0.001), 0, 1))
 	$Shadow.position = _shadow_rest_position + Vector2(-8, 8) * value / maxf(lift_height, 0.001)
 	$Shadow.modulate.a = 1.0 - value * 1.5
 	if held:

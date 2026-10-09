@@ -3,8 +3,16 @@ extends Control
 
 signal changed
 
-@export var pencil_color := Color("c96d62", 0.82)
-@export_range(1.0, 6.0, 0.2) var line_width := 2.4
+@export var pencil_color := Color("b62918", 0.98)
+@export_range(1.0, 6.0, 0.2) var line_width := 2.8
+@export_range(0.0, 1.0, 0.05) var grain_strength := 0.75:
+	set(value):
+		grain_strength = value
+		_refresh_brush_material()
+@export_range(0.4, 3.0, 0.05) var grain_scale := 0.85:
+	set(value):
+		grain_scale = value
+		_refresh_brush_material()
 
 var input_enabled := true:
 	set(value):
@@ -42,6 +50,18 @@ var _erase_point := Vector2.ZERO
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if material == null:
+		set_ink_material(preload("res://Data/source_ink.tres"))
+
+func set_ink_material(ink: ShaderMaterial) -> void:
+	# The brush has its own grain; source glyphs retain their unchanged material.
+	material = ink.duplicate() as ShaderMaterial
+	_refresh_brush_material()
+
+func _refresh_brush_material() -> void:
+	if material is ShaderMaterial:
+		material.set_shader_parameter("pencil_grain_strength", grain_strength)
+		material.set_shader_parameter("pencil_grain_scale", grain_scale)
 
 func bind(body: RichTextLabel, article_state: ProofreadingState, page_offset := -1) -> void:
 	finish_erasure()

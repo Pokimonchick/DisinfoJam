@@ -70,7 +70,7 @@ func _ready() -> void:
 	_create_source_pager()
 	visibility_changed.connect(func(): _animate_source(is_visible_in_tree()))
 	stamp_area.absorption_progress_changed.connect(_on_source_absorption)
-	stamp_area.ink_time_changed.connect(func(time: float): _source_material.set_shader_parameter("ink_time", time))
+	stamp_area.ink_time_changed.connect(func(time: float): _set_source_ink_parameter("ink_time", time))
 	_choice_overlay = CHOICE_OVERLAY.instantiate() as Control
 	choices.add_child(_choice_overlay)
 	choices.move_child(_choice_overlay, 0)
@@ -97,7 +97,7 @@ func _create_proofreading_tools() -> void:
 	proofreading_surface.name = "Proofreading"
 	proofreading_surface.size = $Canvas.design_size
 	proofreading_surface.z_index = 4
-	proofreading_surface.material = _source_material
+	proofreading_surface.set_ink_material(_source_material)
 	proofreading_surface.paper = stamp_area
 	world.add_child(proofreading_surface)
 	proofreading_surface.changed.connect(func():
@@ -304,8 +304,8 @@ func _animate_source(animate := true) -> void:
 	var should_animate := animate and is_visible_in_tree() and source_reveal_seconds > 0.0
 	for label in [%SourceTitle, %SourceText]:
 		label.self_modulate.a = 1.0
-	_source_material.set_shader_parameter("absorption_progress", 0.0)
-	_source_material.set_shader_parameter("ink_origin", %SourceText.get_global_transform_with_canvas().origin)
+	_set_source_ink_parameter("absorption_progress", 0.0)
+	_set_source_ink_parameter("ink_origin", %SourceText.get_global_transform_with_canvas().origin)
 	_set_source_reveal(0.0 if should_animate else 1.0)
 	if should_animate:
 		_source_reveal = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
@@ -317,13 +317,18 @@ func _animate_source(animate := true) -> void:
 	_refresh_actions()
 
 func _set_source_reveal(progress: float) -> void:
-	_source_material.set_shader_parameter("reveal_progress", progress)
+	_set_source_ink_parameter("reveal_progress", progress)
+
+func _set_source_ink_parameter(parameter: StringName, value: Variant) -> void:
+	_source_material.set_shader_parameter(parameter, value)
+	if is_instance_valid(proofreading_surface):
+		(proofreading_surface.material as ShaderMaterial).set_shader_parameter(parameter, value)
 
 func _on_source_absorption(progress: float) -> void:
 	if _next_source == null:
 		return
 	# One clock fades the old source, article number and actual stamped ink together.
-	_source_material.set_shader_parameter("absorption_progress", progress)
+	_set_source_ink_parameter("absorption_progress", progress)
 	if progress >= 1.0:
 		_display_source(_next_source, true)
 		_refresh_actions()

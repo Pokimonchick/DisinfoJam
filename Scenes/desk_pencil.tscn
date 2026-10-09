@@ -1,10 +1,11 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://Scripts/desk_pencil.gd" id="pencil"]
 [ext_resource type="Shader" path="res://Shaders/note_shadow.gdshader" id="shadow"]
 [ext_resource type="Shader" path="res://Shaders/worn_pencil.gdshader" id="wear"]
-[ext_resource type="Shader" path="res://Shaders/stamp_wood.gdshader" id="wood"]
+[ext_resource type="Shader" path="res://Shaders/pencil_wood.gdshader" id="wood"]
 [ext_resource type="Shader" path="res://Shaders/pencil_ferrule.gdshader" id="ferrule"]
+[ext_resource type="Texture2D" path="res://Assets/Desk/pencil_lacquer.png" id="lacquer"]
 
 [sub_resource type="ViewportTexture" id="Texture"]
 viewport_path = NodePath("Render")
@@ -28,25 +29,26 @@ environment = SubResource("Environment")
 shader = ExtResource("wear")
 shader_parameter/paint_color = Color(0.74, 0.055, 0.025, 1)
 shader_parameter/wood_color = Color(0.82, 0.70, 0.49, 1)
-shader_parameter/wear = 0.24
-shader_parameter/grain_strength = 0.10
+shader_parameter/lacquer_texture = ExtResource("lacquer")
+shader_parameter/wear = 0.36
+shader_parameter/grain_strength = 0.20
 shader_parameter/bite_strength = 0.65
 
 [sub_resource type="ShaderMaterial" id="Wood"]
 shader = ExtResource("wood")
 shader_parameter/wood_color = Color(0.82, 0.70, 0.49, 1)
-shader_parameter/grain_direction = Vector3(1, 0, 0.25)
-shader_parameter/flow_direction = Vector3(0, 1, 0)
-shader_parameter/grain_strength = 0.16
+shader_parameter/paint_color = Color(0.74, 0.055, 0.025, 1)
+shader_parameter/lacquer_texture = ExtResource("lacquer")
+shader_parameter/grain_strength = 0.32
 
 [sub_resource type="StandardMaterial3D" id="Pigment"]
 albedo_color = Color(0.60, 0.025, 0.015, 1)
-roughness = 0.92
+roughness = 0.82
 metallic_specular = 0.12
 
 [sub_resource type="ShaderMaterial" id="Aluminum"]
 shader = ExtResource("ferrule")
-shader_parameter/aluminum_color = Color(0.65, 0.65, 0.60, 1)
+shader_parameter/aluminum_color = Color(0.72, 0.72, 0.70, 1)
 shader_parameter/bite_strength = 0.65
 
 [sub_resource type="StandardMaterial3D" id="Rubber"]
@@ -58,48 +60,48 @@ metallic_specular = 0.08
 material = SubResource("Paint")
 top_radius = 0.122
 bottom_radius = 0.122
-height = 2.65
-radial_segments = 24
+height = 2.781667
+radial_segments = 72
 rings = 64
 
 [sub_resource type="CylinderMesh" id="TipWood"]
 material = SubResource("Wood")
 top_radius = 0.032
 bottom_radius = 0.122
-height = 0.25
-radial_segments = 6
-rings = 1
+height = 0.34
+radial_segments = 72
+rings = 32
 
 [sub_resource type="CylinderMesh" id="TipLead"]
 material = SubResource("Pigment")
 top_radius = 0.0
 bottom_radius = 0.032
 height = 0.085
-radial_segments = 6
-rings = 1
+radial_segments = 48
+rings = 8
 
 [sub_resource type="CylinderMesh" id="Ferrule"]
 material = SubResource("Aluminum")
 top_radius = 0.128
 bottom_radius = 0.128
-height = 0.43
-radial_segments = 24
+height = 0.286667
+radial_segments = 72
 rings = 64
 
 [sub_resource type="CylinderMesh" id="RearEraser"]
 material = SubResource("Rubber")
 top_radius = 0.12
 bottom_radius = 0.115
-height = 0.175
-radial_segments = 12
-rings = 1
+height = 0.116667
+radial_segments = 48
+rings = 8
 
 [sub_resource type="SphereMesh" id="EraserCap"]
 material = SubResource("Rubber")
 radius = 1.0
 height = 2.0
-radial_segments = 12
-rings = 6
+radial_segments = 48
+rings = 16
 
 [node name="Pencil" type="Control"]
 editor_description = "Красный деревянный карандаш. Клик — взять; удержание левой кнопки — рисовать; правая — положить."
@@ -108,6 +110,7 @@ offset_bottom = 130.0
 script = ExtResource("pencil")
 grab_rect = Rect2(20, 40, 510, 60)
 lift_height = 0.22
+rest_tilt_degrees = Vector3(0, -8, 0)
 lift_tilt_degrees = Vector3(0, 55, 35)
 model_contact = Vector3(-1.985, 0.127, 0)
 
@@ -149,12 +152,12 @@ light_energy = 1.0
 [node name="ModelRoot" type="Node3D" parent="Render"]
 
 [node name="Barrel" type="MeshInstance3D" parent="Render/ModelRoot"]
-position = Vector3(-0.325, 0.127, 0)
+position = Vector3(-0.169167, 0.127, 0)
 rotation = Vector3(0, 0, 1.5707963)
 mesh = SubResource("Barrel")
 
 [node name="TipWood" type="MeshInstance3D" parent="Render/ModelRoot"]
-position = Vector3(-1.775, 0.127, 0)
+position = Vector3(-1.73, 0.127, 0)
 rotation = Vector3(0, 0, 1.5707963)
 mesh = SubResource("TipWood")
 
@@ -164,16 +167,16 @@ rotation = Vector3(0, 0, 1.5707963)
 mesh = SubResource("TipLead")
 
 [node name="Ferrule" type="MeshInstance3D" parent="Render/ModelRoot"]
-position = Vector3(1.215, 0.127, 0)
+position = Vector3(1.365, 0.127, 0)
 rotation = Vector3(0, 0, 1.5707963)
 mesh = SubResource("Ferrule")
 
 [node name="RearEraser" type="MeshInstance3D" parent="Render/ModelRoot"]
-position = Vector3(1.505, 0.127, 0)
+position = Vector3(1.558333, 0.127, 0)
 rotation = Vector3(0, 0, 1.5707963)
 mesh = SubResource("RearEraser")
 
 [node name="EraserCap" type="MeshInstance3D" parent="Render/ModelRoot"]
-position = Vector3(1.61, 0.127, 0)
-scale = Vector3(0.055, 0.115, 0.115)
+position = Vector3(1.628333, 0.127, 0)
+scale = Vector3(0.036667, 0.115, 0.115)
 mesh = SubResource("EraserCap")

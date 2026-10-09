@@ -9,12 +9,17 @@ uniform float blotch_motion : hint_range(0.0, 2.0) = 0.28;
 uniform float pigment_falloff : hint_range(0.5, 3.0) = 1.5;
 uniform float ink_time = 0.0;
 uniform vec2 ink_origin = vec2(0.0);
+// Enabled only on the pencil's duplicated material, never on source glyphs.
+uniform float pencil_grain_strength : hint_range(0.0, 1.0) = 0.0;
+uniform float pencil_grain_scale : hint_range(0.4, 3.0) = 0.85;
 
 varying vec2 ink_canvas_position;
+varying vec2 pencil_paper_position;
 
 void vertex() {
 	// Glyph atlas UV repeats per letter. Canvas coordinates form one paper mask.
 	ink_canvas_position = (MODEL_MATRIX * vec4(VERTEX, 0.0, 1.0)).xy;
+	pencil_paper_position = VERTEX;
 }
 
 float hash(vec2 point) {
@@ -39,6 +44,16 @@ float blotches(vec2 point) {
 }
 
 void fragment() {
+	if (pencil_grain_strength > 0.0) {
+		// Fixed paper fibers leave small dry gaps without an animated grain pattern.
+		vec2 paper = pencil_paper_position / max(pencil_grain_scale, 0.4);
+		float fleck = hash(floor(paper));
+		float fibers = noise(paper * vec2(0.35, 1.2));
+		float coverage = mix(0.35, 1.0, smoothstep(0.06, 0.38, fleck));
+		coverage *= mix(0.90, 1.0, fibers);
+		COLOR.a *= mix(1.0, coverage, pencil_grain_strength);
+		COLOR.rgb *= mix(1.0, 0.94 + fibers * 0.06, pencil_grain_strength);
+	}
 	// Fully readable text needs no procedural noise during ordinary reading.
 	if (absorption_progress > 0.0 || reveal_progress < 1.0) {
 		float field = blotches((ink_canvas_position - ink_origin) / max(blotch_scale, 1.0));
