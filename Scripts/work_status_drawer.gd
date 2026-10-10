@@ -92,8 +92,8 @@ func _refresh() -> void:
 		approval_text = approval.ready_text
 	%LoyaltyHint.text = approval.formatted(approval_text)
 	%LoyaltyHelp.tooltip_text = preload("res://Scripts/stat_descriptions.gd").text_for("loyalty", session.balance)
-	%MoneyValue.text = "%d $" % session.money
-	var money_color := Color("587148") if session.money > 0 else (Color("a65b50") if session.money < 0 else Color("544330"))
+	%MoneyValue.text = "+%d $" % session.money if session.money > 0 else "%d $" % session.money
+	var money_color := Color("a6c87a") if session.money > 0 else (Color("e18778") if session.money < 0 else Color("e5d0a5"))
 	if %MoneyValue.get_theme_color("font_color") != money_color:
 		%MoneyValue.add_theme_color_override("font_color", money_color)
 

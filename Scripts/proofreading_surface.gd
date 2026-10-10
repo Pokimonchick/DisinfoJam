@@ -404,8 +404,11 @@ func _erase_between(origin: Vector2, finish: Vector2, radius: float) -> void:
 				_render_cache.remove_at(index)
 		else:
 			stroke.segments = remaining
-			if index < _render_cache.size():
-				_render_cache[index] = null
+			if index < _render_cache.size() and _render_cache[index] != null and is_same(_render_cache[index].stroke, stroke):
+				# Keep visible ink until its replacement is complete. Further eraser
+				# movements are coalesced rather than restarting the pending build.
+				if not _render_cache[index].has("replacement"):
+					_render_cache[index].replacement = _new_view(stroke)
 			# Legacy cached classifications are no longer valid after an edit.
 			stroke.corrected = []
 			stroke.wrong = []
@@ -496,6 +499,9 @@ func _new_brush(points: Array):
 	brush.configure(points, size, line_width, edge_softness)
 	return brush
 
+func _new_view(stroke: Dictionary) -> Dictionary:
+	return {"stroke": stroke, "segments": stroke.segments, "legacy": not stroke.has("page_character"), "brushes": [], "segment": 0, "point": 1, "run": [], "prepared": false}
+
 func _sync_live_brushes() -> void:
 	while _live_brushes.size() < _segments.size():
 		_live_brushes.append(_new_brush(_segments[_live_brushes.size()].points))
@@ -549,15 +555,25 @@ func _process(_delta: float) -> void:
 		if not _stroke_visible(stroke):
 			continue
 		if _render_cache[index] == null or not is_same(_render_cache[index].stroke, stroke):
-			_render_cache[index] = {"stroke": stroke, "segments": stroke.segments, "legacy": not stroke.has("page_character"), "brushes": [], "segment": 0, "point": 1, "run": [], "prepared": false}
-		var view: Dictionary = _render_cache[index]
+			_render_cache[index] = _new_view(stroke)
+		var shown: Dictionary = _render_cache[index]
+		var view: Dictionary = shown.get("replacement", shown)
 		if not view.prepared and not _geometry_dirty:
 			_prepare_view(view, deadline)
-		pending = not view.prepared or pending
+		var view_pending: bool = not view.prepared
 		for brush in view.brushes:
 			if brush.pending():
 				updated = brush.advance(deadline) or updated
-				pending = brush.pending() or pending
+				view_pending = brush.pending() or view_pending
+		if shown.has("replacement") and not view_pending:
+			_render_cache[index] = view
+			updated = true
+			# Edits only remove ink, so completed snapshots can advance the display
+			# while a fresh snapshot catches up with continuous eraser movement.
+			if not is_same(view.segments, stroke.segments):
+				view.replacement = _new_view(stroke)
+				view_pending = true
+		pending = view_pending or pending
 	if updated:
 		queue_redraw()
 	set_process(pending)

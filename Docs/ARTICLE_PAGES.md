@@ -13,7 +13,8 @@ The article number and selected headline refer to the whole article.
 - The screen's **Source Page Scene** accepts the page-control scene. In that
   scene, **Turn Seconds** defaults to 0.6, **Footer Gap** to 20 canvas pixels,
   and **Paragraph Fill Minimum** to 0.55. Button styling uses muted paper/olive
-  colors. `Row` contains the two buttons and the counter.
+  colors. `Row` contains the two buttons and the counter. Navigation uses
+  z-index 7: above the paper marks, below the stamp, pencil, eraser and desk shadows.
 - A hidden, non-threaded RichTextLabel shapes the full plain-text source with
   the body's font, width and spacing. Native line ranges and heights choose
   contiguous character spans. A paragraph boundary is preferred when at least

@@ -28,9 +28,10 @@ and the [configuration screen](https://volx.jp/persona-5-royal-keyboard-controll
   states plus `EditorialBanner`, `EditorialPortrait` and `EditorialPrimary` variants.
 - `Scripts/editorial_card.gd` draws the paper frame; native containers own layout
   and controls retain their normal mouse/keyboard behavior.
-- The desk balance uses a compact paper card with a muted red backing, fitting
-  below qualification. Positive cash is green, debt is red. Pencil meter strokes
-  use doubled thickness without changing their length or gameplay values.
+- The desk balance uses a compact brown card with a gold border, fitting below
+  qualification. Positive cash is green, debt is red, and the amount shows its
+  sign. Pencil meter strokes use doubled thickness without changing their length
+  or gameplay values.
 - Settings, pause and new-story confirmation reuse `Shaders/pause_blur.gdshader` with
   a `BackBufferCopy` before the backdrop. Keep the menu visible below the new-story
   overlay and keep focus inside each modal.

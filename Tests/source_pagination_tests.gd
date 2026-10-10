@@ -46,6 +46,68 @@ func _brush_cache() -> void:
 		bounded = bounded and is_finite(vertex.x) and is_finite(vertex.y) and vertex.y > 198.5 and vertex.y < 202.5
 	check(bounded, "A near reversal keeps all visual vertices within the brush width without vertical spikes")
 
+func _red_ink_in(image: Image, region: Rect2i) -> bool:
+	for y in range(region.position.y, region.end.y):
+		for x in range(region.position.x, region.end.x):
+			var pixel := image.get_pixel(x, y)
+			if pixel.r > pixel.g * 1.4 and pixel.r > pixel.b * 1.4:
+				return true
+	return false
+
+func _continuous_erasure(surface: ProofreadingSurface, label: RichTextLabel, model: ProofreadingState) -> void:
+	# A distant, untouched piece of a dense mark must stay visible in every frame
+	# while the eraser repeatedly edits another piece under a small render budget.
+	label.scroll_active = false
+	label.get_v_scroll_bar().value = 0
+	model.strokes.clear()
+	var points: Array = []
+	for index in range(2500):
+		points.append([(220.0 + float(index) * 0.52) / surface.size.x, 820.0 / surface.size.y])
+	model.add_stroke({"segments": [{"anchor": "desk", "points": points}], "page_character": 0, "corrected": [], "wrong": []})
+	surface.line_width = 2.8
+	surface.render_budget_ms = 3.0
+	surface.bind(label, model, 0)
+	for frame in range(160):
+		await process_frame
+		if not surface.is_processing():
+			break
+	check(not surface.is_processing(), "The dense mark finishes its initial visual cache")
+	var native := DisplayServer.get_name() != "headless"
+	var untouched := Rect2i(1450, 817, 24, 7)
+	if native:
+		await RenderingServer.frame_post_draw
+		check(_red_ink_in(root.get_texture().get_image(), untouched), "The untouched end of the dense mark is visible before erasing")
+	surface.render_budget_ms = 0.1
+	check(surface.begin_erasure(Vector2(320, 820), 12.0), "Erasing the dense mark starts on paper")
+	var continuously_visible := true
+	for index in range(12):
+		surface.extend_erasure(Vector2(320.0 + float(index + 1) * 16.0, 820), 12.0)
+		await process_frame
+		if native:
+			await RenderingServer.frame_post_draw
+			continuously_visible = _red_ink_in(root.get_texture().get_image(), untouched) and continuously_visible
+	if native:
+		check(continuously_visible, "Untouched ink never blanks or redraws from the start during continuous erasing")
+	surface.finish_erasure()
+	for frame in range(400):
+		await process_frame
+		if not surface.is_processing():
+			break
+	check(not surface.is_processing(), "Coalesced erasing eventually displays the latest geometry")
+	if native:
+		await RenderingServer.frame_post_draw
+		var image := root.get_texture().get_image()
+		check(not _red_ink_in(image, Rect2i(330, 817, 170, 7)) and _red_ink_in(image, untouched), "The final frame keeps untouched ink and removes the full latest eraser sweep")
+	await _capture("erased-dense")
+	# Deleting a mark while its partial rebuild is pending must cancel that rebuild.
+	surface.begin_erasure(Vector2(700, 820), 12.0)
+	surface.extend_erasure(Vector2(220, 820), 12.0)
+	surface.extend_erasure(Vector2(1600, 820), 12.0)
+	surface.finish_erasure()
+	await process_frame
+	await process_frame
+	check(model.strokes.is_empty() and surface._render_cache.is_empty() and not surface.is_processing(), "Fully erasing a pending mark cannot resurrect its stale visual cache")
+
 func _run() -> void:
 	_brush_cache()
 	root.content_scale_size = Vector2i(1920, 1080)
@@ -198,5 +260,6 @@ func _run() -> void:
 		await process_frame
 	var legacy_moved: bool = surface._render_cache[0].brushes.is_empty() or surface._render_cache[0].brushes[0].tail != legacy_mesh
 	check(label.get_v_scroll_bar().value > 0.0 and legacy_moved, "Legacy text-anchored marks invalidate their visual positions on native scrolling")
+	await _continuous_erasure(surface, label, model)
 	print("SOURCE PAGINATION TESTS: %d checks, %d failures" % [checks, failures])
 	quit(0 if failures == 0 else 1)

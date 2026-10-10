@@ -38,7 +38,7 @@ corner_radius_bottom_left = 3
 [sub_resource type="StyleBoxEmpty" id="disabled"]
 
 [node name="SourcePages" type="Control"]
-z_index = 25
+z_index = 7
 layout_mode = 0
 offset_right = 300.0
 offset_bottom = 46.0

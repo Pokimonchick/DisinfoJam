@@ -85,15 +85,18 @@ func _run() -> void:
 	var balance_card: Control = drawer.get_node("SlidingPanel/BalanceCard")
 	var qualification_hint: Control = drawer.get_node("%QualificationHint")
 	var paper: Control = drawer.get_node("SlidingPanel/Paper")
-	check(balance_card.visible, "The compact paper balance card is visible")
+	check(balance_card.visible, "The compact brown balance card is visible")
 	check(balance_card.get_rect().position.y >= qualification_hint.get_rect().end.y and paper.get_rect().encloses(balance_card.get_rect()), "The balance card fits below qualification inside the paper")
-	check(drawer.get_node("%MoneyValue").get_theme_color("font_color") == Color("587148"), "A positive balance uses green ink")
+	var balance_style := balance_card.get_theme_stylebox("panel") as StyleBoxFlat
+	check(balance_style.bg_color == Color(0.204, 0.161, 0.122, 1) and balance_style.border_color == Color(0.698, 0.541, 0.322, 1), "The balance card uses its brown fill and gold border")
+	check(drawer.get_node("SlidingPanel/MoneyTitle").get_theme_color("font_color") == Color(0.91, 0.78, 0.56, 1), "The balance title uses readable warm lettering")
+	check(drawer.get_node("%MoneyValue").text == "+80 $" and drawer.get_node("%MoneyValue").get_theme_color("font_color") == Color("a6c87a"), "A positive balance shows a plus sign in green ink")
 	model.money = -20
 	model.changed.emit()
-	check(drawer.get_node("%MoneyValue").get_theme_color("font_color") == Color("a65b50"), "A negative balance uses muted red ink")
+	check(drawer.get_node("%MoneyValue").text == "-20 $" and drawer.get_node("%MoneyValue").get_theme_color("font_color") == Color("e18778"), "A negative balance shows a minus sign in red ink")
 	model.money = 0
 	model.changed.emit()
-	check(drawer.get_node("%MoneyValue").get_theme_color("font_color") == Color("544330"), "Zero balance uses neutral ink")
+	check(drawer.get_node("%MoneyValue").text == "0 $" and drawer.get_node("%MoneyValue").get_theme_color("font_color") == Color("e5d0a5"), "Zero balance uses neutral ink")
 	model.money = 80
 	model.changed.emit()
 	var source := Label.new()

@@ -84,6 +84,7 @@ func _run() -> void:
 	var source: RichTextLabel = work.get_node("%SourceText")
 	var bar := source.get_v_scroll_bar()
 	var pager: Pager = work.source_pager
+	check(pager.z_index > surface.z_index and pager.z_index < work.stamp.z_index and pager.z_index < pencil.z_index and pager.z_index < eraser.z_index, "Page navigation is above paper marks but below every interactive desk tool")
 	var proof := session.proofreading
 	var brush_material := surface.material as ShaderMaterial
 	var source_material := source.material as ShaderMaterial

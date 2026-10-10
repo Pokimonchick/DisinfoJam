@@ -9,7 +9,6 @@
 [ext_resource type="Texture2D" uid="uid://d3en4e2iouj0q" path="res://Assets/Assets for new version of game/Untitled (22)/Arrow 3.png" id="7_arrow"]
 [ext_resource type="Texture2D" uid="uid://b8lk2an53p42w" path="res://Assets/Assets for new version of game/Untitled (22)/Group 38.png" id="8_help"]
 [ext_resource type="Script" uid="uid://c5iynoxvvikfr" path="res://Scripts/pencil_meter.gd" id="9_pencil_meter"]
-[ext_resource type="Script" path="res://Scripts/editorial_card.gd" id="10_editorial_card"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_eagcc"]
 
@@ -23,7 +22,19 @@
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_w1yn8"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_balance"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_balance"]
+bg_color = Color(0.204, 0.161, 0.122, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.698, 0.541, 0.322, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+shadow_color = Color(0.12, 0.08, 0.04, 0.4)
+shadow_size = 4
 
 [node name="WorkStatusDrawer" type="Control" unique_id=163510095]
 layout_mode = 3
@@ -395,15 +406,14 @@ theme_override_font_sizes/font_size = 17
 text = "ВЫЧИТКА ИСТОЧНИКА ДОСТУПНА"
 autowrap_mode = 2
 
-[node name="BalanceCard" type="PanelContainer" parent="SlidingPanel" unique_id=2107403312]
+[node name="BalanceCard" type="Panel" parent="SlidingPanel" unique_id=2107403312]
 layout_mode = 0
 offset_left = 42.0
 offset_top = 784.0
 offset_right = 366.0
 offset_bottom = 866.0
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxEmpty_balance")
-script = ExtResource("10_editorial_card")
+theme_override_styles/panel = SubResource("StyleBoxFlat_balance")
 
 [node name="MoneyTitle" type="Label" parent="SlidingPanel" unique_id=1545158402]
 layout_mode = 0
@@ -411,7 +421,7 @@ offset_left = 60.0
 offset_top = 796.0
 offset_right = 178.0
 offset_bottom = 854.0
-theme_override_colors/font_color = Color(0.235294, 0.156863, 0.0862745, 1)
+theme_override_colors/font_color = Color(0.91, 0.78, 0.56, 1)
 theme_override_font_sizes/font_size = 22
 text = "БАЛАНС"
 vertical_alignment = 1
@@ -423,7 +433,7 @@ offset_left = 178.0
 offset_top = 796.0
 offset_right = 350.0
 offset_bottom = 854.0
-theme_override_colors/font_color = Color(0.329412, 0.25098, 0.14902, 1)
+theme_override_colors/font_color = Color(0.898039, 0.815686, 0.647059, 1)
 theme_override_font_sizes/font_size = 34
 text = "0 $"
 vertical_alignment = 1
