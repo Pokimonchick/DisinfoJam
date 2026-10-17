@@ -130,7 +130,7 @@ func _draw_note() -> void:
 		draw_line(Vector2(28.0, y), Vector2(size.x - 28.0, y), Color("a9a083", 0.48), 1.0)
 	if _is_hovered:
 		draw_rect(Rect2(1.5, 1.5, size.x - 3.0, size.y - 3.0), Color("e8bd68"), false, 4.0)
-		draw_string(ThemeDB.fallback_font, Vector2(28.0, size.y - 20.0), "НАЖАТЬ, ЧТОБЫ ПРОЧИТАТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("7e603d"))
+		draw_string(preload("res://Scripts/game_fonts.gd").BODY, Vector2(28.0, size.y - 20.0), "НАЖАТЬ, ЧТОБЫ ПРОЧИТАТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("7e603d"))
 
 func _draw_folder() -> void:
 	draw_rect(Rect2(8.0, 16.0, size.x - 16.0, size.y - 25.0), Color("1e1919", 0.42), true)

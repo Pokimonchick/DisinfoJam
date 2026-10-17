@@ -56,6 +56,7 @@ func present(origin: Control, tag: String, title: String, body: String, primary:
 	_opening = true
 	modulate.a = 0.0
 	show()
+	AudioManager.play_cue(AudioManager.Cue.PAPER_TURN)
 	# Let wrapped text recalculate its minimum size at the new width before
 	# exposing the paper; otherwise the first opening can grow off-screen.
 	size = target_size
@@ -106,6 +107,7 @@ func close(after_close: Callable = Callable()) -> void:
 	if not active:
 		return
 	active = false
+	AudioManager.play_cue(AudioManager.Cue.PAPER_PUT)
 	_version += 1
 	if _motion and _motion.is_valid():
 		_motion.kill()

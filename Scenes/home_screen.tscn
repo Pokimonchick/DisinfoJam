@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3]
 
-[ext_resource type="Script" path="res://Scripts/home_screen.gd" id="1"]
-[ext_resource type="Script" path="res://Scripts/pixel_room.gd" id="2"]
+[ext_resource type="Script" path="res://Scripts/home_screen.gd" id="home"]
+[ext_resource type="Script" path="res://Scripts/tamagotchi_room.gd" id="room"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/tamagochi/Shop assets/Menu assets/Cash 2.png" id="cash"]
 
 [node name="Home" type="Control"]
 layout_mode = 3
@@ -10,117 +11,154 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1")
+script = ExtResource("home")
 
-[node name="Layout" type="VBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-theme_override_constants/separation = 8
+[node name="Canvas" type="Control" parent="."]
+layout_mode = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
 
-[node name="Summary" type="Label" parent="Layout"]
+[node name="RoomView" type="Control" parent="Canvas"]
 unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 21
+layout_mode = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+script = ExtResource("room")
 
-[node name="RoomView" type="Control" parent="Layout"]
+[node name="MoneyPaper" type="TextureRect" parent="Canvas"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 280)
-layout_mode = 2
-size_flags_vertical = 3
-script = ExtResource("2")
+layout_mode = 0
+offset_left = 42.0
+offset_top = 44.0
+offset_right = 294.0
+offset_bottom = 142.0
+mouse_filter = 2
+texture = ExtResource("cash")
+expand_mode = 1
 
-[node name="Bed" type="Button" parent="Layout/RoomView"]
+[node name="Money" type="Label" parent="Canvas/MoneyPaper"]
 unique_name_in_owner = true
-layout_mode = 1
-anchor_left = 0.035
-anchor_top = 0.49
-anchor_right = 0.30
-anchor_bottom = 0.865
-mouse_default_cursor_shape = 2
-tooltip_text = "Лечь спать и начать следующую смену"
-
-[node name="Coffee" type="Button" parent="Layout/RoomView"]
-unique_name_in_owner = true
-layout_mode = 1
-anchor_left = 0.6
-anchor_top = 0.41
-anchor_right = 0.735
-anchor_bottom = 0.66
-mouse_default_cursor_shape = 2
-
-[node name="Meal" type="Button" parent="Layout/RoomView"]
-unique_name_in_owner = true
-layout_mode = 1
-anchor_left = 0.82
-anchor_top = 0.25
-anchor_right = 0.98
-anchor_bottom = 0.85
-mouse_default_cursor_shape = 2
-
-[node name="Notebook" type="Button" parent="Layout/RoomView"]
-unique_name_in_owner = true
-layout_mode = 1
-anchor_left = 0.704
-anchor_top = 0.518
-anchor_right = 0.763
-anchor_bottom = 0.607
-mouse_default_cursor_shape = 2
-tooltip_text = "Открыть блокнот: расходы и доходы"
-
-[node name="Captions" type="Control" parent="Layout"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-
-[node name="BedCaption" type="Label" parent="Layout/Captions"]
-unique_name_in_owner = true
-layout_mode = 1
-anchor_left = 0.035
-anchor_right = 0.35
-anchor_bottom = 1.0
-theme_override_font_sizes/font_size = 18
-
-[node name="CoffeeCaption" type="Label" parent="Layout/Captions"]
-unique_name_in_owner = true
-layout_mode = 1
-anchor_left = 0.535
-anchor_right = 0.785
-anchor_bottom = 1.0
-theme_override_font_sizes/font_size = 18
+layout_mode = 0
+offset_left = 18.0
+offset_top = 10.0
+offset_right = 232.0
+offset_bottom = 86.0
+theme_override_colors/font_color = Color(0.3, 0.16, 0.1, 1)
+theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="MealCaption" type="Label" parent="Layout/Captions"]
+[node name="Day" type="Label" parent="Canvas"]
 unique_name_in_owner = true
-layout_mode = 1
-anchor_left = 0.79
-anchor_right = 0.995
-anchor_bottom = 1.0
-theme_override_font_sizes/font_size = 18
-horizontal_alignment = 2
+layout_mode = 0
+offset_left = 326.0
+offset_top = 62.0
+offset_right = 820.0
+offset_bottom = 110.0
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_colors/font_shadow_color = Color(0.2, 0.1, 0.08, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 30
 
-[node name="Notice" type="Label" parent="Layout"]
+[node name="Pause" type="Button" parent="Canvas"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 24)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.88, 0.82, 1)
-theme_override_font_sizes/font_size = 18
-autowrap_mode = 3
-
-[node name="Footer" type="HBoxContainer" parent="Layout"]
-layout_mode = 2
-theme_override_constants/separation = 20
-
-[node name="DebtHint" type="Label" parent="Layout/Footer"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 15
-autowrap_mode = 3
-
-[node name="Snack" type="Button" parent="Layout/Footer"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(225, 38)
-layout_mode = 2
+layout_mode = 0
+offset_left = 1664.0
+offset_top = 42.0
+offset_right = 1870.0
+offset_bottom = 114.0
 mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 17
+text = "Пауза · Esc"
+
+[node name="HeroineInfo" type="Button" parent="Canvas"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 652.0
+offset_top = 345.0
+offset_right = 992.0
+offset_bottom = 990.0
+mouse_default_cursor_shape = 2
+tooltip_text = "Никола Коко: открыть сведения"
+modulate = Color(1, 1, 1, 0)
+
+[node name="Fish" type="Button" parent="Canvas"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 1630.0
+offset_top = 514.0
+offset_right = 1912.0
+offset_bottom = 750.0
+mouse_default_cursor_shape = 2
+tooltip_text = "Покормить рыбок: открыть рюкзак"
+modulate = Color(1, 1, 1, 0)
+
+[node name="Meal" type="Button" parent="Canvas"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 42.0
+offset_top = 934.0
+offset_right = 284.0
+offset_bottom = 1030.0
+mouse_default_cursor_shape = 2
+text = "Магазин"
+
+[node name="Bag" type="Button" parent="Canvas"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 304.0
+offset_top = 934.0
+offset_right = 546.0
+offset_bottom = 1030.0
+mouse_default_cursor_shape = 2
+text = "Рюкзак"
+
+[node name="Notebook" type="Button" parent="Canvas"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 566.0
+offset_top = 934.0
+offset_right = 828.0
+offset_bottom = 1030.0
+mouse_default_cursor_shape = 2
+text = "Блокнот"
+
+[node name="Bed" type="Button" parent="Canvas"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 1414.0
+offset_top = 924.0
+offset_right = 1874.0
+offset_bottom = 1040.0
+mouse_default_cursor_shape = 2
+text = "Следующая смена"
+
+[node name="Notice" type="Label" parent="Canvas"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 875.0
+offset_top = 936.0
+offset_right = 1388.0
+offset_bottom = 1034.0
+theme_override_colors/font_color = Color(1, 0.96, 0.85, 1)
+theme_override_colors/font_shadow_color = Color(0.2, 0.1, 0.08, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 25
+autowrap_mode = 3
+vertical_alignment = 1
+
+[node name="NightCaption" type="Label" parent="Canvas"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 1150.0
+offset_top = 944.0
+offset_right = 1840.0
+offset_bottom = 1024.0
+text = "Тише. Бриполис засыпает…"
+theme_override_colors/font_color = Color(0.85, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 34
+horizontal_alignment = 2

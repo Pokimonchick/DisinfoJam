@@ -32,8 +32,8 @@ enum DialogKind { NONE, RESULT }
 @export var eraser_rest_position := Vector2(600, 940)
 @export_range(0.1, 4.0, 0.1) var proofreading_budget_ms := 2.0
 @export_group("Audio")
-@export var headline_appear_sound: AudioStream = preload("res://Assets/Sounds/paper - Part_1.wav")
-@export_range(-40.0, 6.0, 0.5) var headline_appear_volume_db: float = 0.0
+@export var headline_appear_sound: AudioStream = preload("res://Assets/Sounds/Бумага перелистывание.wav")
+@export_range(-40.0, 6.0, 0.5) var headline_appear_volume_db: float = -5.0
 
 var session: NewsroomSession
 # Selected is the article's draft, not a published headline.
@@ -295,7 +295,7 @@ func _refresh_combo() -> void:
 
 func _drink_coffee() -> void:
 	if not (choices.visible and GameSettings.choice_overlay_enabled):
-		session.drink_coffee()
+		AudioManager.play_cue(AudioManager.Cue.COFFEE if session.drink_coffee() else AudioManager.Cue.WARNING)
 
 func _display_source(article: NewsArticle, animate := false) -> void:
 	_next_source = null
@@ -464,6 +464,7 @@ func _hide_choices(animate := true) -> void:
 		choices.hide()
 		_update_choice_overlay()
 		return
+	AudioManager.play_cue(AudioManager.Cue.PAPER_PUT)
 	_choice_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	for card in cards:
 		card.disabled = true

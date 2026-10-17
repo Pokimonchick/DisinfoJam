@@ -18,12 +18,17 @@
 [ext_resource type="Script" path="res://Scripts/menu_paper_button.gd" id="16_menu_button"]
 [ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/menu_background.PNG" id="17_menu_background"]
 [ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/coco_news.PNG" id="18_menu_logo"]
-[ext_resource type="FontFile" path="res://Assets/Fonts/Neucha/Neucha.ttf" id="19_menu_font"]
+[ext_resource type="FontFile" path="res://Assets/Assets for new version of game/tamagochi/Alegreya_Sans,Ysabeau/Ysabeau/static/Ysabeau-Bold.ttf" id="19_menu_font"]
 [ext_resource type="Theme" path="res://Data/editorial_ui_theme.tres" id="20_editorial_theme"]
 [ext_resource type="Script" path="res://Scripts/editorial_card.gd" id="21_editorial_card"]
 [ext_resource type="Shader" path="res://Shaders/pause_blur.gdshader" id="22_modal_blur"]
 [ext_resource type="Texture2D" path="res://Assets/Characters/Mask group (22).png" id="23_heroine"]
 [ext_resource type="Script" path="res://Scripts/dialogue_reveal.gd" id="24_dialogue_reveal"]
+
+[ext_resource type="Script" path="res://Scripts/story_dialogue.gd" id="25_dialogue_frame"]
+[ext_resource type="Script" path="res://Scripts/tamagotchi_room.gd" id="26_room_art"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/tamagochi/Тамагочи/dialogue/dialogue background.png" id="27_dialogue_paper"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/tamagochi/Тамагочи/dialogue/dialogue arrow.png" id="28_dialogue_arrow"]
 
 [sub_resource type="Theme" id="MenuTheme"]
 default_font = ExtResource("19_menu_font")
@@ -117,7 +122,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="Narrative" type="PanelContainer" parent="Padding/Layout/Stage" unique_id=1176842582]
+[node name="Narrative" type="Control" parent="." unique_id=1176842582]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -125,85 +130,121 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("20_editorial_theme")
-script = ExtResource("21_editorial_card")
+script = ExtResource("25_dialogue_frame")
 
-[node name="Layout" type="HBoxContainer" parent="Padding/Layout/Stage/Narrative" unique_id=287667656]
-layout_mode = 2
-theme_override_constants/separation = 30
-
-[node name="PortraitPanel" type="PanelContainer" parent="Padding/Layout/Stage/Narrative/Layout"]
-custom_minimum_size = Vector2(310, 350)
-layout_mode = 2
-size_flags_vertical = 4
-theme_type_variation = &"EditorialPortrait"
-
-[node name="NarrativeVisual" type="Control" parent="Padding/Layout/Stage/Narrative/Layout/PortraitPanel" unique_id=1383027181]
-unique_name_in_owner = true
-layout_mode = 2
+[node name="Canvas" type="Control" parent="Narrative"]
+layout_mode = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
 mouse_filter = 2
-script = ExtResource("6")
-sprite = ExtResource("23_heroine")
 
-[node name="Text" type="VBoxContainer" parent="Padding/Layout/Stage/Narrative/Layout" unique_id=786988081]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 18
-
-[node name="TitleBanner" type="PanelContainer" parent="Padding/Layout/Stage/Narrative/Layout/Text"]
-layout_mode = 2
-theme_type_variation = &"EditorialBanner"
-
-[node name="Titles" type="VBoxContainer" parent="Padding/Layout/Stage/Narrative/Layout/Text/TitleBanner"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="NarrativeTag" type="Label" parent="Padding/Layout/Stage/Narrative/Layout/Text/TitleBanner/Titles" unique_id=1776798645]
+[node name="NarrativeVisual" type="Control" parent="Narrative/Canvas" unique_id=1383027181]
 unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.91, 0.74, 0.41, 1)
-theme_override_font_sizes/font_size = 16
+layout_mode = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+script = ExtResource("26_room_art")
+show_heroine = false
 
-[node name="NarrativeTitle" type="Label" parent="Padding/Layout/Stage/Narrative/Layout/Text/TitleBanner/Titles" unique_id=1510054816]
+[node name="NarrativeTitle" type="Label" parent="Narrative/Canvas" unique_id=1510054816]
 unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.96, 0.9, 0.75, 1)
-theme_override_font_sizes/font_size = 36
+visible = false
+layout_mode = 0
+offset_left = 166.0
+offset_top = 122.0
+offset_right = 1620.0
+offset_bottom = 238.0
+theme_type_variation = &"EditorialHeading"
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_colors/font_shadow_color = Color(0.2, 0.1, 0.08, 1)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 52
 autowrap_mode = 3
 
-[node name="NarrativeBody" type="RichTextLabel" parent="Padding/Layout/Stage/Narrative/Layout/Text" unique_id=1728767463]
+[node name="Paper" type="TextureRect" parent="Narrative/Canvas"]
+layout_mode = 0
+offset_left = 160.0
+offset_top = 800.0
+offset_right = 1760.0
+offset_bottom = 1060.0
+mouse_filter = 2
+texture = ExtResource("27_dialogue_paper")
+expand_mode = 1
+
+[node name="NarrativeTag" type="Label" parent="Narrative/Canvas/Paper" unique_id=1776798645]
 unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_font_sizes/normal_font_size = 22
+layout_mode = 0
+offset_left = 34.0
+offset_top = 20.0
+offset_right = 1515.0
+offset_bottom = 62.0
+theme_override_colors/font_color = Color(0.7, 0.27, 0.23, 1)
+theme_override_font_sizes/font_size = 32
+
+[node name="NarrativeBody" type="RichTextLabel" parent="Narrative/Canvas/Paper" unique_id=1728767463]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 34.0
+offset_top = 70.0
+offset_right = 1552.0
+offset_bottom = 208.0
+theme_override_colors/default_color = Color(0.27, 0.13, 0.24, 1)
+theme_override_font_sizes/normal_font_size = 32
 scroll_following_visible_characters = true
 script = ExtResource("24_dialogue_reveal")
 
-[node name="Actions" type="HBoxContainer" parent="Padding/Layout/Stage/Narrative/Layout/Text" unique_id=990910718]
-layout_mode = 2
-theme_override_constants/separation = 12
+[node name="Arrow" type="TextureRect" parent="Narrative/Canvas/Paper"]
+layout_mode = 0
+offset_left = 786.0
+offset_top = 230.0
+offset_right = 802.0
+offset_bottom = 243.0
+mouse_filter = 2
+texture = ExtResource("28_dialogue_arrow")
+expand_mode = 1
+texture_filter = 1
 
-[node name="NarrativeBack" type="Button" parent="Padding/Layout/Stage/Narrative/Layout/Text/Actions"]
+[node name="NarrativeBack" type="Button" parent="Narrative/Canvas"]
 unique_name_in_owner = true
-visible = false
-custom_minimum_size = Vector2(0, 55)
-layout_mode = 2
+layout_mode = 0
+offset_left = 160.0
+offset_top = 739.0
+offset_right = 340.0
+offset_bottom = 790.0
 mouse_default_cursor_shape = 2
-text = "Назад"
+text = "← Назад"
 
-[node name="NarrativePrimary" type="Button" parent="Padding/Layout/Stage/Narrative/Layout/Text/Actions" unique_id=1721445878]
+[node name="NarrativePrimary" type="Button" parent="Narrative/Canvas/Paper" unique_id=1721445878]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 55)
-layout_mode = 2
-size_flags_horizontal = 3
+layout_mode = 0
+offset_left = 1035.0
+offset_top = 212.0
+offset_right = 1555.0
+offset_bottom = 252.0
 mouse_default_cursor_shape = 2
-theme_type_variation = &"EditorialPrimary"
+theme_override_colors/font_color = Color(0.3, 0.15, 0.2, 1)
+theme_override_font_sizes/font_size = 24
 
-[node name="NarrativeSecondary" type="Button" parent="Padding/Layout/Stage/Narrative/Layout/Text/Actions" unique_id=194769613]
+[node name="NarrativeSecondary" type="Button" parent="Narrative/Canvas" unique_id=194769613]
 unique_name_in_owner = true
-layout_mode = 2
+layout_mode = 0
+offset_left = 1330.0
+offset_top = 739.0
+offset_right = 1760.0
+offset_bottom = 790.0
 mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 25
+
+[node name="Pause" type="Button" parent="Narrative/Canvas"]
+layout_mode = 0
+offset_left = 1640.0
+offset_top = 40.0
+offset_right = 1870.0
+offset_bottom = 106.0
+mouse_default_cursor_shape = 2
+text = "Пауза · Esc"
 
 [node name="Menu" type="Control" parent="." unique_id=844596861]
 unique_name_in_owner = true
@@ -442,7 +483,7 @@ text = "Назад"
 unique_name_in_owner = true
 layout_mode = 1
 
-[node name="Home" parent="Padding/Layout/Stage" unique_id=2004351375 instance=ExtResource("4")]
+[node name="Home" parent="." unique_id=2004351375 instance=ExtResource("4")]
 unique_name_in_owner = true
 layout_mode = 1
 

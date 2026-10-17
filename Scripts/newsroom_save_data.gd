@@ -9,13 +9,15 @@ const NUMBERS := ["health", "reputation", "loyalty", "qualification", "money", "
 const FLAGS := ["coffee_ready", "coffee_used_today", "approval_time_applied", "approval_stamina_applied", "food_stocked", "awaiting_acknowledgement", "campaign_completed", "proofreading_unlocked", "proofreading_started"]
 const PHASES := ["idle", "work", "home", "ended"]
 const ENDINGS := ["none", "exhaustion", "office_fire", "arrest", "debt", "victory", "goal_missed", "qualification_fired"]
+const AUTHORED_PROSE_REVISION := 2
 
 static func capture(session: NewsroomSession) -> Dictionary:
 	var run := {"phase": PHASES[session.phase], "ending": ENDINGS[session.ending],
 		"mode": session.mode, "id": session.run_id, "option_order": session.option_order.duplicate(),
 		"journal": session.journal.duplicate(true), "last_result": session.last_result.duplicate(true),
 		"last_shift": session.last_shift.duplicate(true), "finances": session.finances.to_data(),
-		"story_choices": session.story_choices.duplicate(), "proofreading": session.proofreading.to_data()}
+		"story_choices": session.story_choices.duplicate(), "proofreading": session.proofreading.to_data(),
+		"inventory": session.inventory.duplicate()}
 	for key in NUMBERS + FLAGS:
 		run[key] = session.get(key)
 	var rows: Array = []
@@ -25,7 +27,8 @@ static func capture(session: NewsroomSession) -> Dictionary:
 		"profile": {"id": session.player_id, "name": session.player_name, "endless_unlocked": session.endless_unlocked},
 		"run": run,
 		# Save the actual material, including generated stories, not just catalog indices.
-		"content": {"sequence_version": 1, "articles": rows, "rng_seed": str(session._rng.seed), "rng_state": str(session._rng.state)}
+		"content": {"sequence_version": 1, "authored_prose_revision": AUTHORED_PROSE_REVISION,
+			"articles": rows, "rng_seed": str(session._rng.seed), "rng_state": str(session._rng.state)}
 	}
 
 static func validate(sections: Dictionary) -> bool:
@@ -36,6 +39,8 @@ static func validate(sections: Dictionary) -> bool:
 	var run: Dictionary = sections.run
 	var content: Dictionary = sections.content
 	if not preload("res://Scripts/finance_ledger.gd").validate_data(run.get("finances", {})):
+		return false
+	if not preload("res://Data/home_items.gd").validate_inventory(run.get("inventory", {})):
 		return false
 	for key in ["health", "reputation", "loyalty", "money", "day", "time_left", "shift_length", "article_cursor", "completed_shifts"]:
 		if not run.has(key):
@@ -127,6 +132,9 @@ static func validate(sections: Dictionary) -> bool:
 		return false
 	if content.has("sequence_version") and (not _number(content.sequence_version) or content.sequence_version != 1):
 		return false
+	if content.has("authored_prose_revision"):
+		if not preload("res://Scripts/finance_ledger.gd")._is_integer(content.authored_prose_revision) or content.authored_prose_revision < 1:
+			return false
 	if content.has("sequence_version") and run.article_cursor > content.articles.size():
 		return false
 	var ids: Dictionary = {}
@@ -177,6 +185,8 @@ static func restore(session: NewsroomSession, sections: Dictionary) -> bool:
 	session.journal.assign(run.get("journal", []).duplicate(true))
 	session.last_result = run.get("last_result", {}).duplicate(true)
 	session.last_shift = run.get("last_shift", {}).duplicate(true)
+	for id in run.get("inventory", {}):
+		session.inventory[id] = int(run.inventory[id])
 	session.finances.restore(run.get("finances", {}), session.journal, session.completed_shifts)
 	session.articles.clear()
 	for row in sections.content.articles:
@@ -186,8 +196,11 @@ static func restore(session: NewsroomSession, sections: Dictionary) -> bool:
 	session._rng.seed = int(sections.content.get("rng_seed", "0"))
 	session._rng.state = int(sections.content.get("rng_state", "0"))
 	_restore_story_choices(session, run)
-	if not sections.content.has("sequence_version"):
+	var old_prose: bool = sections.content.get("authored_prose_revision", 1) < AUTHORED_PROSE_REVISION
+	if not sections.content.has("sequence_version") or old_prose:
 		_migrate_queue(session)
+	if old_prose:
+		_migrate_authored_prose(session)
 	preload("res://Data/legacy_article_balance.gd").restore_requested_headlines(session.articles, session.article_cursor, session.journal)
 	session._resolved_article = null
 	# Moving the pencil lesson earlier also opens it in an existing second-shift
@@ -233,7 +246,7 @@ static func _migrate_queue(session: NewsroomSession) -> void:
 	var published_ids: Dictionary = {}
 	for entry in session.journal:
 		published_ids[str(entry.get("article_id", ""))] = true
-	for index in range(session.articles.size() - 1, session.article_cursor - 1, -1):
+	for index in range(session.articles.size() - 1, session.article_cursor, -1):
 		if published_ids.has(session.articles[index].id):
 			session.articles.remove_at(index)
 	var existing: Dictionary = published_ids.duplicate()
@@ -244,6 +257,26 @@ static func _migrate_queue(session: NewsroomSession) -> void:
 			session.articles.append(article)
 			existing[article.id] = true
 	ArticleSequence.order_remaining(session.articles, session.article_cursor + 1)
+
+static func _migrate_authored_prose(session: NewsroomSession) -> void:
+	# Only untouched authored rows after the pinned draft may receive new prose.
+	# Full fingerprints also protect hand-edited effects, explanations and provenance.
+	var previous: Dictionary = {}
+	var archived: Array = preload("res://Docs/OriginalArticles/article_catalog_before_lively.gd").ROWS + preload("res://Docs/OriginalArticles/bripolis_articles_before_lively.gd").ROWS
+	for row in archived:
+		previous[row.id] = NewsArticle.from_row(row).to_row()
+	var current: Dictionary = {}
+	for article in preload("res://Data/article_catalog.gd").create_articles():
+		current[article.id] = article
+	var published: Dictionary = {}
+	for entry in session.journal:
+		published[str(entry.get("article_id", ""))] = true
+	for index in range(session.article_cursor + 1, session.articles.size()):
+		var saved: NewsArticle = session.articles[index]
+		if published.has(saved.id) or not previous.has(saved.id) or not current.has(saved.id):
+			continue
+		if saved.to_row() == previous[saved.id]:
+			session.articles[index] = current[saved.id]
 
 static func _number(value: Variant) -> bool:
 	return (value is int or value is float) and is_finite(float(value))

@@ -18,6 +18,11 @@ func _ready() -> void:
 	%ChoiceOverlay.toggled.connect(GameSettings.set_choice_overlay_enabled)
 	%MusicVolume.value_changed.connect(_on_music_volume_changed)
 	%SfxVolume.value_changed.connect(_on_sfx_volume_changed)
+	for slider: Slider in [%MusicVolume, %SfxVolume]:
+		slider.drag_ended.connect(func(changed: bool):
+			if changed:
+				AudioManager.play_cue(AudioManager.Cue.UI_CLICK)
+		)
 	%Close.pressed.connect(close)
 
 

@@ -1,8 +1,8 @@
 class_name FinanceLedger
 extends RefCounted
 
-const EXPENSE_KINDS := ["rent", "meal", "snack", "coffee", "proofreading_missed", "proofreading_wrong"]
-const EXPENSE_NAMES := {"rent": "Аренда", "meal": "Полноценная еда", "snack": "Перекус", "coffee": "Кофе", "proofreading_missed": "Пропущенные опечатки", "proofreading_wrong": "Неверные пометки"}
+const EXPENSE_KINDS := ["rent", "meal", "snack", "coffee", "home_food", "home_drink", "pet_food", "proofreading_missed", "proofreading_wrong"]
+const EXPENSE_NAMES := {"rent": "Аренда", "meal": "Полноценная еда", "snack": "Перекус", "coffee": "Кофе", "home_food": "Еда в рюкзак", "home_drink": "Напитки в рюкзак", "pet_food": "Корм для рыбки", "proofreading_missed": "Пропущенные опечатки", "proofreading_wrong": "Неверные пометки"}
 const INCOME_NAMES := ["Факты", "Сенсация", "Поддержка власти"]
 
 var entries: Array[Dictionary] = []

@@ -9,7 +9,7 @@ func play(amount: int, anchor_rect: Rect2) -> void:
 	var label := Label.new()
 	label.text = "%s%d $" % ["−" if amount < 0 else "+", absi(amount)]
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.add_theme_font_override("font", preload("res://Assets/Fonts/Neucha/Neucha.ttf"))
+	label.add_theme_font_override("font", preload("res://Assets/Assets for new version of game/tamagochi/Alegreya_Sans,Ysabeau/Alegreya_Sans/AlegreyaSans-Regular.ttf"))
 	label.add_theme_font_size_override("font_size", 24)
 	label.add_theme_color_override("font_color", Color("ff8b73") if amount < 0 else Color("95c997"))
 	label.add_theme_color_override("font_outline_color", Color("30231d"))

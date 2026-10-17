@@ -4,9 +4,6 @@ signal next_requested
 signal previous_requested
 signal skip_requested
 
-@export_group("Портреты")
-@export var boss_portrait: Texture2D
-@export var heroine_portrait: Texture2D = preload("res://Assets/Characters/Mask group (22).png")
 @export_group("Оформление")
 @export_range(0.0, 1.0, 0.01) var dim_opacity := 0.76
 @export_range(0.0, 30.0, 1.0) var highlight_margin := 10.0
@@ -18,6 +15,15 @@ var _redraw_dim_opacity := -1.0
 @onready var _panel: PanelContainer = $Paper
 
 func _ready() -> void:
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	%Speaker.add_theme_font_override("font", preload("res://Scripts/game_fonts.gd").BOLD)
+	%Explanation.add_theme_font_override("normal_font", preload("res://Scripts/game_fonts.gd").BOLD)
+	for button in [%Next, %Back, %Skip]:
+		for state in ["normal", "hover", "pressed", "disabled"]:
+			button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+		for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+			button.add_theme_color_override(color_name, Color("4c2840"))
+		button.add_theme_color_override("font_disabled_color", Color("aa948b"))
 	%Next.pressed.connect(func():
 		if not %Explanation.finish_reveal():
 			next_requested.emit()
@@ -27,12 +33,9 @@ func _ready() -> void:
 
 func present(speaker: String, body: String, targets: Array[Control], step: int, count: int, heroine: bool, last_caption: String) -> void:
 	_targets = targets
-	%Speaker.text = "%s · %d / %d" % [speaker, step + 1, count]
+	%Speaker.text = "[%s] · %d / %d" % [speaker, step + 1, count]
 	%Back.disabled = step == 0
 	%Next.text = last_caption if step == count - 1 else "Дальше"
-	%Portrait.texture = heroine_portrait if heroine else boss_portrait
-	%Portrait.visible = %Portrait.texture != null
-	%BossPlaceholder.visible = not %Portrait.visible
 	show()
 	%Explanation.reveal(body, DialogueReveal.Speaker.HEROINE if heroine else DialogueReveal.Speaker.BOSS)
 	%Next.grab_focus()
@@ -57,7 +60,7 @@ func _position_paper() -> void:
 		_highlight = rect if first else _highlight.merge(rect)
 		first = false
 	_highlight = Rect2() if first else _highlight.grow(highlight_margin).intersection(Rect2(Vector2.ZERO, size))
-	var width := minf(680.0, size.x - 36.0)
+	var width := minf(1120.0, size.x - 36.0)
 	_panel.size.x = width
 	_panel.size.y = _panel.get_combined_minimum_size().y
 	var extent := _panel.size

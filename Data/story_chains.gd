@@ -6,7 +6,8 @@ extends RefCounted
 const CHAINS: Dictionary = {
 	"cats": ["cats_rumor", "cats_denial", "cats_taxi"],
 	"rat": ["rat_chef", "rat_complaint", "rat_resolution"],
-	"bloom": ["bloom_poem", "bloom_letter"]
+	"bloom": ["bloom_poem", "bloom_letter"],
+	"ginger": ["ginger_cats_letter", "ginger_coal_notice"]
 }
 
 const VARIANTS: Dictionary = {

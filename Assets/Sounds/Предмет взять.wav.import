@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://bnoo0plkewadf"
+path="res://.godot/imported/Предмет взять.wav-42176fe1db30fb929fbc5e8d2ba0c883.sample"
+
+[deps]
+
+source_file="res://Assets/Sounds/Предмет взять.wav"
+dest_files=["res://.godot/imported/Предмет взять.wav-42176fe1db30fb929fbc5e8d2ba0c883.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

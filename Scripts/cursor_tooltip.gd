@@ -4,6 +4,8 @@ const SHOW_DELAY := 0.45
 const CURSOR_OFFSET := Vector2(18.0, 20.0)
 const EDGE_MARGIN := 8.0
 const MAX_TEXT_WIDTH := 520.0
+const GAME_CURSOR = preload("res://Assets/Assets for new version of game/tamagochi/Тамагочи/курсор.png")
+const CURSOR_HOTSPOT := Vector2(8, 5)
 
 var _source: Control
 var _hover_time := 0.0
@@ -13,6 +15,8 @@ var _label: Label
 
 
 func _ready() -> void:
+	for shape in [Input.CURSOR_ARROW, Input.CURSOR_IBEAM, Input.CURSOR_POINTING_HAND, Input.CURSOR_CROSS, Input.CURSOR_WAIT, Input.CURSOR_BUSY, Input.CURSOR_DRAG, Input.CURSOR_CAN_DROP, Input.CURSOR_FORBIDDEN, Input.CURSOR_VSIZE, Input.CURSOR_HSIZE, Input.CURSOR_BDIAGSIZE, Input.CURSOR_FDIAGSIZE, Input.CURSOR_MOVE, Input.CURSOR_VSPLIT, Input.CURSOR_HSPLIT, Input.CURSOR_HELP]:
+		Input.set_custom_mouse_cursor(GAME_CURSOR, shape, CURSOR_HOTSPOT)
 	layer = 120
 	_paper = Panel.new()
 	_paper.mouse_filter = Control.MOUSE_FILTER_IGNORE

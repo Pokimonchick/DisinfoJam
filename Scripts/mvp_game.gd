@@ -43,6 +43,10 @@ var _stamina_warning_day := 0
 var _notebook: Control
 var _pending_deductions: Array[int] = []
 var _combo_demonstration := false
+var _dialogue_parts: Array[String] = []
+var _dialogue_part := 0
+var _dialogue_speaker := DialogueReveal.Speaker.HEROINE
+var _dialogue_primary := ""
 
 @onready var work: Control = %Work
 @onready var home: Control = %Home
@@ -65,6 +69,9 @@ func _ready() -> void:
 	work.bind(session)
 	home.bind(session)
 	home.notebook_requested.connect(_open_notebook)
+	home.pause_requested.connect(_toggle_pause)
+	%Narrative.advance_requested.connect(_advance_dialogue)
+	%Narrative.pause_requested.connect(_toggle_pause)
 	work.view_changed.connect(_queue_save)
 	work.view_changed.connect(_maybe_begin_pencil_tutorial)
 	work.pause_requested.connect(_toggle_pause)
@@ -91,6 +98,8 @@ func _ready() -> void:
 	pause_panel.secondary_pressed.connect(_show_menu)
 	pause_panel.settings_pressed.connect(_open_settings)
 	settings_panel.closed.connect(_on_settings_closed)
+	# Paper navigation and the cup use their own physical action sounds.
+	AudioManager.bind_ui_buttons(self, [work.source_pager.previous, work.source_pager.next, work.get_node("%Coffee/Cup")])
 	get_window().min_size = Vector2i(960, 640)
 	get_tree().auto_accept_quit = false
 	_show_menu()
@@ -236,8 +245,14 @@ func _narrative_next() -> void:
 			_show_profile_setup()
 
 func _advance_dialogue() -> void:
-	if not %NarrativeBody.finish_reveal():
-		_narrative_next()
+	if %NarrativeBody.finish_reveal():
+		return
+	if _dialogue_part + 1 < _dialogue_parts.size():
+		_dialogue_part += 1
+		_render_dialogue_part()
+		_queue_save()
+		return
+	_narrative_next()
 
 func _narrative_secondary() -> void:
 	if view == View.ENDING:
@@ -325,8 +340,8 @@ func _show_view(next: View) -> void:
 	%Narrative.visible = view in [View.INTRO, View.TUTORIAL, View.ENDING, View.STORY]
 	work.visible = view == View.WORK
 	home.visible = view == View.HOME
-	$Padding.visible = view not in [View.WORK, View.MENU, View.PROFILE]
-	%HUD.visible = view in [View.HOME, View.ENDING]
+	$Padding.visible = view == View.ENDING
+	%HUD.visible = false
 	%PauseButton.visible = view in [View.WORK, View.HOME, View.INTRO, View.TUTORIAL, View.STORY]
 	%Location.text = {View.MENU: "НЕЗАВИСИМАЯ РЕДАКЦИЯ", View.INTRO: "ГЛАВА I · АМНЕЗИЯ", View.TUTORIAL: "ПЕРЕД ПЕРВОЙ СМЕНОЙ", View.WORK: "РАБОЧИЙ СТОЛ", View.HOME: "СЪЁМНАЯ КОМНАТА", View.ENDING: "ИТОГИ НЕДЕЛИ" if session.campaign_completed else "ПОСЛЕДНИЙ ВЫПУСК", View.PROFILE: "НОВОЕ ПРОХОЖДЕНИЕ", View.STORY: "ГЛАВА I · АМНЕЗИЯ"}[view]
 	_refresh_goal()
@@ -347,18 +362,45 @@ func _set_narrative(tag: String, title: String, body: String, visual: int, prima
 	%NarrativeBody.stop_reveal()
 	%NarrativeTag.text = tag
 	%NarrativeTitle.text = title
-	if visual in [0, 1] and view in [View.INTRO, View.STORY]:
-		%NarrativeBody.reveal(body, DialogueReveal.Speaker.HEROINE if visual == 0 else DialogueReveal.Speaker.BOSS)
-	else:
-		%NarrativeBody.text = body
-		%NarrativeBody.visible_characters = -1
-		%NarrativeBody.scroll_to_line(0)
-	%NarrativeVisual.kind = visual
-	%NarrativeVisual.sprite = HEROINE_PORTRAIT if visual == 0 else null
-	%NarrativePrimary.text = primary
+	_dialogue_parts = _split_dialogue(body)
+	_dialogue_part = 0
+	_dialogue_primary = primary
+	_dialogue_speaker = DialogueReveal.Speaker.BOSS if visual == 1 else DialogueReveal.Speaker.HEROINE
+	%NarrativeTag.text = tag if view == View.ENDING else ("[Босс]" if visual == 1 else "[%s]" % NewsroomSession.CAMPAIGN_HERO_NAME)
+	%NarrativeTitle.visible = view == View.ENDING
+	%NarrativeVisual.show_heroine = false
+	_render_dialogue_part()
 	%NarrativeSecondary.text = secondary
 	%NarrativeSecondary.visible = not secondary.is_empty()
 	%NarrativePrimary.grab_focus()
+
+static func _split_dialogue(body: String) -> Array[String]:
+	var result: Array[String] = []
+	var current := ""
+	for paragraph in body.split("\n\n", false):
+		for word in paragraph.split(" ", false):
+			if current.length() + word.length() + 1 > 300 and not current.is_empty():
+				result.append(current.strip_edges())
+				current = ""
+			current += (" " if not current.is_empty() and not current.ends_with("\n") else "") + word
+		current += "\n\n"
+	if not current.strip_edges().is_empty():
+		result.append(current.strip_edges())
+	if result.is_empty():
+		result.append("")
+	return result
+
+func _render_dialogue_part() -> void:
+	if view == View.ENDING:
+		%NarrativeBody.stop_reveal()
+		%NarrativeBody.text = _dialogue_parts[_dialogue_part]
+		%NarrativeBody.visible_characters = -1
+		%NarrativeBody.scroll_to_line(0)
+	else:
+		%NarrativeBody.reveal(_dialogue_parts[_dialogue_part], _dialogue_speaker)
+	%NarrativePrimary.text = "Дальше" if _dialogue_part + 1 < _dialogue_parts.size() else _dialogue_primary
+	%NarrativeBack.visible = view in [View.INTRO, View.STORY]
+	%NarrativeBack.disabled = _story_page == 0 and _dialogue_part == 0
 
 func _toggle_pause() -> void:
 	if view in [View.MENU, View.PROFILE] or transitioning:
@@ -388,8 +430,15 @@ func _on_settings_closed() -> void:
 
 
 func _narrative_back() -> void:
+	if view in [View.INTRO, View.STORY] and _dialogue_part > 0:
+		_dialogue_part -= 1
+		_render_dialogue_part()
+		_queue_save()
+		return
 	if view in [View.INTRO, View.STORY] and _story_page > 0:
 		_show_story(_story_id, _story_page - 1)
+		_dialogue_part = _dialogue_parts.size() - 1
+		_render_dialogue_part()
 
 
 func _interface_blocked() -> bool:
@@ -403,6 +452,7 @@ func _update_interface_lock() -> void:
 		work.stamp.cancel_interaction()
 	work.process_mode = Node.PROCESS_MODE_DISABLED if blocked else Node.PROCESS_MODE_INHERIT
 	home.process_mode = Node.PROCESS_MODE_DISABLED if blocked else Node.PROCESS_MODE_INHERIT
+	home.set_playback_paused(blocked or settings_panel.visible)
 	# Freeze desk parallax too; the spotlight must remain on the explained item.
 	work.get_node("Canvas").motion_enabled = not blocked
 
@@ -410,6 +460,7 @@ func _pause_dialogue_reveal() -> void:
 	var blocked := paused or settings_panel.visible
 	%NarrativeBody.set_reveal_paused(blocked)
 	tutorial.get_node("%Explanation").set_reveal_paused(blocked)
+	%NarrativeVisual.set_playback_paused(blocked)
 
 
 func _begin_tutorial(stage: String) -> void:
@@ -465,8 +516,7 @@ func _present_tutorial_step() -> void:
 				work.combo_burst.show()
 				_combo_demonstration = true
 	else:
-		var paths := {"meal": "%Meal", "coffee": "%Coffee", "notebook": "%Notebook", "bed": "%Bed"}
-		targets.append(%HUD.get_node("%Money") if step.target == "money" else home.get_node(paths[step.target]))
+		targets.append(home.tutorial_target(step.target))
 	var heroine := _tutorial_stage == "home"
 	tutorial.present("НИКОЛА КОКО · ПРО СЕБЯ" if heroine else "БОСС", step.text, targets, _tutorial_step, steps.size(), heroine, "Осмотреть комнату" if heroine else "Начать работу")
 	_update_interface_lock()
@@ -529,6 +579,7 @@ func _check_stamina_warning() -> void:
 	if session.awaiting_acknowledgement or work.popup.visible:
 		return
 	_stamina_warning_day = session.day
+	AudioManager.play_cue(AudioManager.Cue.WARNING)
 	stamina_warning.present("ПОРА ПЕРЕДОХНУТЬ", "Силы на исходе", "Выносливости осталось мало. Сдай выпуск и вернись домой, чтобы поесть и отдохнуть.\n\nМожно закрыть это предупреждение и продолжить работу. При нуле сил наступит истощение.", "Продолжить работу", "Сдать выпуск")
 	_update_interface_lock()
 	_queue_save()
@@ -551,6 +602,7 @@ func _open_notebook() -> void:
 	_notebook = FINANCE_NOTEBOOK.instantiate()
 	_notebook.z_index = 128
 	add_child(_notebook)
+	AudioManager.bind_ui_buttons(_notebook)
 	_notebook.open(session.finances, session.day)
 	_notebook.closed.connect(_on_notebook_closed)
 	_update_interface_lock()
@@ -574,7 +626,7 @@ func _on_transaction(entry: Dictionary) -> void:
 func _show_money_delta(amount: int) -> void:
 	if view != View.HOME:
 		return
-	var money_label: Control = %HUD.get_node("%Money")
+	var money_label: Control = home.money_label
 	$MoneyDelta.play(amount, money_label.get_global_rect())
 
 
@@ -658,6 +710,11 @@ func _continue_run() -> void:
 			work.show_article(false)
 		else:
 			work.restore_presentation(presentation.get("newsroom", {}))
+	elif session.phase == NewsroomSession.Phase.HOME:
+		home.restore_presentation(presentation.get("home", {}))
+	if view in [View.INTRO, View.STORY]:
+		_dialogue_part = clampi(int(story.get("part", 0)), 0, _dialogue_parts.size() - 1)
+		_render_dialogue_part()
 	_run_active = true
 	_autosave_elapsed = 0.0
 	%SaveNotice.text = GameState.save_store.error_message
@@ -681,12 +738,15 @@ func _save_progress() -> bool:
 	var in_story := view in [View.INTRO, View.STORY]
 	sections["presentation"] = {"screen": VIEW_KEYS[view], "lesson": lesson,
 		"newsroom": work.capture_presentation(),
+		"home": home.capture_presentation(),
 		"guidance": {"stage": _tutorial_stage, "step": _tutorial_step, "work_done": _work_tutorial_done, "home_done": _home_tutorial_done, "pencil_done": _pencil_tutorial_done},
 		"stamina_warning_day": _stamina_warning_day,
-		"story": {"id": _story_id if in_story else "", "page": _story_page if in_story else 0, "seen": _seen_stories.duplicate()}}
+		"story": {"id": _story_id if in_story else "", "page": _story_page if in_story else 0, "part": _dialogue_part if in_story else 0, "seen": _seen_stories.duplicate()}}
 	sections["extensions"] = GameState.capture_save_sections()
 	var document := _loaded_document.duplicate(true)
 	document["sections"] = SaveRepository.merge_sections(document.get("sections", {}), sections)
+	# Inventory is a complete snapshot: a consumed stack must not survive the merge.
+	document.sections.run["inventory"] = sections.run.inventory.duplicate()
 	# Registered extensions return complete snapshots; removed items must stay removed.
 	document.sections["extensions"] = sections.extensions
 	var success: bool = GameState.save_store.write_document(document)
@@ -708,6 +768,17 @@ static func _validate_save(sections: Dictionary) -> bool:
 		return false
 	var presentation: Variant = sections.get("presentation", {})
 	if not presentation is Dictionary or not presentation.get("newsroom", {}) is Dictionary:
+		return false
+	var home_state: Variant = presentation.get("home", {})
+	if not home_state is Dictionary or not NewsroomSaveData._number(home_state.get("sleep_left", 0.0)):
+		return false
+	if home_state.get("sleep_left", 0.0) < 0.0 or home_state.get("sleep_left", 0.0) > 8.0:
+		return false
+	var dialogue_state: Variant = presentation.get("story", {})
+	if not dialogue_state is Dictionary or not NewsroomSaveData._number(dialogue_state.get("part", 0)):
+		return false
+	var part: Variant = dialogue_state.get("part", 0)
+	if part != floor(float(part)) or part < 0 or part > 10000:
 		return false
 	if not presentation.get("lesson", 0) is int and not presentation.get("lesson", 0) is float:
 		return false

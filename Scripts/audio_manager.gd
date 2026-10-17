@@ -1,5 +1,21 @@
 extends Node
 
+enum Cue { UI_CLICK, PAPER_TURN, PAPER_PUT, TOOL_PICKUP, TOOL_PUT, COFFEE, WARNING }
+
+const CUE_STREAMS := {
+	Cue.UI_CLICK: preload("res://Assets/Sounds/UI щелчок.wav"),
+	Cue.PAPER_TURN: preload("res://Assets/Sounds/Бумага перелистывание.wav"),
+	Cue.PAPER_PUT: preload("res://Assets/Sounds/Бумага падение.wav"),
+	Cue.TOOL_PICKUP: preload("res://Assets/Sounds/Предмет взять.wav"),
+	Cue.TOOL_PUT: preload("res://Assets/Sounds/Предмет положить.wav"),
+	Cue.COFFEE: preload("res://Assets/Sounds/Глоток кофе.wav"),
+	Cue.WARNING: preload("res://Assets/Sounds/Предупреждение.wav"),
+}
+const CUE_GAINS_DB := {
+	Cue.UI_CLICK: -4.0, Cue.PAPER_TURN: -5.0, Cue.PAPER_PUT: 3.0,
+	Cue.TOOL_PICKUP: 5.0, Cue.TOOL_PUT: -6.0, Cue.COFFEE: 4.0, Cue.WARNING: -9.0,
+}
+
 @export_range(2, 32, 1) var sfx_voice_count: int = 8
 @export_range(0.0, 3.0, 0.05) var crossfade_seconds: float = 0.6
 @export_range(-40.0, 0.0, 0.5) var music_gain_db: float = 0.0
@@ -15,6 +31,11 @@ var _requested_music: AudioStream
 var _requested_loop := true
 var _requested_volume_db := 0.0
 var _music_tween: Tween
+var _sfx_loop_player: AudioStreamPlayer
+var _sfx_loop_owner: Node
+var _sfx_loop_source: AudioStream
+var _loop_streams: Dictionary = {}
+var _warning_at_ms := -1000
 
 
 func _ready() -> void:
@@ -27,6 +48,12 @@ func _ready() -> void:
 		player.bus = &"SFX"
 		$SFX.add_child(player)
 		_sfx_players.append(player)
+	# One tool is held at a time. Its loop cannot be stolen by dialogue blips.
+	_sfx_loop_player = AudioStreamPlayer.new()
+	_sfx_loop_player.name = "ToolLoop"
+	_sfx_loop_player.bus = &"SFX"
+	$SFX.add_child(_sfx_loop_player)
+	set_process(false)
 	for player in _music_players:
 		player.bus = &"Music"
 		player.finished.connect(_on_music_finished.bind(player))
@@ -99,10 +126,69 @@ func play_sfx(stream: AudioStream, volume_db: float = 0.0, pitch_scale: float = 
 	player.play()
 
 
+func play_cue(cue: Cue) -> void:
+	if GameSettings.sfx_volume <= 0.0:
+		return
+	if cue == Cue.WARNING:
+		var now := Time.get_ticks_msec()
+		if now - _warning_at_ms < 750:
+			return
+		_warning_at_ms = now
+	play_sfx(CUE_STREAMS[cue], CUE_GAINS_DB[cue])
+
+
+func bind_ui_buttons(container: Node, excluded: Array[BaseButton] = []) -> void:
+	var click := play_cue.bind(Cue.UI_CLICK)
+	for button: BaseButton in container.find_children("*", "BaseButton", true, false):
+		if not excluded.has(button) and not button.pressed.is_connected(click):
+			button.pressed.connect(click)
+
+
+func start_sfx_loop(owner: Node, stream: AudioStream, volume_db: float = 0.0) -> void:
+	if stream == null or not is_instance_valid(owner) or not owner.can_process() or GameSettings.sfx_volume <= 0.0:
+		return
+	if _sfx_loop_owner == owner and _sfx_loop_source == stream and _sfx_loop_player.playing:
+		return # Mouse motion keeps the same playback instead of restarting it.
+	if not _loop_streams.has(stream):
+		var prepared := stream.duplicate() as AudioStream
+		if prepared is AudioStreamWAV:
+			prepared.loop_mode = AudioStreamWAV.LOOP_FORWARD
+			prepared.loop_begin = 0
+			prepared.loop_end = roundi(prepared.get_length() * prepared.mix_rate)
+		elif prepared is AudioStreamMP3 or prepared is AudioStreamOggVorbis:
+			prepared.set("loop", true)
+		_loop_streams[stream] = prepared
+	_sfx_loop_player.stop()
+	_sfx_loop_owner = owner
+	_sfx_loop_source = stream
+	_sfx_loop_player.stream = _loop_streams[stream]
+	_sfx_loop_player.volume_db = volume_db
+	_sfx_loop_player.play()
+	set_process(true)
+
+
+func stop_sfx_loop(owner: Node = null) -> void:
+	if owner != null and _sfx_loop_owner != owner:
+		return
+	_sfx_loop_player.stop()
+	_sfx_loop_player.stream = null
+	_sfx_loop_owner = null
+	_sfx_loop_source = null
+	set_process(false)
+
+
+func _process(_delta: float) -> void:
+	if not is_instance_valid(_sfx_loop_owner) or not _sfx_loop_owner.can_process():
+		stop_sfx_loop()
+	elif _sfx_loop_owner is CanvasItem and not _sfx_loop_owner.is_visible_in_tree():
+		stop_sfx_loop()
+
+
 func stop_sfx() -> void:
 	for player in _sfx_players:
 		player.stop()
 		player.stream = null
+	stop_sfx_loop()
 
 
 func _fade_music(target: int, gain: float) -> void:
@@ -148,6 +234,8 @@ func _on_music_finished(player: AudioStreamPlayer) -> void:
 func _apply_volumes() -> void:
 	_set_bus_volume(&"Music", GameSettings.music_volume, music_gain_db)
 	_set_bus_volume(&"SFX", GameSettings.sfx_volume, sfx_gain_db)
+	if GameSettings.sfx_volume <= 0.0:
+		stop_sfx_loop()
 
 
 func _set_bus_volume(bus: StringName, value: float, gain_db: float) -> void:

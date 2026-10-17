@@ -2,6 +2,7 @@ class_name NewsroomSession
 extends RefCounted
 
 const CAMPAIGN_HERO_NAME := "Никола Коко"
+const HOME_ITEMS = preload("res://Data/home_items.gd")
 
 signal changed
 signal phase_changed
@@ -38,6 +39,7 @@ var coffee_used_today: bool = false
 var approval_time_applied: bool = false
 var approval_stamina_applied: bool = false
 var food_stocked: bool = false
+var inventory: Dictionary = {}
 var combo_type: int = -1
 var combo_count: int = 0
 var awaiting_acknowledgement: bool = false
@@ -93,6 +95,7 @@ func reset(seed_value: int = -1) -> void:
 	approval_time_applied = false
 	approval_stamina_applied = false
 	food_stocked = false
+	inventory.clear()
 	combo_type = -1
 	combo_count = 0
 	awaiting_acknowledgement = false
@@ -292,6 +295,8 @@ func buy_food(full_meal: bool) -> bool:
 	if phase != Phase.HOME or health >= balance.maximum_stat:
 		return false
 	var price := balance.meal_price if full_meal else balance.snack_price
+	if money < price:
+		return false
 	money -= price
 	_record_transaction("meal" if full_meal else "snack", -price, "Еда" if full_meal else "Перекус")
 	food_stocked = true
@@ -303,7 +308,7 @@ func buy_food(full_meal: bool) -> bool:
 
 
 func buy_coffee() -> bool:
-	if phase != Phase.HOME or coffee_ready:
+	if phase != Phase.HOME or coffee_ready or money < balance.coffee_price:
 		return false
 	coffee_ready = true
 	money -= balance.coffee_price
@@ -312,6 +317,46 @@ func buy_coffee() -> bool:
 	_check_ending()
 	save_requested.emit()
 	return true
+
+
+func buy_home_item(id: String) -> Dictionary:
+	if phase != Phase.HOME:
+		return {"ok": false, "reason": "wrong_phase"}
+	var item: Dictionary = HOME_ITEMS.get_item(id)
+	if item.is_empty():
+		return {"ok": false, "reason": "unknown_item"}
+	if money < int(item.price):
+		return {"ok": false, "reason": "insufficient_funds"}
+	if int(inventory.get(id, 0)) >= HOME_ITEMS.MAX_COUNT:
+		return {"ok": false, "reason": "inventory_full"}
+	money -= int(item.price)
+	inventory[id] = int(inventory.get(id, 0)) + 1
+	var kind: String = {"drink": "home_drink", "food": "home_food", "pet": "pet_food"}[item.category]
+	_record_transaction(kind, -int(item.price), item.name)
+	changed.emit()
+	save_requested.emit()
+	return {"ok": true, "reason": ""}
+
+
+func use_home_item(id: String) -> Dictionary:
+	if phase != Phase.HOME:
+		return {"ok": false, "reason": "wrong_phase", "category": "", "restore": 0}
+	var item: Dictionary = HOME_ITEMS.get_item(id)
+	if item.is_empty():
+		return {"ok": false, "reason": "unknown_item", "category": "", "restore": 0}
+	if int(inventory.get(id, 0)) < 1:
+		return {"ok": false, "reason": "not_owned", "category": item.category, "restore": 0}
+	if int(item.restore) > 0 and health >= balance.maximum_stat:
+		return {"ok": false, "reason": "health_full", "category": item.category, "restore": 0}
+	var previous_health := health
+	if int(item.restore) > 0:
+		health = minf(balance.maximum_stat, health + int(item.restore))
+	inventory[id] = int(inventory[id]) - 1
+	if inventory[id] == 0:
+		inventory.erase(id)
+	changed.emit()
+	save_requested.emit()
+	return {"ok": true, "reason": "", "category": item.category, "restore": health - previous_health}
 
 
 func drink_coffee() -> bool:

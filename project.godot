@@ -13,7 +13,7 @@ config_version=5
 config/name="DisinfoJam"
 run/main_scene="res://Scenes/mvp_game.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
-config/icon="res://icon.svg"
+config/icon="res://Assets/icon.png"
 
 [audio]
 
@@ -39,7 +39,7 @@ window/stretch/aspect="expand"
 [gui]
 
 timers/tooltip_delay_sec=3600.0
-theme/custom_font="res://Assets/Fonts/Neucha/Neucha.ttf"
+theme/custom_font="res://Assets/Assets for new version of game/tamagochi/Alegreya_Sans,Ysabeau/Alegreya_Sans/AlegreyaSans-Regular.ttf"
 
 [physics]
 

@@ -152,6 +152,8 @@ func page_ranges() -> Array[Vector2i]:
 func turn_to(index: int) -> void:
 	if not enabled or turning or not can_process() or not is_visible_in_tree() or index < 0 or index >= _pages.size() or index == page_index:
 		return
+	var audio := get_node("/root/AudioManager")
+	audio.play_cue(audio.Cue.PAPER_TURN)
 	if turn_seconds <= 0.0:
 		_apply_page(index)
 		return

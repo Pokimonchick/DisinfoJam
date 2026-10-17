@@ -112,7 +112,7 @@ static func penalty_breakdown(missed: int, wrong: int, money_limit: int, qualifi
 	# Cap the total deductions for this article, preserving correction rewards.
 	# Allocate missed-typo costs first so ledger categories match the actual debit.
 	var missed_money := mini(missed, maxi(0, money_limit))
-	return {"missed_money": missed_money, "wrong_money": mini(wrong, maxi(0, money_limit - missed_money)), "qualification": mini(missed * 3 + wrong, maxi(0, qualification_limit))}
+	return {"missed_money": missed_money, "wrong_money": mini(wrong, maxi(0, money_limit - missed_money)), "qualification": mini(missed * 2 + wrong, maxi(0, qualification_limit))}
 
 func to_data() -> Dictionary:
 	return {"version": VERSION, "article_id": article_id, "source_text": source_text, "display_text": display_text, "seed": seed, "targets": targets.duplicate(true), "strokes": strokes.duplicate(true)}

@@ -4,79 +4,90 @@
 Completed
 
 ## Current task
-Paginate desk sources; fix startup; improve the 3D pencil and add the supplied
-3D eraser. Keep complete marks on their originating sheet and restrict writing
-to article paper. Acceptance: page navigation/saves, whole-article stamping,
-physical tools and erasure accounting work without altering global balance.
+Integrate supplied tamagotchi/home art, shop and backpack, short night transition,
+paper dialogue presentation, global fonts/cursor/icon and a gentle stamp hint.
+Refresh authored articles and add the user's two ginger-cat/coal-dust sources.
+This replaces the obsolete pagination snapshot; do not resume that older scope.
 
 ## Context
-- Godot 4.7.2 Compatibility; Russian five-shift game, 1990s Bripolis, cats govern.
-- Fifty finite articles and linked histories are already committed. No required
-  publication minimum; finish a shift freely. No old article-generation work remains.
-- User initially declined checks, then explicitly allowed checks of affected
-  pencil, eraser and page interactions. No full project suite or export requested.
+- Godot 4.7.2 Compatibility; Russian five-shift game in anthropomorphic Bripolis.
+- User asked not to run tests after restoring the previous character voices.
+  Current work used editor asset import and scene loading, without playing the game.
+- Names follow Никола Коко, господин де Мур and Рататуй; avoid ordinary Russian
+  names/patronymics and a forced real-country naming scheme.
 
 ## Already done
-- SourcePager: native line/paragraph page layout, footer, page fades and saved
-  character position. Direct preload removes dependency on class-cache refresh.
-- Fixed the startup parse error with an explicitly typed Vector2 in SourcePager.
-- Wider six-sided pencil, procedural chipped lacquer exposing wood, square
-  viewport and a 0.24-second rotation/lift into the working pose.
-- Supplied eraser.blend converted to Assets/Models/eraser.glb; original unchanged.
-  Matte materials, matching lighting, pickup/cursor carry/LMB erasing/RMB return.
-- Eraser replaces the Undo button. Partial erasure preserves untouched portions
-  and recalculates correction rewards and wrong-word penalties.
-- Paper-local clipping excludes coffee, headline and page controls. Light red
-  marks render below the stamp/desk objects, with the source ink effect.
-- One optional page_character per complete stroke; blank-paper portions also
-  remain on that sheet. Existing mixed-anchor saves remain readable.
-- Tutorial targets the eraser; docs and affected existing checks updated.
+- Home composes supplied room video, heroine/shadow poses, bed and foreground shelf.
+  Supplied animations are baked into small Theora loops; raw full-screen sequences
+  are not loaded as animation textures at runtime.
+- Six-product shop, details, purchase refusal, stacked backpack and heroine stats.
+  Fish food produces a brief aquarium response without a separate needs system.
+- A 3.2-second looping night precedes the next shift. Pause/settings freeze it;
+  saves retain remaining time, and sleep recovery occurs once at HOME -> WORK.
+- Cream bottom story dialogue with speaker name, short saved text fragments and
+  existing reveal/voices. Tutorial paper uses the supplied frame; portraits removed.
+- Alegreya Sans/Ysabeau throughout, supplied cursor and icon (also export presets).
+- Stamp image gently pulses when a headline is selected and stamping is available;
+  it stops during carry, return, pause and blocked interactions.
+- Rewrote 24 base and 18 additional Codex stories, retaining IDs/types/effects.
+  Two new user sources bring the catalog to 52 articles / 156 headlines.
+- Added subtle recurring details and a ginger chain; its sources remain fixed,
+  so the coal-dust connection is left for the reader to discover.
+- Save migration updates only untouched future authored prose, preserving the
+  current draft, published results, manual changes and proofreading strokes.
+- Supplied sound hooks are integrated; original synthetic dialogue blips retained.
+  Earlier requested missed-typo qualification cost is -2; article penalty caps remain.
 
 ## Decisions
-- Three headline types and current balance remain unchanged.
-- Pencil and eraser unlock on shift 3. Only one tool is held; page controls work
-  while holding either. Modal/pause/phase changes return tools safely.
-- Resting viewports render once; only the held tool renders continuously.
-- New marks use fixed desk coordinates and one full-source page character anchor.
-  Save version remains 1; old strokes use their first text anchor, or sheet 1.
-- Source/stamp ink settings, result delay, solar/dust and coffee tuning preserved.
+- Drinks: 12 $ / up to +15 stamina. Noodles: 24 $ / up to +30. Fish food: 5 $.
+- Buying adds stock only. Consume from the backpack at home; full stamina keeps
+  the item. Insufficient funds refuse purchase; rent may still cause debt.
+- Inventory is an authoritative snapshot, replacing the saved dictionary instead
+  of recursively merging removed stacks. Counts are known IDs, integers 1..99.
+- Old saves default to an empty bag and first dialogue fragment. Format remains 1;
+  content.authored_prose_revision = 2 controls prose/catalog migration.
+- Shop/bag/next-shift buttons are replaceable placeholders pending final artwork.
+- Proofreading and its story scene unlock at the beginning of shift 2.
 
 ## Relevant files
-- Scripts/source_pager.gd, Scenes/source_pager.tscn, Docs/ARTICLE_PAGES.md.
-- Scripts/newsroom_screen.gd, proofreading_surface.gd, proofreading_state.gd.
-- Scripts/desk_pencil.gd; Scenes/desk_pencil.tscn, desk_eraser.tscn.
-- Assets/Models/eraser.glb; Shaders/worn_pencil.gdshader.
-- Scripts/mvp_game.gd, Data/interface_lessons.gd, Docs/PROOFREADING.md, SAVES.md.
-- Tests/proofreading_tests.gd, pencil_desk_integration_tests.gd, desk_stamp_tests.gd.
+- Scenes/home_screen.tscn; Scripts/home_screen.gd, tamagotchi_room.gd,
+  tamagotchi_panels.gd; Data/home_items.gd; Docs/TAMAGOTCHI_ASSETS.md.
+- Scenes/mvp_game.tscn, interaction_tutorial.tscn; Scripts/mvp_game.gd,
+  story_dialogue.gd, interaction_tutorial.gd, game_fonts.gd; Data/interface_lessons.gd.
+- Scripts/newsroom_session.gd, newsroom_save_data.gd, finance_ledger.gd; Docs/SAVES.md.
+- Data/article_catalog.gd, bripolis_articles.gd, district_letters.gd, story_chains.gd;
+  Docs/OriginalArticles/, BRIPOLIS_CONTENT.md, BALANCE_TABLE.md.
+- Scripts/desk_stamp.gd, cursor_tooltip.gd; Shaders/stamp_hint.gdshader;
+  Data/editorial_ui_theme.tres, project.godot, export_presets.cfg.
 
 ## Do not touch
-- User changes in Scenes/newsroom_screen.tscn, export_presets.cfg and outputs/.
-- User campaign save, global balance and solar/dust/coffee configuration.
+- User edits in Scenes/newsroom_screen.tscn, Shaders/pencil_ferrule.gdshader,
+  Shaders/worn_pencil.gdshader, export path Build/10 and outputs/.
+- Campaign save and unrelated desk lighting/coffee/material tuning.
 - Generated caches/import data: only Godot updates them.
 
 ## Remaining
-None for the accepted implementation. Future visual tuning can use scene/material
-Inspector parameters; do not resume the obsolete fifty-article task.
+No implementation remains in this batch. In-game layout and interaction review
+is unperformed under the user's request not to run tests; do not claim it passed.
 
 ## Validation
-- Final editor asset import succeeded; no script/shader errors in relevant logs.
-- Proofreading: 90 checks, 0 failures, headless; clipping, partial erasure, penalty
-  reversal and complete-page ownership checked.
-- Desk integration: 29 checks, 0 failures, native Compatibility; tools, navigation,
-  pause/modal locks, home continuation and publication checked. Four screenshots
-  in TEMP; rest, raised pencil and raised eraser inspected.
-- Desk stamp: 65 checks, 0 failures, headless; pagination/publication/save integration.
-- 184 focused checks total. No full suite, export, or five-day balance playthrough.
-- Final source/diff reviewed. These results apply to the completed feature state.
+- Source and final intended diff reviewed, including save/inventory and modal flow.
+- Final editor import and loading mvp_game.tscn in the editor produced no errors
+  in TEMP/disinfo_new_home_import_final.log and disinfo_new_home_scene_editor.log.
+  Last small dialogue/color changes were reviewed in source after that load.
+- Source/docs diff whitespace check passed. Original font licenses retain their
+  supplied trailing whitespace. No tests, game launch, export or playthrough run.
 
 ## Known issues / uncertainties
-- Old off-paper marks are hidden by paper clipping; old files remain accepted.
-- At the per-stroke save point limit, an eraser split that exceeds the budget
-  preserves that stroke rather than deleting unrelated ink.
-- Source geometry assumes plain left-aligned text without BBCode.
+- Visual layout, video switching and buy/use/pause flows have not been observed
+  in the running game. Placeholder controls can be replaced independently of state.
+- Earlier native desk/audio checks had failures; they were not rerun or treated
+  as passing acceptance for this batch. Existing dirty test edits remain separate.
 
 ## Git state
 - Workspace C:/Users/User/Desktop/gdg/DisinfoJam; branch elfat.
-- Remote/base at last push: 9b7c368. Pagination and tools form one feature unit.
-- Keep user scene/export/outputs edits and unrelated generated story-test UID
-  outside this feature commit. Push only after three new Codex commits from elfat.
+- Feature base: 1d6d172; latest known pushed base before this batch: c885dde.
+- Stage the cohesive room/editorial/audio changes only. Preserve unrelated user
+  scene/material/export-path work, old test edits, generated source UIDs and outputs/.
+- Push elfat -> origin/elfat only after three new Codex commits since last push;
+  inspect outgoing commits and never force-push. Consult current Git for final hash.

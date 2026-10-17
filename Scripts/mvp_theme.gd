@@ -3,6 +3,7 @@ extends RefCounted
 const INK := Color("182b30")
 const PAPER := Color("eee4cc")
 const GOLD := Color("e8bd68")
+const Fonts = preload("res://Scripts/game_fonts.gd")
 
 static func box(color: Color, radius: int = 10, padding: int = 18) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
@@ -13,8 +14,12 @@ static func box(color: Color, radius: int = 10, padding: int = 18) -> StyleBoxFl
 
 static func create() -> Theme:
 	var result := Theme.new()
-	result.default_font = ThemeDB.fallback_font
+	result.default_font = Fonts.BODY
 	result.default_font_size = 20
+	result.set_font("normal_font", "RichTextLabel", Fonts.BODY)
+	result.set_font("bold_font", "RichTextLabel", Fonts.BOLD)
+	result.set_type_variation("EditorialHeading", "Label")
+	result.set_font("font", "EditorialHeading", Fonts.HEADING)
 	result.set_color("font_color", "Label", PAPER)
 	result.set_color("default_color", "RichTextLabel", PAPER)
 	result.set_stylebox("panel", "PanelContainer", box(Color("253c41")))

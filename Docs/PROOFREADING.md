@@ -37,7 +37,7 @@ Each typo's target has 2.1 times its width and height (4.41 times its area). Cro
 | Publication outcome | Money | Qualification |
 | --- | ---: | ---: |
 | Corrected typo | +2 | +1 |
-| Missed typo | -1 | -3 |
+| Missed typo | -1 | -2 |
 | Incorrectly marked word | -1 | -1 |
 
 Combo does not scale proofreading amounts. The result note shows **Вычитка** and qualification changes. The financial notebook records **Исправления при вычитке** separately from publication income, with **Пропущенные опечатки** and **Неверные пометки** under expenses. Rent continues to use the existing `NewsroomBalance.rent` and shift-end transaction.

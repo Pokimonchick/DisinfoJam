@@ -252,6 +252,9 @@ func undo_last() -> bool:
 		return true
 	return false
 
+func has_active_tool_contact(viewport_point: Vector2) -> bool:
+	return (_drawing or _erasing) and input_enabled and state != null and not _geometry_dirty and can_process() and is_visible_in_tree() and _paper_contains(_local_point(viewport_point))
+
 func _paper_contains(point: Vector2) -> bool:
 	return not _paper_parts(point, point + Vector2(0.001, 0)).is_empty()
 

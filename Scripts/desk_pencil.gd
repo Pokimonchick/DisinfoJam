@@ -21,6 +21,10 @@ signal interaction_changed
 @export_enum("Pencil", "Eraser") var tool_mode := 0
 @export var model_contact := Vector3(-1.985, 0.11, 0)
 @export_range(4.0, 60.0, 1.0) var erase_radius := 20.0
+@export_group("Audio")
+@export var pencil_sound: AudioStream = preload("res://Assets/Sounds/Карандаш.wav")
+@export var eraser_sound: AudioStream = preload("res://Assets/Sounds/Ластик.wav")
+@export_range(-40.0, 18.0, 0.5) var friction_volume_db := 14.0
 var input_exclusions: Array[Control] = []
 
 var enabled := false:
@@ -43,6 +47,8 @@ var _lift := 0.0
 var _stroke_down := false
 var _gui_drag := false
 var _rest_camera := Transform3D.IDENTITY
+var _sound_point := Vector2.ZERO
+var _sound_until_ms := 0
 
 @onready var _render: SubViewport = $Render
 @onready var _camera: Camera3D = $Render/Camera
@@ -59,7 +65,16 @@ func _ready() -> void:
 	_refresh_enabled()
 	if not Engine.is_editor_hint():
 		get_window().focus_exited.connect(cancel_interaction)
+		set_process(false)
 	_render.render_target_update_mode = SubViewport.UPDATE_ONCE
+
+func _process(_delta: float) -> void:
+	# A slow frame's delta includes time before the latest mouse event.
+	if Time.get_ticks_msec() >= _sound_until_ms or not held or not _stroke_down or not is_instance_valid(_surface) or not _surface.has_active_tool_contact(_tip_point):
+		_stop_action_sound()
+
+func _exit_tree() -> void:
+	_stop_action_sound()
 
 func set_surface(surface: ProofreadingSurface) -> void:
 	_surface = surface
@@ -97,6 +112,8 @@ func begin_pickup(viewport_point: Vector2) -> bool:
 	_motion.tween_method(_set_lift, 0.0, lift_height, 0.24).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	if tool_mode == 0 and is_instance_valid(_surface):
 		_surface.drawing_enabled = true
+	var audio := get_node("/root/AudioManager")
+	audio.play_cue(audio.Cue.TOOL_PICKUP)
 	picked_up.emit()
 	interaction_changed.emit()
 	return true
@@ -141,21 +158,41 @@ func _over_input_exclusion(viewport_point: Vector2) -> bool:
 	return false
 
 func _begin_action(point: Vector2) -> bool:
+	_stop_action_sound()
+	_sound_point = point
 	if not is_instance_valid(_surface):
 		return false
 	return _surface.begin_stroke(point) if tool_mode == 0 else _surface.begin_erasure(point, erase_radius)
 
 func _extend_action(point: Vector2) -> void:
+	var moved := _sound_point.distance_to(point) >= 0.5
+	if moved:
+		_sound_point = point
 	if tool_mode == 0:
 		_surface.extend_stroke(point)
 	else:
 		_surface.extend_erasure(point, erase_radius)
+	if not _surface.has_active_tool_contact(point) or _over_input_exclusion(point):
+		_stop_action_sound()
+	elif moved:
+		_sound_until_ms = Time.get_ticks_msec() + 100
+		get_node("/root/AudioManager").start_sfx_loop(self, pencil_sound if tool_mode == 0 else eraser_sound, friction_volume_db)
+		set_process(true)
 
 func _finish_action() -> void:
+	_stop_action_sound()
 	if tool_mode == 0:
 		_surface.finish_stroke()
 	else:
 		_surface.finish_erasure()
+
+func _stop_action_sound() -> void:
+	_sound_until_ms = 0
+	set_process(false)
+	if not Engine.is_editor_hint():
+		var audio := get_node_or_null("/root/AudioManager")
+		if audio != null:
+			audio.stop_sfx_loop(self)
 
 func move_pencil(viewport_point: Vector2) -> void:
 	if not held:
@@ -183,7 +220,11 @@ func return_to_rest() -> void:
 	_gui_drag = false
 	_motion = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 	_motion.tween_method(_return_step.bind(position, _lift, _camera.transform), 0.0, 1.0, return_seconds)
-	_motion.tween_callback(cancel_interaction)
+	_motion.tween_callback(func():
+		cancel_interaction()
+		var audio := get_node("/root/AudioManager")
+		audio.play_cue(audio.Cue.TOOL_PUT)
+	)
 	interaction_changed.emit()
 
 func _return_step(progress: float, origin: Vector2, lift: float, camera: Transform3D) -> void:
@@ -192,6 +233,7 @@ func _return_step(progress: float, origin: Vector2, lift: float, camera: Transfo
 	_camera.transform = camera.interpolate_with(_rest_camera, progress)
 
 func cancel_interaction() -> void:
+	_stop_action_sound()
 	if not is_node_ready():
 		return
 	var was_held := held

@@ -1,6 +1,8 @@
 @tool
 extends Button
 
+const Fonts = preload("res://Scripts/game_fonts.gd")
+
 @export var paper_color := Color("f4e6bf")
 @export var hover_color := Color("edc96c")
 @export var ink_color := Color("35291f")
@@ -12,6 +14,7 @@ var _hover_tween: Tween
 func _ready() -> void:
 	# Native Button keeps input, disabled states and keyboard navigation.
 	# Only its drawing is replaced with a cut-paper silhouette.
+	add_theme_font_override("font", Fonts.HEADING)
 	var empty := StyleBoxEmpty.new()
 	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
 		add_theme_stylebox_override(state, empty)

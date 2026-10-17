@@ -1,6 +1,8 @@
 [gd_resource type="Theme" format=3]
 
-[ext_resource type="FontFile" path="res://Assets/Fonts/Neucha/Neucha.ttf" id="1_font"]
+[ext_resource type="FontFile" path="res://Assets/Assets for new version of game/tamagochi/Alegreya_Sans,Ysabeau/Alegreya_Sans/AlegreyaSans-Regular.ttf" id="1_font"]
+[ext_resource type="FontFile" path="res://Assets/Assets for new version of game/tamagochi/Alegreya_Sans,Ysabeau/Alegreya_Sans/AlegreyaSans-Bold.ttf" id="5_bold"]
+[ext_resource type="FontFile" path="res://Assets/Assets for new version of game/tamagochi/Alegreya_Sans,Ysabeau/Ysabeau/static/Ysabeau-Bold.ttf" id="6_heading"]
 [ext_resource type="Texture2D" path="res://Assets/UI/editorial_checked.svg" id="2_checked"]
 [ext_resource type="Texture2D" path="res://Assets/UI/editorial_unchecked.svg" id="3_unchecked"]
 [ext_resource type="Texture2D" path="res://Assets/UI/editorial_slider.svg" id="4_slider"]
@@ -137,6 +139,10 @@ bg_color = Color(0.91, 0.74, 0.41, 1)
 [resource]
 default_font = ExtResource("1_font")
 default_font_size = 24
+RichTextLabel/fonts/normal_font = ExtResource("1_font")
+RichTextLabel/fonts/bold_font = ExtResource("5_bold")
+EditorialHeading/base_type = &"Label"
+EditorialHeading/fonts/font = ExtResource("6_heading")
 Button/colors/font_color = Color(0.96, 0.9, 0.75, 1)
 Button/colors/font_hover_color = Color(0.15, 0.21, 0.2, 1)
 Button/colors/font_pressed_color = Color(0.96, 0.9, 0.75, 1)
@@ -148,6 +154,7 @@ Button/styles/pressed = SubResource("Pressed")
 Button/styles/disabled = SubResource("Disabled")
 Button/styles/focus = SubResource("Focus")
 EditorialPrimary/base_type = &"Button"
+EditorialPrimary/fonts/font = ExtResource("5_bold")
 EditorialPrimary/styles/normal = SubResource("Primary")
 CheckBox/colors/font_color = Color(0.15, 0.21, 0.2, 1)
 CheckBox/colors/font_hover_color = Color(0.15, 0.21, 0.2, 1)

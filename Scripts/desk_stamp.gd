@@ -63,9 +63,20 @@ signal returned_to_rest
 		shadow_offset = value
 		if is_node_ready():
 			_set_lift(_lift)
+@export_group("Publication hint")
+@export_range(0.0, 0.5, 0.01) var hint_strength := 0.22:
+	set(value):
+		hint_strength = value
+		if is_node_ready():
+			_refresh_hint()
+@export_range(0.1, 2.0, 0.05) var hint_speed := 0.45:
+	set(value):
+		hint_speed = value
+		if is_node_ready():
+			_refresh_hint()
 @export_group("Audio")
-@export var impact_sound: AudioStream
-@export_range(-40.0, 6.0, 0.5) var impact_volume_db := -8.0
+@export var impact_sound: AudioStream = preload("res://Assets/Sounds/Штамп.wav")
+@export_range(-40.0, 6.0, 0.5) var impact_volume_db := -4.0
 
 var enabled := false
 var dragging := false
@@ -78,6 +89,7 @@ var _lift := 0.0
 var _fallback_sound: AudioStreamWAV
 var _area: StampArea
 var _rest_camera := Transform3D.IDENTITY
+var _hint_material: ShaderMaterial
 
 @onready var _render: SubViewport = $Render
 @onready var _camera: Camera3D = $Render/Camera
@@ -85,6 +97,10 @@ var _rest_camera := Transform3D.IDENTITY
 @onready var _shadow: TextureRect = $Shadow
 
 func _ready() -> void:
+	_hint_material = ShaderMaterial.new()
+	_hint_material.shader = preload("res://Shaders/stamp_hint.gdshader")
+	$Image.material = _hint_material
+	_refresh_hint()
 	_rest_position = position
 	_update_perspective(position + get_transform().basis_xform(size * 0.5))
 	_rest_camera = _camera.transform
@@ -116,6 +132,9 @@ func _notification(what: int) -> void:
 		if not is_visible_in_tree():
 			cancel_interaction()
 		_render.render_target_update_mode = SubViewport.UPDATE_ONCE if is_visible_in_tree() else SubViewport.UPDATE_DISABLED
+		_refresh_hint()
+	elif what == NOTIFICATION_PAUSED or what == NOTIFICATION_UNPAUSED:
+		_refresh_hint()
 
 func _has_point(point: Vector2) -> bool:
 	# Ignore the transparent corners around the round base.
@@ -147,6 +166,14 @@ func set_enabled(value: bool) -> void:
 	tooltip_text = "Нажми на штамп, перенеси курсор на текст статьи или место под ним и нажми ещё раз для печати." if value and not dragging and not busy else ""
 	if not value and (dragging or (busy and not _impact_done)):
 		cancel_interaction()
+	_refresh_hint()
+
+func _refresh_hint() -> void:
+	if _hint_material == null:
+		return
+	_hint_material.set_shader_parameter("hint_active", not Engine.is_editor_hint() and enabled and not dragging and not busy and can_process() and is_visible_in_tree())
+	_hint_material.set_shader_parameter("hint_strength", hint_strength)
+	_hint_material.set_shader_parameter("hint_speed", hint_speed)
 
 func begin_drag(viewport_point: Vector2) -> bool:
 	if not enabled or busy or dragging or not can_process() or not is_visible_in_tree() or not is_instance_valid(_area):
@@ -154,6 +181,7 @@ func begin_drag(viewport_point: Vector2) -> bool:
 	if _motion and _motion.is_valid():
 		_motion.kill()
 	dragging = true
+	_refresh_hint()
 	_impact_done = false
 	_grab_offset = _parent_point(viewport_point) - _parent_contact()
 	_render.render_target_update_mode = SubViewport.UPDATE_ALWAYS
@@ -161,6 +189,8 @@ func begin_drag(viewport_point: Vector2) -> bool:
 	_motion.tween_method(_set_lift, _lift, lift_height, 0.16).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_motion.tween_property(_model_root, "rotation_degrees", lift_tilt_degrees, 0.16)
 	_area.show_preview(contact_position())
+	var audio := get_node("/root/AudioManager")
+	audio.play_cue(audio.Cue.TOOL_PICKUP)
 	interaction_changed.emit()
 	return true
 
@@ -177,9 +207,12 @@ func finish_drag() -> void:
 		return
 	dragging = false
 	if not enabled or not _area.can_stamp(contact_position()):
+		var audio := get_node("/root/AudioManager")
+		audio.play_cue(audio.Cue.WARNING)
 		_return_to_rest()
 		return
 	busy = true
+	_refresh_hint()
 	if _motion and _motion.is_valid():
 		_motion.kill()
 	_motion = create_tween()
@@ -207,6 +240,7 @@ func cancel_interaction() -> void:
 	if is_instance_valid(_area):
 		_area.preview.hide()
 	_render.render_target_update_mode = SubViewport.UPDATE_ONCE if is_visible_in_tree() else SubViewport.UPDATE_DISABLED
+	_refresh_hint()
 	interaction_changed.emit()
 	returned_to_rest.emit()
 
@@ -222,6 +256,7 @@ func _return_to_rest() -> void:
 		_motion.kill()
 	dragging = false
 	busy = true
+	_refresh_hint()
 	_area.preview.hide()
 	_motion = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 	_motion.tween_method(_return_step.bind(position, _lift, _model_root.rotation_degrees, _camera.transform), 0.0, 1.0, return_seconds)
@@ -231,7 +266,10 @@ func _return_to_rest() -> void:
 		_set_lift(0)
 		busy = false
 		_impact_done = false
+		_refresh_hint()
 		_render.render_target_update_mode = SubViewport.UPDATE_ONCE
+		var audio := get_node("/root/AudioManager")
+		audio.play_cue(audio.Cue.TOOL_PUT)
 		interaction_changed.emit()
 		returned_to_rest.emit()
 	)

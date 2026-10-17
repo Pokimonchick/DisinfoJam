@@ -4,10 +4,11 @@ signal closed
 
 const Ledger = preload("res://Scripts/finance_ledger.gd")
 const NotebookTheme = preload("res://Scripts/mvp_theme.gd")
-const NotebookFont = preload("res://Assets/Fonts/Neucha/Neucha.ttf")
+const Fonts = preload("res://Scripts/game_fonts.gd")
 var _ledger: Ledger
 var _day := 1
 var _all_days := false
+var _closing := false
 var _text: RichTextLabel
 var _today: Button
 var _all: Button
@@ -15,7 +16,6 @@ var _all: Button
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	theme = NotebookTheme.create()
-	theme.default_font = NotebookFont
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	var shade := ColorRect.new()
 	shade.color = Color(0.04, 0.06, 0.07, 0.78)
@@ -37,6 +37,7 @@ func _ready() -> void:
 	column.add_child(header)
 	var title := Label.new()
 	title.text = "Финансовый блокнот"
+	title.add_theme_font_override("font", Fonts.HEADING)
 	title.add_theme_color_override("font_color", NotebookTheme.INK)
 	title.add_theme_font_size_override("font_size", 26)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -71,10 +72,15 @@ func open(ledger: Ledger, day: int) -> void:
 	_ledger = ledger
 	_day = day
 	_all_days = false
+	AudioManager.play_cue(AudioManager.Cue.PAPER_TURN)
 	if is_node_ready():
 		_refresh()
 
 func _select(all_days: bool) -> void:
+	if _closing:
+		return
+	if _all_days != all_days:
+		AudioManager.play_cue(AudioManager.Cue.PAPER_TURN)
 	_all_days = all_days
 	_refresh()
 
@@ -121,5 +127,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		_close()
 
 func _close() -> void:
+	if _closing:
+		return
+	_closing = true
+	AudioManager.play_cue(AudioManager.Cue.PAPER_PUT)
 	closed.emit()
 	queue_free()
