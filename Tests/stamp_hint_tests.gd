@@ -47,7 +47,7 @@ func _test_headline_lifecycle() -> void:
 	work._select_headline(0)
 	await create_timer(0.4).timeout
 	_check(stamp.enabled and _active(stamp), "Selecting a headline starts the stationary stamp hint")
-	_check(is_equal_approx(material.get_shader_parameter("hint_strength"), 0.22) and is_equal_approx(material.get_shader_parameter("hint_speed"), 0.45), "The hint uses the gentle 0.22 strength and slow 0.45 Hz pulse")
+	_check(is_equal_approx(material.get_shader_parameter("hint_strength"), 0.55) and is_equal_approx(material.get_shader_parameter("hint_speed"), 0.35), "The hint uses a visible 0.55 strength and slow 0.35 Hz pulse")
 	_check(material.shader == load("res://Shaders/stamp_hint.gdshader"), "The hint shader belongs to the 2D stamp image")
 	game.transitioning = false
 	game._toggle_pause()

@@ -55,8 +55,8 @@ work tutorial styling, shorter lessons and one two-state Finish Shift button.
 
 ## Decisions
 - Drinks: 12 $ / up to +15 stamina. Noodles: 24 $ / up to +30. Fish food: 5 $.
-- Buying adds stock only. Consume from the backpack at home; full stamina keeps
-  the item. Insufficient funds refuse purchase; rent may still cause debt.
+- Buying adds stock only, including on credit. Consume from the backpack at home; full stamina keeps
+  the item. Purchases are allowed on credit again; the existing -100 debt defeat remains.
 - Inventory is an authoritative snapshot, replacing the saved dictionary instead
   of recursively merging removed stacks. Counts are known IDs, integers 1..99.
 - Old saves default to an empty bag. Story character offsets preserve position
@@ -64,6 +64,12 @@ work tutorial styling, shorter lessons and one two-state Finish Shift button.
   Format remains 1;
   content.authored_prose_revision = 2 controls prose/catalog migration.
 - Proofreading and its story scene unlock at the beginning of shift 2.
+
+- Starting campaign stamina increased from 30 to 60 in Data/mvp_balance.tres.
+- Work stamina drain and publication costs reduced by 1.5, including reputation
+  reduction. UI rounds displayed stamina costs and bonuses to whole numbers.
+- Ending HUD minimum widths reduced to fit four scales, money and shift; clipped
+  header labels cannot force the whole ending layout beyond the viewport.
 
 ## Relevant files
 - Scenes/home_screen.tscn; Scripts/home_screen.gd, tamagotchi_room.gd,
@@ -98,6 +104,9 @@ without further test runs. Original cutscene/endings layout restored in source.
 - Final source/diff reviewed. Latest requested intro reversal, button enlargement,
   heroine sizing, punctuation and small panel polish were not rerun after user
   requested urgent completion without extra checks.
+
+- Latest credit, stamina, ending HUD and stronger stamp glow edits: source/diff
+  review only, without new test runs under the user's urgency request.
 
 ## Known issues / uncertainties
 - Final cutscene/endings restoration and small visual changes were inspected in

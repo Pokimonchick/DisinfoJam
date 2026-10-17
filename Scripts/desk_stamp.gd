@@ -64,12 +64,12 @@ signal returned_to_rest
 		if is_node_ready():
 			_set_lift(_lift)
 @export_group("Publication hint")
-@export_range(0.0, 0.5, 0.01) var hint_strength := 0.22:
+@export_range(0.0, 1.0, 0.01) var hint_strength := 0.55:
 	set(value):
 		hint_strength = value
 		if is_node_ready():
 			_refresh_hint()
-@export_range(0.1, 2.0, 0.05) var hint_speed := 0.45:
+@export_range(0.1, 2.0, 0.05) var hint_speed := 0.35:
 	set(value):
 		hint_speed = value
 		if is_node_ready():

@@ -10,7 +10,4 @@ extends Resource
 
 
 func formatted(template: String) -> String:
-	var amount_text := str(amount)
-	if amount_text.ends_with(".0"):
-		amount_text = amount_text.trim_suffix(".0")
-	return template.format({"threshold": int(threshold), "amount": amount_text})
+	return template.format({"threshold": int(threshold), "amount": str(roundi(amount))})

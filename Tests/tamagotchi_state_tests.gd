@@ -43,6 +43,7 @@ func _run() -> void:
 	_test_purchase_and_use()
 	_test_rejected_actions()
 	_test_inventory_boundaries()
+	_test_stamina_costs()
 	_test_rent_and_sleep_model()
 	_test_save_validation()
 	if not "--model-only" in OS.get_cmdline_user_args():
@@ -114,9 +115,10 @@ func _test_rejected_actions() -> void:
 	for id in EXPECTED:
 		var model := _home()
 		model.money = EXPECTED[id][0] - 1
-		_expect_rejection(model, id, true, "insufficient_funds", "%s insufficient funds" % id)
+		_check(model.buy_home_item(id).ok and model.money == -1 and model.inventory[id] == 1, "%s can be bought without sufficient cash" % id)
 		model.money = -10
-		_expect_rejection(model, id, true, "insufficient_funds", "%s debt cannot fund a purchase" % id)
+		_check(model.buy_home_item(id).ok and model.money == -10 - EXPECTED[id][0] and model.inventory[id] == 2, "%s can be bought while already in debt" % id)
+		model.inventory.clear()
 		_expect_rejection(model, id, false, "not_owned", "%s empty backpack" % id)
 		if id != "fish_food":
 			model.inventory[id] = 2
@@ -140,6 +142,20 @@ func _test_inventory_boundaries() -> void:
 		_check(model.buy_home_item(id).ok and model.inventory[id] == 99, "%s stack reaches 99" % id)
 		_expect_rejection(model, id, true, "inventory_full", "%s stack rejects item 100" % id)
 		_check(model.use_home_item(id).ok and model.inventory[id] == 98 and model.buy_home_item(id).ok and model.inventory[id] == 99, "%s consuming frees space for a subsequent purchase" % id)
+
+func _test_stamina_costs() -> void:
+	var model := _fresh()
+	model.start_shift()
+	_check(is_equal_approx(model.publication_stamina_cost(), 4.0 / 1.5), "Publication stamina cost is reduced by a factor of 1.5")
+	model.reputation = model.balance.reader_support.threshold
+	_check(is_equal_approx(model.publication_stamina_cost(), 2.0 / 1.5), "Reader support preserves the same factor of reduction")
+	model.reputation = 65.0
+	model.health = 80.0
+	model.tick_work(45.0)
+	_check(is_equal_approx(model.health, 78.0), "Passive work drain is reduced from three to two points per 45 seconds")
+	model = _home()
+	model.money = model.balance.debt_limit + 1
+	_check(model.buy_home_item("matcha").ok and model.phase == NewsroomSession.Phase.ENDED and model.ending == NewsroomSession.Ending.DEBT, "Credit purchases preserve the existing debt defeat limit")
 
 func _test_rent_and_sleep_model() -> void:
 	var model := _home()

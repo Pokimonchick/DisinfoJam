@@ -99,12 +99,15 @@ theme_override_constants/separation = 20
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+clip_text = true
 theme_override_font_sizes/font_size = 15
 horizontal_alignment = 2
 
 [node name="CampaignGoal" type="Label" parent="Padding/Layout/Header"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
+clip_text = true
 theme_override_font_sizes/font_size = 16
 
 [node name="PauseButton" type="Button" parent="Padding/Layout/Header" unique_id=1412060397]

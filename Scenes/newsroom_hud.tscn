@@ -8,11 +8,11 @@
 [node name="HUD" type="HBoxContainer"]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 12
 script = ExtResource("1")
 
 [node name="HealthGroup" type="Control" parent="."]
-custom_minimum_size = Vector2(240, 152)
+custom_minimum_size = Vector2(150, 152)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 6
@@ -69,7 +69,7 @@ ignore_texture_size = true
 stretch_mode = 0
 
 [node name="ReputationGroup" type="Control" parent="."]
-custom_minimum_size = Vector2(240, 152)
+custom_minimum_size = Vector2(150, 152)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 6
@@ -134,7 +134,7 @@ offset_top = 106.0
 offset_bottom = 150.0
 
 [node name="LoyaltyGroup" type="Control" parent="."]
-custom_minimum_size = Vector2(240, 152)
+custom_minimum_size = Vector2(150, 152)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 6
@@ -201,7 +201,7 @@ offset_bottom = 150.0
 [node name="QualificationGroup" type="Control" parent="."]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(240, 152)
+custom_minimum_size = Vector2(150, 152)
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -251,7 +251,7 @@ texture_normal = ExtResource("4_help")
 ignore_texture_size = true
 stretch_mode = 0
 [node name="MoneyGroup" type="VBoxContainer" parent="."]
-custom_minimum_size = Vector2(120, 0)
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 theme_override_constants/separation = 10
 
@@ -266,7 +266,7 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 28
 
 [node name="ShiftGroup" type="VBoxContainer" parent="."]
-custom_minimum_size = Vector2(134, 0)
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 
 [node name="Day" type="Label" parent="ShiftGroup"]

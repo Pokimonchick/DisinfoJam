@@ -295,8 +295,6 @@ func buy_food(full_meal: bool) -> bool:
 	if phase != Phase.HOME or health >= balance.maximum_stat:
 		return false
 	var price := balance.meal_price if full_meal else balance.snack_price
-	if money < price:
-		return false
 	money -= price
 	_record_transaction("meal" if full_meal else "snack", -price, "Еда" if full_meal else "Перекус")
 	food_stocked = true
@@ -308,7 +306,7 @@ func buy_food(full_meal: bool) -> bool:
 
 
 func buy_coffee() -> bool:
-	if phase != Phase.HOME or coffee_ready or money < balance.coffee_price:
+	if phase != Phase.HOME or coffee_ready:
 		return false
 	coffee_ready = true
 	money -= balance.coffee_price
@@ -325,8 +323,6 @@ func buy_home_item(id: String) -> Dictionary:
 	var item: Dictionary = HOME_ITEMS.get_item(id)
 	if item.is_empty():
 		return {"ok": false, "reason": "unknown_item"}
-	if money < int(item.price):
-		return {"ok": false, "reason": "insufficient_funds"}
 	if int(inventory.get(id, 0)) >= HOME_ITEMS.MAX_COUNT:
 		return {"ok": false, "reason": "inventory_full"}
 	money -= int(item.price)
@@ -334,6 +330,7 @@ func buy_home_item(id: String) -> Dictionary:
 	var kind: String = {"drink": "home_drink", "food": "home_food", "pet": "pet_food"}[item.category]
 	_record_transaction(kind, -int(item.price), item.name)
 	changed.emit()
+	_check_ending()
 	save_requested.emit()
 	return {"ok": true, "reason": ""}
 
