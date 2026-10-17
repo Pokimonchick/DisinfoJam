@@ -44,6 +44,9 @@ var _notebook: Control
 var _pending_deductions: Array[int] = []
 var _combo_demonstration := false
 var _dialogue_parts: Array[String] = []
+var _dialogue_offsets: Array[int] = []
+var _dialogue_body := ""
+var _dialogue_part_size := 150
 var _dialogue_part := 0
 var _dialogue_speaker := DialogueReveal.Speaker.HEROINE
 var _dialogue_primary := ""
@@ -216,8 +219,6 @@ func _show_story(episode_id: String, page: int = 0) -> void:
 	var entry: Dictionary = CHAPTER.EPISODES[episode_id][page]
 	_show_view(View.INTRO if episode_id == "intro" else View.STORY)
 	_set_narrative(entry.tag, entry.title, entry.body.replace("{name}", NewsroomSession.CAMPAIGN_HERO_NAME), entry.visual, entry.next, "Сразу к работе" if episode_id == "intro" else "")
-	%NarrativeBack.visible = true
-	%NarrativeBack.disabled = page == 0
 	_queue_save()
 
 func _advance_story() -> void:
@@ -362,7 +363,11 @@ func _set_narrative(tag: String, title: String, body: String, visual: int, prima
 	%NarrativeBody.stop_reveal()
 	%NarrativeTag.text = tag
 	%NarrativeTitle.text = title
-	_dialogue_parts = _split_dialogue(body)
+	var at_home := session.phase == NewsroomSession.Phase.HOME
+	%Narrative.set_home_style(at_home)
+	_dialogue_body = body
+	_dialogue_part_size = 300 if at_home else 150
+	_dialogue_parts = _split_dialogue(body, _dialogue_part_size, _dialogue_offsets)
 	_dialogue_part = 0
 	_dialogue_primary = primary
 	_dialogue_speaker = DialogueReveal.Speaker.BOSS if visual == 1 else DialogueReveal.Speaker.HEROINE
@@ -371,35 +376,67 @@ func _set_narrative(tag: String, title: String, body: String, visual: int, prima
 	%NarrativeVisual.show_heroine = false
 	_render_dialogue_part()
 	%NarrativeSecondary.text = secondary
-	%NarrativeSecondary.visible = not secondary.is_empty()
-	%NarrativePrimary.grab_focus()
+	%NarrativeSecondary.hide()
+	%NarrativePrimary.hide()
+	%Narrative.focus_continue()
 
-static func _split_dialogue(body: String) -> Array[String]:
+static func _split_dialogue(body: String, maximum: int = 150, offsets: Array[int] = []) -> Array[String]:
 	var result: Array[String] = []
+	offsets.clear()
 	var current := ""
+	var current_offset := 0
+	var source_cursor := 0
 	for paragraph in body.split("\n\n", false):
 		for word in paragraph.split(" ", false):
-			if current.length() + word.length() + 1 > 300 and not current.is_empty():
+			var word_start := body.find(word, source_cursor)
+			if word_start < 0:
+				word_start = source_cursor
+			source_cursor = word_start + word.length()
+			if current.length() + word.length() + 1 > maximum and not current.is_empty():
 				result.append(current.strip_edges())
+				offsets.append(current_offset)
 				current = ""
+			if current.strip_edges().is_empty():
+				current_offset = word_start
 			current += (" " if not current.is_empty() and not current.ends_with("\n") else "") + word
 		current += "\n\n"
 	if not current.strip_edges().is_empty():
 		result.append(current.strip_edges())
+		offsets.append(current_offset)
 	if result.is_empty():
 		result.append("")
+		offsets.append(0)
 	return result
 
+func _restore_dialogue_part(story: Dictionary) -> void:
+	var character_offset: int
+	if story.has("character_offset"):
+		character_offset = clampi(int(story.character_offset), 0, _dialogue_body.length())
+	else:
+		# Older saves counted 300-character fragments. Recover their source anchor
+		# before selecting a fragment in the current layout; never skip its start.
+		var previous_offsets: Array[int] = []
+		_split_dialogue(_dialogue_body, int(story.get("part_size", 300)), previous_offsets)
+		var previous_part := clampi(int(story.get("part", 0)), 0, previous_offsets.size() - 1)
+		character_offset = previous_offsets[previous_part]
+	_dialogue_part = 0
+	for index in _dialogue_offsets.size():
+		if _dialogue_offsets[index] > character_offset:
+			break
+		_dialogue_part = index
+
 func _render_dialogue_part() -> void:
+	var body: String = %Narrative.format_body(_dialogue_parts[_dialogue_part])
 	if view == View.ENDING:
 		%NarrativeBody.stop_reveal()
-		%NarrativeBody.text = _dialogue_parts[_dialogue_part]
+		%NarrativeBody.text = body
 		%NarrativeBody.visible_characters = -1
 		%NarrativeBody.scroll_to_line(0)
 	else:
-		%NarrativeBody.reveal(_dialogue_parts[_dialogue_part], _dialogue_speaker)
-	%NarrativePrimary.text = "Дальше" if _dialogue_part + 1 < _dialogue_parts.size() else _dialogue_primary
-	%NarrativeBack.visible = view in [View.INTRO, View.STORY]
+		%NarrativeBody.reveal(body, _dialogue_speaker)
+	%Narrative.update_text_layout()
+	%NarrativePrimary.hide()
+	%NarrativeBack.hide()
 	%NarrativeBack.disabled = _story_page == 0 and _dialogue_part == 0
 
 func _toggle_pause() -> void:
@@ -413,7 +450,9 @@ func _toggle_pause() -> void:
 	else:
 		pause_panel.hide()
 		if tutorial.visible:
-			tutorial.get_node("%Next").grab_focus()
+			tutorial.focus_continue()
+		elif view in [View.INTRO, View.STORY, View.ENDING]:
+			%Narrative.focus_continue()
 
 
 func _open_settings() -> void:
@@ -713,7 +752,7 @@ func _continue_run() -> void:
 	elif session.phase == NewsroomSession.Phase.HOME:
 		home.restore_presentation(presentation.get("home", {}))
 	if view in [View.INTRO, View.STORY]:
-		_dialogue_part = clampi(int(story.get("part", 0)), 0, _dialogue_parts.size() - 1)
+		_restore_dialogue_part(story)
 		_render_dialogue_part()
 	_run_active = true
 	_autosave_elapsed = 0.0
@@ -741,7 +780,10 @@ func _save_progress() -> bool:
 		"home": home.capture_presentation(),
 		"guidance": {"stage": _tutorial_stage, "step": _tutorial_step, "work_done": _work_tutorial_done, "home_done": _home_tutorial_done, "pencil_done": _pencil_tutorial_done},
 		"stamina_warning_day": _stamina_warning_day,
-		"story": {"id": _story_id if in_story else "", "page": _story_page if in_story else 0, "part": _dialogue_part if in_story else 0, "seen": _seen_stories.duplicate()}}
+		"story": {"id": _story_id if in_story else "", "page": _story_page if in_story else 0,
+			"part": _dialogue_part if in_story else 0, "part_size": _dialogue_part_size,
+			"character_offset": _dialogue_offsets[_dialogue_part] if in_story else 0,
+			"seen": _seen_stories.duplicate()}}
 	sections["extensions"] = GameState.capture_save_sections()
 	var document := _loaded_document.duplicate(true)
 	document["sections"] = SaveRepository.merge_sections(document.get("sections", {}), sections)
@@ -779,6 +821,14 @@ static func _validate_save(sections: Dictionary) -> bool:
 		return false
 	var part: Variant = dialogue_state.get("part", 0)
 	if part != floor(float(part)) or part < 0 or part > 10000:
+		return false
+	for key in ["character_offset", "part_size"]:
+		if not dialogue_state.has(key):
+			continue
+		var value: Variant = dialogue_state[key]
+		if not NewsroomSaveData._number(value) or value < 0 or value > 2147483647 or value != floor(float(value)):
+			return false
+	if dialogue_state.has("part_size") and not dialogue_state.part_size in [150, 300]:
 		return false
 	if not presentation.get("lesson", 0) is int and not presentation.get("lesson", 0) is float:
 		return false

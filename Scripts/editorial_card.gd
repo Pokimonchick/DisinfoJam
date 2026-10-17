@@ -10,12 +10,16 @@ extends PanelContainer
 	set(value):
 		backing_color = value
 		queue_redraw()
+@export var draw_paper := true:
+	set(value):
+		draw_paper = value
+		queue_redraw()
 
 func _ready() -> void:
 	resized.connect(queue_redraw)
 
 func _draw() -> void:
-	if size.x < 64.0 or size.y < 64.0:
+	if not draw_paper or size.x < 64.0 or size.y < 64.0:
 		return
 	var w := size.x
 	var h := size.y

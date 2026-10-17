@@ -8,8 +8,10 @@ const ART_ROOT := "res://Assets/Assets for new version of game/tamagochi/"
 const ROOM_ROOT := ART_ROOT + "Тамагочи/"
 const DAY_STREAM := "res://Assets/Generated/Tamagotchi/day_room.ogv"
 const NIGHT_STREAM := "res://Assets/Generated/Tamagotchi/night_room.ogv"
-const HERO_POSITION := Vector2(620, 280)
-const HERO_SIZE := Vector2(462, 745)
+const HERO_SCALE := 0.845
+const HERO_POSITION := Vector2(622, 355)
+const HERO_SIZE := Vector2(462, 745) * HERO_SCALE
+const SHADOW_POSITION := HERO_POSITION + Vector2(0, 74) * HERO_SCALE
 const IDLE_FPS := 6.0
 const FISH_FEEDBACK_SECONDS := 1.8
 
@@ -55,7 +57,8 @@ func _ready() -> void:
 	for frame in range(4):
 		_hero_frames.append(load(ART_ROOT + "IMG_%d.PNG" % (1944 + frame)) as Texture2D)
 		_shadow_frames.append(load(ART_ROOT + "IMG_%d.PNG" % (1952 + frame)) as Texture2D)
-	_shadow = _add_texture("HeroineShadow", _shadow_frames[0], HERO_POSITION, HERO_SIZE)
+	_shadow = _add_texture("HeroineShadow", _shadow_frames[0], SHADOW_POSITION, HERO_SIZE)
+	_shadow.modulate.a = 0.5
 	_heroine = _add_texture("Heroine", _hero_frames[0], HERO_POSITION, HERO_SIZE)
 	_bed = _add_texture("Bed", load(ROOM_ROOT + "Кровать пнг/Comp 1/Кровать_00000.png") as Texture2D)
 	_shelf = _add_texture("Shelf", load(ROOM_ROOT + "Кровать пнг/Comp 1/Полка_00000.png") as Texture2D)

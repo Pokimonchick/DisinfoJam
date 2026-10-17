@@ -2,7 +2,8 @@
 
 [ext_resource type="Script" path="res://Scripts/home_screen.gd" id="home"]
 [ext_resource type="Script" path="res://Scripts/tamagotchi_room.gd" id="room"]
-[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/tamagochi/Shop assets/Menu assets/Cash 2.png" id="cash"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/tamagochi/Тамагочи UIUX/Daily background.png" id="day"]
+[ext_resource type="Texture2D" path="res://Assets/Assets for new version of game/tamagochi/Тамагочи UIUX/Daily background number.png" id="number"]
 
 [node name="Home" type="Control"]
 layout_mode = 3
@@ -18,6 +19,7 @@ layout_mode = 0
 offset_right = 1920.0
 offset_bottom = 1080.0
 mouse_filter = 2
+texture_filter = 1
 
 [node name="RoomView" type="Control" parent="Canvas"]
 unique_name_in_owner = true
@@ -27,59 +29,111 @@ offset_bottom = 1080.0
 mouse_filter = 2
 script = ExtResource("room")
 
-[node name="MoneyPaper" type="TextureRect" parent="Canvas"]
+[node name="DayPanel" type="TextureRect" parent="Canvas"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 42.0
-offset_top = 44.0
-offset_right = 294.0
-offset_bottom = 142.0
+offset_left = 50.0
+offset_top = 12.0
+offset_right = 410.0
+offset_bottom = 124.0
 mouse_filter = 2
-texture = ExtResource("cash")
+texture = ExtResource("day")
 expand_mode = 1
 
-[node name="Money" type="Label" parent="Canvas/MoneyPaper"]
+[node name="Day" type="Label" parent="Canvas/DayPanel"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 18.0
-offset_top = 10.0
-offset_right = 232.0
-offset_bottom = 86.0
-theme_override_colors/font_color = Color(0.3, 0.16, 0.1, 1)
-theme_override_font_sizes/font_size = 40
+offset_left = 14.0
+offset_top = 55.0
+offset_right = 254.0
+offset_bottom = 107.0
+theme_override_colors/font_color = Color(0.77, 0.65, 0.4, 1)
+theme_override_font_sizes/font_size = 36
+vertical_alignment = 1
+
+[node name="DaysPaper" type="TextureRect" parent="Canvas/DayPanel"]
+layout_mode = 0
+offset_left = 268.0
+offset_top = 0.0
+offset_right = 356.0
+offset_bottom = 101.0
+mouse_filter = 2
+texture = ExtResource("number")
+expand_mode = 1
+
+[node name="DaysLeft" type="Label" parent="Canvas/DayPanel/DaysPaper"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_top = 8.0
+offset_right = 88.0
+offset_bottom = 61.0
+theme_override_colors/font_color = Color(0.49, 0.31, 0.23, 1)
+theme_override_font_sizes/font_size = 48
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Day" type="Label" parent="Canvas"]
+[node name="Caption" type="Label" parent="Canvas/DayPanel/DaysPaper"]
+layout_mode = 0
+offset_top = 60.0
+offset_right = 88.0
+offset_bottom = 91.0
+theme_override_colors/font_color = Color(0.34, 0.21, 0.16, 1)
+theme_override_font_sizes/font_size = 13
+text = "ДНЕЙ\nОСТАЛОСЬ"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MoneyPaper" type="Control" parent="Canvas"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 326.0
-offset_top = 62.0
-offset_right = 820.0
-offset_bottom = 110.0
-theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
-theme_override_colors/font_shadow_color = Color(0.2, 0.1, 0.08, 1)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 30
+offset_left = 50.0
+offset_top = 124.0
+offset_right = 248.0
+offset_bottom = 187.0
+mouse_filter = 2
+
+[node name="Notebook" type="Button" parent="Canvas/MoneyPaper"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_default_cursor_shape = 2
+tooltip_text = "Баланс: открыть финансовый блокнот"
+
+[node name="Money" type="Label" parent="Canvas/MoneyPaper/Notebook"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.3, 0.16, 0.1, 1)
+theme_override_font_sizes/font_size = 34
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Pause" type="Button" parent="Canvas"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 0
 offset_left = 1664.0
 offset_top = 42.0
 offset_right = 1870.0
 offset_bottom = 114.0
-mouse_default_cursor_shape = 2
 text = "Пауза · Esc"
 
 [node name="HeroineInfo" type="Button" parent="Canvas"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 652.0
-offset_top = 345.0
-offset_right = 992.0
-offset_bottom = 990.0
+offset_left = 648.0
+offset_top = 408.0
+offset_right = 937.0
+offset_bottom = 966.0
 mouse_default_cursor_shape = 2
 tooltip_text = "Никола Коко: открыть сведения"
 modulate = Color(1, 1, 1, 0)
@@ -95,60 +149,86 @@ mouse_default_cursor_shape = 2
 tooltip_text = "Покормить рыбок: открыть рюкзак"
 modulate = Color(1, 1, 1, 0)
 
-[node name="Meal" type="Button" parent="Canvas"]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 42.0
-offset_top = 934.0
-offset_right = 284.0
-offset_bottom = 1030.0
-mouse_default_cursor_shape = 2
-text = "Магазин"
-
 [node name="Bag" type="Button" parent="Canvas"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 304.0
-offset_top = 934.0
-offset_right = 546.0
-offset_bottom = 1030.0
+offset_left = 995.0
+offset_top = 410.0
+offset_right = 1195.0
+offset_bottom = 570.0
 mouse_default_cursor_shape = 2
-text = "Рюкзак"
+tooltip_text = "Показатели Николы Коко и рюкзак"
 
-[node name="Notebook" type="Button" parent="Canvas"]
-unique_name_in_owner = true
+[node name="Outline" type="Polygon2D" parent="Canvas/Bag"]
+color = Color(0.13, 0.12, 0.16, 1)
+polygon = PackedVector2Array(30, 0, 165, 0, 165, 10, 185, 10, 185, 25, 195, 25, 195, 45, 200, 45, 200, 100, 190, 100, 190, 120, 170, 120, 170, 130, 105, 130, 80, 155, 50, 160, 50, 130, 30, 130, 30, 120, 10, 120, 10, 100, 0, 100, 0, 35, 10, 35, 10, 15, 30, 15)
+
+[node name="Fill" type="Polygon2D" parent="Canvas/Bag"]
+color = Color(0.99, 0.98, 0.96, 1)
+polygon = PackedVector2Array(35, 6, 160, 6, 160, 16, 180, 16, 180, 30, 190, 30, 190, 48, 194, 48, 194, 96, 184, 96, 184, 114, 164, 114, 164, 124, 102, 124, 77, 149, 56, 153, 56, 124, 35, 124, 35, 114, 16, 114, 16, 96, 6, 96, 6, 40, 16, 40, 16, 21, 35, 21)
+
+[node name="Dot1" type="ColorRect" parent="Canvas/Bag"]
 layout_mode = 0
-offset_left = 566.0
-offset_top = 934.0
-offset_right = 828.0
-offset_bottom = 1030.0
-mouse_default_cursor_shape = 2
-text = "Блокнот"
+offset_left = 65.0
+offset_top = 63.0
+offset_right = 79.0
+offset_bottom = 77.0
+mouse_filter = 2
+color = Color(0.34, 0.32, 0.41, 1)
+
+[node name="Dot2" type="ColorRect" parent="Canvas/Bag"]
+layout_mode = 0
+offset_left = 88.0
+offset_top = 63.0
+offset_right = 102.0
+offset_bottom = 77.0
+mouse_filter = 2
+color = Color(0.34, 0.32, 0.41, 1)
+
+[node name="Dot3" type="ColorRect" parent="Canvas/Bag"]
+layout_mode = 0
+offset_left = 111.0
+offset_top = 63.0
+offset_right = 125.0
+offset_bottom = 77.0
+mouse_filter = 2
+color = Color(0.34, 0.32, 0.41, 1)
 
 [node name="Bed" type="Button" parent="Canvas"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 1414.0
-offset_top = 924.0
-offset_right = 1874.0
-offset_bottom = 1040.0
+offset_left = 84.0
+offset_top = 910.0
+offset_right = 449.0
+offset_bottom = 1037.0
 mouse_default_cursor_shape = 2
-text = "Следующая смена"
+text = "СПАТЬ"
+
+[node name="Meal" type="Button" parent="Canvas"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 1460.0
+offset_top = 910.0
+offset_right = 1825.0
+offset_bottom = 1037.0
+mouse_default_cursor_shape = 2
+text = "МАГАЗИН"
 
 [node name="Notice" type="Label" parent="Canvas"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 0
-offset_left = 875.0
-offset_top = 936.0
-offset_right = 1388.0
-offset_bottom = 1034.0
+offset_left = 540.0
+offset_top = 1010.0
+offset_right = 1390.0
+offset_bottom = 1070.0
 theme_override_colors/font_color = Color(1, 0.96, 0.85, 1)
 theme_override_colors/font_shadow_color = Color(0.2, 0.1, 0.08, 1)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 25
 autowrap_mode = 3
-vertical_alignment = 1
+horizontal_alignment = 1
 
 [node name="NightCaption" type="Label" parent="Canvas"]
 unique_name_in_owner = true

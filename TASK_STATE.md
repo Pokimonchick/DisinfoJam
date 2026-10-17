@@ -7,7 +7,8 @@ Completed
 Integrate supplied tamagotchi/home art, shop and backpack, short night transition,
 paper dialogue presentation, global fonts/cursor/icon and a gentle stamp hint.
 Refresh authored articles and add the user's two ginger-cat/coal-dust sources.
-This replaces the obsolete pagination snapshot; do not resume that older scope.
+Apply the user's UI corrections: supplied home controls, black prologue, original
+work tutorial styling, shorter lessons and one two-state Finish Shift button.
 
 ## Context
 - Godot 4.7.2 Compatibility; Russian five-shift game in anthropomorphic Bripolis.
@@ -24,9 +25,16 @@ This replaces the obsolete pagination snapshot; do not resume that older scope.
   Fish food produces a brief aquarium response without a separate needs system.
 - A 3.2-second looping night precedes the next shift. Pause/settings freeze it;
   saves retain remaining time, and sleep recovery occurs once at HOME -> WORK.
-- Cream bottom story dialogue with speaker name, short saved text fragments and
-  existing reveal/voices. Tutorial paper uses the supplied frame; portraits removed.
-- Alegreya Sans/Ysabeau throughout, supplied cursor and icon (also export presets).
+- White centered narration on black outside home. Cream dialogue is home-only;
+  the work tutorial uses its original editorial paper, with no boss portrait.
+- Next/instruction buttons removed; click/Space/Enter continue. Back/Skip have
+  equal fixed footer sizes; lessons are concise (11 work / 4 home / 4 pencil).
+- New home art: Sleep left, Shop right, weekdays/remaining shifts and cash top left.
+  Bubble opens Info/Bag; cash opens ledger. Removed the permanent room notice.
+- Full room fits the viewport; glint is on the window. Heroine scale matches the
+  supplied video, with a soft shadow at the feet. Cursor reduced by 1.5.
+- Alegreya Sans/Ysabeau throughout and supplied icon (also export presets).
+- Finish Shift is one native button: provided cream PNG normally, yellow on hover.
 - Stamp image gently pulses when a headline is selected and stamping is available;
   it stops during carry, return, pause and blocked interactions.
 - Rewrote 24 base and 18 additional Codex stories, retaining IDs/types/effects.
@@ -44,9 +52,10 @@ This replaces the obsolete pagination snapshot; do not resume that older scope.
   the item. Insufficient funds refuse purchase; rent may still cause debt.
 - Inventory is an authoritative snapshot, replacing the saved dictionary instead
   of recursively merging removed stacks. Counts are known IDs, integers 1..99.
-- Old saves default to an empty bag and first dialogue fragment. Format remains 1;
+- Old saves default to an empty bag. Story character offsets preserve position
+  across short-fragment reflow; legacy fragment indices use their old 300 size.
+  Format remains 1;
   content.authored_prose_revision = 2 controls prose/catalog migration.
-- Shop/bag/next-shift buttons are replaceable placeholders pending final artwork.
 - Proofreading and its story scene unlock at the beginning of shift 2.
 
 ## Relevant files
@@ -58,6 +67,7 @@ This replaces the obsolete pagination snapshot; do not resume that older scope.
 - Data/article_catalog.gd, bripolis_articles.gd, district_letters.gd, story_chains.gd;
   Docs/OriginalArticles/, BRIPOLIS_CONTENT.md, BALANCE_TABLE.md.
 - Scripts/desk_stamp.gd, cursor_tooltip.gd; Shaders/stamp_hint.gdshader;
+  Scripts/finish_shift_button.gd; Assets/UI/finish_shift_*.png;
   Data/editorial_ui_theme.tres, project.godot, export_presets.cfg.
 
 ## Do not touch
@@ -72,21 +82,22 @@ is unperformed under the user's request not to run tests; do not claim it passed
 
 ## Validation
 - Source and final intended diff reviewed, including save/inventory and modal flow.
-- Final editor import and loading mvp_game.tscn in the editor produced no errors
-  in TEMP/disinfo_new_home_import_final.log and disinfo_new_home_scene_editor.log.
-  Last small dialogue/color changes were reviewed in source after that load.
+- Asset import and final mvp_game.tscn editor load completed; final log
+  TEMP/disinfo_ui_corrections_editor_save_final.log has no script/resource errors.
+  Initial tutorial boolean-inference errors were fixed before the final load.
+- Room composition was compared with the supplied video using source frames.
 - Source/docs diff whitespace check passed. Original font licenses retain their
   supplied trailing whitespace. No tests, game launch, export or playthrough run.
 
 ## Known issues / uncertainties
 - Visual layout, video switching and buy/use/pause flows have not been observed
-  in the running game. Placeholder controls can be replaced independently of state.
+  in the running game. Source/media comparison does not replace that verification.
 - Earlier native desk/audio checks had failures; they were not rerun or treated
   as passing acceptance for this batch. Existing dirty test edits remain separate.
 
 ## Git state
 - Workspace C:/Users/User/Desktop/gdg/DisinfoJam; branch elfat.
-- Feature base: 1d6d172; latest known pushed base before this batch: c885dde.
+- Current correction base and last successful pushed commit: 6046307.
 - Stage the cohesive room/editorial/audio changes only. Preserve unrelated user
   scene/material/export-path work, old test edits, generated source UIDs and outputs/.
 - Push elfat -> origin/elfat only after three new Codex commits since last push;

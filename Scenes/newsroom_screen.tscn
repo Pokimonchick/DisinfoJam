@@ -24,6 +24,8 @@
 [ext_resource type="PackedScene" path="res://Scenes/desk_stamp.tscn" id="stamp"]
 [ext_resource type="PackedScene" path="res://Scenes/stamp_area.tscn" id="stamp_area"]
 
+[ext_resource type="Script" path="res://Scripts/finish_shift_button.gd" id="finish_paper"]
+
 [sub_resource type="ShaderMaterial" id="ShadowMaterial"]
 shader = ExtResource("shadow_shader")
 shader_parameter/shadow_strength = 1.0
@@ -450,6 +452,7 @@ offset_bottom = 67.0
 mouse_default_cursor_shape = 2
 theme_override_font_sizes/font_size = 24
 text = "Сдать выпуск"
+script = ExtResource("finish_paper")
 
 [node name="DeskFocus" parent="Canvas" unique_id=83320363 instance=ExtResource("focus")]
 layout_mode = 0

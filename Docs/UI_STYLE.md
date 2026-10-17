@@ -38,13 +38,14 @@ and the [configuration screen](https://volx.jp/persona-5-royal-keyboard-controll
 - Settings, pause and new-story confirmation reuse `Shaders/pause_blur.gdshader` with
   a `BackBufferCopy` before the backdrop. Keep the menu visible below the new-story
   overlay and keep focus inside each modal.
-- The narrative screen uses the supplied room background and a cream bottom
-  dialogue frame with a speaker name. Boss portraits and portrait placeholders
-  have been removed. Long story pages split into short fragments; Back/Next/Skip
-  retain their story roles and the current fragment is saved.
+- Prologue and story narration outside the home use centered white text on black.
+  The cream dialogue frame is reserved for the tamagotchi room; the work tutorial
+  uses its original editorial paper without a boss portrait. Long story pages
+  split into short fragments, with no Next/instruction-caption button.
 - Heroine/boss dialogue and guided explanations use `DialogueReveal`: letters
   appear with small character blips, punctuation pauses and a short entry delay.
-  The first Next click completes the text; the second advances. Pause/settings
+  Clicking the text or pressing Space/Enter completes the reveal, then advances.
+  Tutorial Back/Skip controls share a fixed footer, size and font. Pause/settings
   freeze the reveal. Ending summaries appear immediately.
   The voices remain the previous synthesized short blips from
   `dialogue_heroine.wav` and `dialogue_boss.wav`, rather than full spoken lines.
@@ -62,6 +63,14 @@ and the [configuration screen](https://volx.jp/persona-5-royal-keyboard-controll
   and restore up to 15 stamina when used; noodles cost 24 $ and restore up to 30;
   fish food costs 5 $ and changes no player stats. Item data lives in
   `Data/home_items.gd`.
+- Home uses the supplied `Тамагочи UIUX` paper sprites: Sleep at the bottom left,
+  Shop at the bottom right, weekday/remaining shifts and cash at the top left.
+  The speech bubble opens the Info/Bag tabs; clicking cash opens the ledger.
+  The full room canvas fits the available viewport without cropping its edges.
+  The heroine follows the supplied video's scale and has a soft shadow at her feet;
+  the animated glint stays in the original window coordinates.
+- Finish Shift is one native button using `finish_shift_normal.png` at rest and
+  `finish_shift_hover.png` on hover. It retains the existing action and location.
 - The next-shift action changes the room to its night presentation for 3.2 seconds
   (`night_seconds` on Home). Room interactions and panels close during this
   transition; pause/settings freeze playback. Stamina recovery occurs once when
