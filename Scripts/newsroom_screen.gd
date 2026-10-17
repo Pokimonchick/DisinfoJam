@@ -152,7 +152,7 @@ func _create_source_pager() -> void:
 		_set_page_ink_parameter("page_reveal_progress", reveal)
 	)
 	source_pager.bind(%SourceText)
-	for ink_control in [source_pager.previous, source_pager.counter, source_pager.next]:
+	for ink_control in [source_pager.get_node("Backdrop"), source_pager.previous, source_pager.counter, source_pager.next]:
 		ink_control.material = _page_material
 	pencil.input_exclusions.assign([eraser, source_pager])
 	eraser.input_exclusions.assign([pencil, source_pager])
@@ -308,7 +308,8 @@ func _display_source(article: NewsArticle, animate := false) -> void:
 		return
 	_displayed_article_id = article.id
 	%SourceTitle.text = article.source_title
-	source_pager.set_source(session.display_source_text(article))
+	var targets: Array = session.proofreading.targets if session.proofreading_unlocked and session.proofreading.article_id == article.id and session.proofreading.source_text == article.source_text else []
+	source_pager.set_source(session.display_source_text(article), article.id, article.source_text, targets)
 	if session.proofreading_unlocked and session.proofreading.article_id == article.id:
 		proofreading_surface.bind(%SourceText, session.proofreading, source_pager.character_offset)
 	else:

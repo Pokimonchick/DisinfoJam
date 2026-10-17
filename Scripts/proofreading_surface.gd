@@ -148,10 +148,8 @@ func _rebuild_geometry() -> void:
 		return
 	var style := label.get_theme_stylebox("normal")
 	var margin := Vector2(style.get_margin(SIDE_LEFT), style.get_margin(SIDE_TOP))
-	var font := label.get_theme_font("normal_font")
-	var font_size := label.get_theme_font_size("normal_font_size")
 	var text_server := TextServerManager.get_primary_interface()
-	var visible_text := label.text
+	var visible_text := label.get_parsed_text()
 	for index in label.get_line_count():
 		var span := label.get_line_range(index)
 		# Godot includes a virtual final paragraph separator in the final range.
@@ -161,8 +159,7 @@ func _rebuild_geometry() -> void:
 			start += 1
 		while end > start and visible_text[end - 1] in ["\n", "\r"]:
 			end -= 1
-		var shaped := TextLine.new()
-		shaped.add_string(visible_text.substr(start, end - start), font, font_size)
+		var shaped := preload("res://Scripts/article_emphasis.gd").shape_line(label, visible_text, start, end)
 		_lines.append({"start": start + character_offset, "end": end + character_offset, "y": margin.y + label.get_line_offset(index), "height": float(label.get_line_height(index)), "x": margin.x, "width": float(label.get_line_width(index)), "shape": shaped})
 	var target_ids: Dictionary = {}
 	for target in state.targets:
@@ -303,7 +300,7 @@ func _append_paper_part(a: Vector2, b: Vector2) -> void:
 
 func _stroke_visible(stroke: Dictionary) -> bool:
 	var anchor := ProofreadingState.stroke_page_anchor(stroke)
-	return is_instance_valid(label) and anchor >= character_offset and anchor < character_offset + maxi(1, label.text.length())
+	return is_instance_valid(label) and anchor >= character_offset and anchor < character_offset + maxi(1, label.get_parsed_text().length())
 
 func _segment_point(segment: Dictionary, point: Array) -> Vector2:
 	if segment.anchor == "desk":
@@ -466,7 +463,7 @@ static func _circle_interval(a: Vector2, b: Vector2, centre: Vector2, radius: fl
 	var high := minf(1.0, (-projection + sqrt(discriminant)) / length_squared)
 	return Vector2(low, high) if high > low else Vector2(-1, -1)
 func _segment_visible(segment: Dictionary) -> bool:
-	return segment.anchor == "desk" or (is_instance_valid(label) and int(segment.character) >= character_offset and int(segment.character) < character_offset + label.text.length())
+	return segment.anchor == "desk" or (is_instance_valid(label) and int(segment.character) >= character_offset and int(segment.character) < character_offset + label.get_parsed_text().length())
 
 func _local_point(viewport_point: Vector2) -> Vector2:
 	return get_global_transform_with_canvas().affine_inverse() * viewport_point

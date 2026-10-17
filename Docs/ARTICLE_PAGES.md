@@ -12,11 +12,11 @@ The article number and selected headline refer to the whole article.
   the existing `SourceText`; the desk scene's authored layout is preserved.
 - The screen's **Source Page Scene** accepts the page-control scene. In that
   scene, **Turn Seconds** defaults to 0.6, **Footer Gap** to 20 canvas pixels,
-  and **Paragraph Fill Minimum** to 0.55. Button styling uses muted paper/olive
-  colors. `Row` contains the two buttons and the counter. Navigation uses
+  and **Paragraph Fill Minimum** to 0.55. A contrasting cream paper panel backs
+  larger brown arrows and a bold page counter. `Row` contains the controls. Navigation uses
   z-index 7: above the paper marks, below the stamp, pencil, eraser and desk shadows.
-- A hidden, non-threaded RichTextLabel shapes the full plain-text source with
-  the body's font, width and spacing. Native line ranges and heights choose
+- A hidden, non-threaded RichTextLabel shapes the full source with the body's
+  fonts, emphasis, width and spacing. Native line ranges and heights choose
   contiguous character spans. A paragraph boundary is preferred when at least
   55% of the sheet is filled; oversized paragraphs split at wrapped lines.
 - The visible label holds only the current span. Newline separators at a sheet's
@@ -31,6 +31,18 @@ The article number and selected headline refer to the whole article.
 - Separate `page_absorption_progress` / `page_reveal_progress` uniforms preserve
   the article's own transition. The body/paginator share one local material;
   the brush has its own grain-enabled copy with synchronized progress.
+
+## Reading cues
+
+`Data/article_highlights.gd` selects exact phrases for all 52 sources and their
+authored continuation variants. Bold highlights useful facts; italic highlights
+attributions, uncertainty and other qualifications. These cues do not label a
+headline as correct or reveal its rewards.
+
+`Scripts/article_emphasis.gd` applies native font spans without inserting markup
+into source strings or saved text. It maps clean-source offsets through inserted
+typo letters, clips emphasis to the visible sheet, and shares the same mixed-font
+shaping with proofreading geometry and publication evaluation.
 
 ## Tools and saves
 

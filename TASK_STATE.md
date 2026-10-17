@@ -7,8 +7,9 @@ Completed
 Integrate supplied tamagotchi/home art, shop and backpack, short night transition,
 paper dialogue presentation, global fonts/cursor/icon and a gentle stamp hint.
 Refresh authored articles and add the user's two ginger-cat/coal-dust sources.
-Apply the user's UI corrections: supplied home controls, black prologue, original
-work tutorial styling, shorter lessons and one two-state Finish Shift button.
+Apply the user's UI corrections: supplied home controls, restored original story
+scenes/endings, original work tutorial styling and one two-state Finish Shift button.
+Shorten Codex articles, add bold/italic reading cues and strengthen source pagination.
 
 ## Context
 - Godot 4.7.2 Compatibility; Russian five-shift game in anthropomorphic Bripolis.
@@ -48,6 +49,11 @@ work tutorial styling, shorter lessons and one two-state Finish Shift button.
   Two new user sources bring the catalog to 52 articles / 156 headlines.
 - Added subtle recurring details and a ginger chain; its sources remain fixed,
   so the coal-dust connection is left for the reader to discover.
+- Shortened 42 Codex sources by about 30% and 15 continuation variants by one third;
+  ten user source bodies, headline options and effects remain intact.
+- All 52 sources/continuations have selected bold facts and italic qualifications.
+  Native font spans preserve text indices; pagination and proofreading share shaping.
+- Source navigation has larger bold arrows/counter on a contrasting paper panel.
 - Save migration updates only untouched future authored prose, preserving the
   current draft, published results, manual changes and proofreading strokes.
 - Supplied sound hooks are integrated; original synthetic dialogue blips retained.
@@ -62,7 +68,8 @@ work tutorial styling, shorter lessons and one two-state Finish Shift button.
 - Old saves default to an empty bag. Story character offsets preserve position
   across short-fragment reflow; legacy fragment indices use their old 300 size.
   Format remains 1;
-  content.authored_prose_revision = 2 controls prose/catalog migration.
+  content.authored_prose_revision = 3 controls prose/catalog migration. Exact archived
+  longer bodies also update untouched future drafts; current/published/manual prose stays.
 - Proofreading and its story scene unlock at the beginning of shift 2.
 
 - Starting campaign stamina increased from 30 to 60 in Data/mvp_balance.tres.
@@ -79,6 +86,9 @@ work tutorial styling, shorter lessons and one two-state Finish Shift button.
 - Scripts/newsroom_session.gd, newsroom_save_data.gd, finance_ledger.gd; Docs/SAVES.md.
 - Data/article_catalog.gd, bripolis_articles.gd, district_letters.gd, story_chains.gd;
   Docs/OriginalArticles/, BRIPOLIS_CONTENT.md, BALANCE_TABLE.md.
+- Data/article_highlights.gd; Scripts/article_emphasis.gd, source_pager.gd,
+  proofreading_surface.gd, proofreading_evaluation.gd; Scenes/source_pager.tscn;
+  Docs/ARTICLE_PAGES.md; Tests/article_emphasis_tests.gd.
 - Scripts/desk_stamp.gd, cursor_tooltip.gd; Shaders/stamp_hint.gdshader;
   Scripts/finish_shift_button.gd; Assets/UI/finish_shift_*.png;
   Data/editorial_ui_theme.tres, project.godot, export_presets.cfg.
@@ -91,7 +101,7 @@ work tutorial styling, shorter lessons and one two-state Finish Shift button.
 
 ## Remaining
 No implementation remains in this correction batch. User requested urgent completion
-without further test runs. Original cutscene/endings layout restored in source.
+without extra checks. Do not start additional tests or launches for reassurance.
 
 ## Validation
 - State/inventory/controller saves: 235 checks passed.
@@ -107,18 +117,23 @@ without further test runs. Original cutscene/endings layout restored in source.
 
 - Latest credit, stamina, ending HUD and stronger stamp glow edits: source/diff
   review only, without new test runs under the user's urgency request.
+- Article emphasis/pagination and prose migration: 1254 focused headless assertions
+  passed after the shortening; all 52 sources and 15 variants covered. Checked native
+  font geometry, page text/height, typo insertion offsets, scoring and migration guards.
+  No additional rendered run; final diff reviewed.
 
 ## Known issues / uncertainties
 - Final cutscene/endings restoration and small visual changes were inspected in
   source/diff only; do not claim the old temporary story-presentation tests cover them.
-- Existing campaigns retain their saved article text; punctuation edit updates the
-  authored catalog, without resetting saved proofreading marks or past results.
+- Current/published/custom drafts retain saved prose and marks. Untouched future
+  Codex bodies receive the shortened version when loading an older prose revision.
 - Existing unrelated dirty desk/audio test changes remain separate.
 
 ## Git state
 - Workspace C:/Users/User/Desktop/gdg/DisinfoJam; branch elfat.
-- Correction base: 1c0759c. Last successful pushed commit: 6046307.
-- Stage the cohesive room/editorial/audio changes only. Preserve unrelated user
-  scene/material/export-path work, old test edits, generated source UIDs and outputs/.
+- Correction base and last successful push: 2cde868 (elfat -> origin/elfat).
+- Current cohesive batch is article emphasis, navigation and shortened prose; consult
+  Git for its final commit hash. Preserve unrelated scene/material/export-path work,
+  old test edits, generated source UIDs and outputs/.
 - Push elfat -> origin/elfat only after three new Codex commits since last push;
   inspect outgoing commits and never force-push. Consult current Git for final hash.

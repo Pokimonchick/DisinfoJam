@@ -1,6 +1,8 @@
 class_name SourcePager
 extends Control
 
+const EMPHASIS = preload("res://Scripts/article_emphasis.gd")
+
 signal page_changed(character_offset: int)
 signal turning_changed
 signal opacity_changed(opacity: float)
@@ -27,12 +29,15 @@ var _pages: Array[Vector2i] = []
 var _motion: Tween
 var _target_page := -1
 var _layout_queued := false
+var _emphasis: Array[Dictionary] = []
 
 @onready var previous: Button = $Row/Previous
 @onready var next: Button = $Row/Next
 @onready var counter: Label = $Row/Counter
 
 func _ready() -> void:
+	for control in [previous, counter, next]:
+		control.add_theme_font_override("font", preload("res://Scripts/game_fonts.gd").BOLD)
 	previous.pressed.connect(func(): turn_to(page_index - 1))
 	next.pressed.connect(func(): turn_to(page_index + 1))
 	_measure = RichTextLabel.new()
@@ -53,11 +58,12 @@ func bind(label: RichTextLabel) -> void:
 	body.focus_mode = Control.FOCUS_NONE
 	body.resized.connect(_queue_layout)
 	body.theme_changed.connect(_queue_layout)
-	set_source(body.text)
+	set_source(body.get_parsed_text())
 
-func set_source(text: String) -> void:
+func set_source(text: String, article_id: String = "", original: String = "", targets: Array = []) -> void:
 	_stop_turn()
 	source_text = text
+	_emphasis = EMPHASIS.ranges_for(article_id, original if not original.is_empty() else text, targets)
 	page_index = 0
 	_pages.clear()
 	_rebuild_pages(0)
@@ -90,7 +96,7 @@ func _rebuild_pages(anchor: int) -> void:
 	_measure.add_theme_stylebox_override("normal", body.get_theme_stylebox("normal"))
 	for key in ["line_separation", "paragraph_separation"]:
 		_measure.add_theme_constant_override(key, body.get_theme_constant(key))
-	_measure.text = source_text
+	EMPHASIS.render(_measure, source_text, _emphasis)
 	var style := body.get_theme_stylebox("normal")
 	var height := maxf(1.0, body.size.y - style.get_margin(SIDE_TOP) - style.get_margin(SIDE_BOTTOM) - 1.0)
 	var line_count := _measure.get_line_count()
@@ -208,7 +214,7 @@ func _apply_page(index: int) -> void:
 	while span.y > span.x and source_text[span.y - 1] in ["\n", "\r"]:
 		span.y -= 1
 	character_offset = span.x
-	body.text = source_text.substr(span.x, span.y - span.x)
+	EMPHASIS.render(body, source_text.substr(span.x, span.y - span.x), _emphasis, span.x)
 	body.scroll_to_line(0)
 	_refresh_navigation()
 	page_changed.emit(character_offset)

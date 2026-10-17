@@ -9,7 +9,7 @@ const NUMBERS := ["health", "reputation", "loyalty", "qualification", "money", "
 const FLAGS := ["coffee_ready", "coffee_used_today", "approval_time_applied", "approval_stamina_applied", "food_stocked", "awaiting_acknowledgement", "campaign_completed", "proofreading_unlocked", "proofreading_started"]
 const PHASES := ["idle", "work", "home", "ended"]
 const ENDINGS := ["none", "exhaustion", "office_fire", "arrest", "debt", "victory", "goal_missed", "qualification_fired"]
-const AUTHORED_PROSE_REVISION := 2
+const AUTHORED_PROSE_REVISION := 3
 
 static func capture(session: NewsroomSession) -> Dictionary:
 	var run := {"phase": PHASES[session.phase], "ending": ENDINGS[session.ending],
@@ -264,10 +264,17 @@ static func _migrate_authored_prose(session: NewsroomSession) -> void:
 	var previous: Dictionary = {}
 	var archived: Array = preload("res://Docs/OriginalArticles/article_catalog_before_lively.gd").ROWS + preload("res://Docs/OriginalArticles/bripolis_articles_before_lively.gd").ROWS
 	for row in archived:
-		previous[row.id] = NewsArticle.from_row(row).to_row()
+		previous[row.id] = [NewsArticle.from_row(row).to_row()]
 	var current: Dictionary = {}
+	var prior_texts: Dictionary = preload("res://Docs/OriginalArticles/authored_prose_before_shortening.gd").TEXTS
 	for article in preload("res://Data/article_catalog.gd").create_articles():
 		current[article.id] = article
+		if prior_texts.has(article.id):
+			var prior := article.to_row()
+			prior.text = prior_texts[article.id]
+			if not previous.has(article.id):
+				previous[article.id] = []
+			previous[article.id].append(prior)
 	var published: Dictionary = {}
 	for entry in session.journal:
 		published[str(entry.get("article_id", ""))] = true
@@ -275,7 +282,7 @@ static func _migrate_authored_prose(session: NewsroomSession) -> void:
 		var saved: NewsArticle = session.articles[index]
 		if published.has(saved.id) or not previous.has(saved.id) or not current.has(saved.id):
 			continue
-		if saved.to_row() == previous[saved.id]:
+		if saved.to_row() in previous[saved.id]:
 			session.articles[index] = current[saved.id]
 
 static func _number(value: Variant) -> bool:

@@ -11,8 +11,10 @@ Names follow the animal-city fiction around Никола Коко, господ�
 - `Data/bripolis_articles.gd` contains the 18 new stories with explicit `provenance` (`author: Codex`, `kind: authored`). This is fictional authored content; it uses no network generation.
 - `Data/district_letters.gd` contains the user's `ginger_cats_letter` and `ginger_coal_notice`, with light copy-editing and Codex headlines. An anxious letter about missing ginger cats and a separate industrial coal-dust notice share the district «Рыжие Пушистики»; neither source states the inferred explanation as a proven finding.
 - `Data/story_chains.gd` contains Codex continuations around the user stories. Only source text changes; the shared plot, evidence and outcomes stay intact.
+- The 42 Codex source bodies were shortened by about 30%, and the 15 continuation variants by about one third. Facts, qualifications, character voices and recurring clues remain; the ten user source bodies and headline effects were not shortened. `Data/article_highlights.gd` adds bold/italic reading cues without modifying the source strings.
 - `Docs/OriginalArticles/community_articles_original.gd` is an exact copy from before the headline adaptation. It is excluded from the live catalog but is read during legacy-save recovery to identify old stable headline indices.
 - `Docs/OriginalArticles/article_catalog_before_lively.gd` and `bripolis_articles_before_lively.gd` preserve the former Codex prose. `district_letters_user_original.md` preserves the two new user sources. These reference copies are not appended to the live catalog.
+- `Docs/OriginalArticles/authored_prose_before_shortening.gd` retains the 42 longer bodies for exact-match migration of untouched future drafts in existing saves.
 
 ## Connections the reader can notice
 

@@ -3,6 +3,7 @@ extends RefCounted
 
 # Recognition is a publication job. Drawing and erasure only edit geometry.
 const CELL_SIZE := 64.0
+const EMPHASIS = preload("res://Scripts/article_emphasis.gd")
 
 var done := false
 var counts: Dictionary = {}
@@ -28,6 +29,7 @@ var _core_corrected: Dictionary = {}
 var _wrong_coverage: Dictionary = {}
 var _all_corrected: Dictionary = {}
 var _all_wrong: Dictionary = {}
+var _emphasis: Array = []
 
 func prepare(state: ProofreadingState, body: RichTextLabel, surface: Control, pages: Array[Vector2i], offset: int) -> void:
 	_state = state
@@ -36,9 +38,10 @@ func prepare(state: ProofreadingState, body: RichTextLabel, surface: Control, pa
 	_label_size = body.size
 	_pages = pages.duplicate()
 	if _pages.is_empty():
-		_pages.append(Vector2i(offset, offset + body.text.length()))
+		_pages.append(Vector2i(offset, offset + body.get_parsed_text().length()))
 		_scroll = body.get_v_scroll_bar().value
 	_source_words = ProofreadingState.words(state.display_text)
+	_emphasis = body.get_meta(EMPHASIS.ALL_RANGES, [])
 	for target in state.targets:
 		_targets[int(target.id)] = true
 	# Measure other sheets without changing the player's visible text or page.
@@ -106,7 +109,7 @@ func _page_for(anchor: int) -> Vector2i:
 
 func _build_page_step(span: Vector2i) -> void:
 	if _building.is_empty():
-		_measure.text = _state.display_text.substr(span.x, span.y - span.x)
+		EMPHASIS.render(_measure, _state.display_text.substr(span.x, span.y - span.x), _emphasis, span.x)
 		_building = {"lines": [], "grid": {}}
 		_line_index = 0
 		_word_index = 0
@@ -115,14 +118,14 @@ func _build_page_step(span: Vector2i) -> void:
 	var margin := Vector2(style.get_margin(SIDE_LEFT), style.get_margin(SIDE_TOP))
 	if _line_index < _measure.get_line_count():
 		var range := _measure.get_line_range(_line_index)
-		var start := mini(range.x, _measure.text.length())
-		var end := mini(range.y, _measure.text.length())
-		while start < end and _measure.text[start] in ["\n", "\r"]:
+		var text := _measure.get_parsed_text()
+		var start := mini(range.x, text.length())
+		var end := mini(range.y, text.length())
+		while start < end and text[start] in ["\n", "\r"]:
 			start += 1
-		while end > start and _measure.text[end - 1] in ["\n", "\r"]:
+		while end > start and text[end - 1] in ["\n", "\r"]:
 			end -= 1
-		var shape := TextLine.new()
-		shape.add_string(_measure.text.substr(start, end - start), _measure.get_theme_font("normal_font"), _measure.get_theme_font_size("normal_font_size"))
+		var shape := EMPHASIS.shape_line(_measure, text, start, end)
 		_building.lines.append({"start": start + span.x, "end": end + span.x, "x": margin.x, "y": margin.y + _measure.get_line_offset(_line_index), "height": float(_measure.get_line_height(_line_index)), "shape": shape})
 		_line_index += 1
 		return
