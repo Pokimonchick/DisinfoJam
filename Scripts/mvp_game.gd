@@ -39,6 +39,10 @@ var _tutorial_step := 0
 var _work_tutorial_done := false
 var _home_tutorial_done := false
 var _pencil_tutorial_done := false
+var _tutorial_opened := false
+var _tutorial_checked := false
+var _tutorial_evaluation: ProofreadingEvaluation
+var _tutorial_word: Control
 var _stamina_warning_day := 0
 var _notebook: Control
 var _pending_deductions: Array[int] = []
@@ -91,6 +95,11 @@ func _ready() -> void:
 	tutorial.next_requested.connect(_tutorial_next)
 	tutorial.previous_requested.connect(_tutorial_back)
 	tutorial.skip_requested.connect(_finish_tutorial)
+	work.tutorial_paper = tutorial.get_node("Paper")
+	work.pencil.input_exclusions.append(work.tutorial_paper)
+	work.eraser.input_exclusions.append(work.tutorial_paper)
+	work.stamp.input_exclusions.append(work.tutorial_paper)
+	work.proofreading_surface.changed.connect(_clear_tutorial_assessment)
 	stamina_warning.primary_pressed.connect(_dismiss_stamina_warning)
 	stamina_warning.secondary_pressed.connect(_rest_after_warning)
 	stamina_warning.get_node("Dim").color.a = 0.75
@@ -108,6 +117,7 @@ func _ready() -> void:
 	_show_menu()
 
 func _process(delta: float) -> void:
+	_update_tutorial_progress()
 	if view == View.WORK and not paused and not transitioning and not _interface_blocked() and not work.evaluating_publication:
 		_check_stamina_warning()
 	if view == View.WORK and not paused and not transitioning and not _interface_blocked() and not work.evaluating_publication:
@@ -190,6 +200,8 @@ func _new_run(skip_story: bool) -> void:
 	_seen_stories.clear()
 	_tutorial_stage = ""
 	_tutorial_step = 0
+	_tutorial_opened = false
+	_clear_tutorial_assessment()
 	_work_tutorial_done = skip_story
 	_home_tutorial_done = skip_story
 	_pencil_tutorial_done = false
@@ -272,6 +284,8 @@ func _show_lesson() -> void:
 func _on_phase_changed() -> void:
 	if _restoring:
 		return
+	if (_tutorial_stage in ["work", "pencil"] and session.phase != NewsroomSession.Phase.WORK) or (_tutorial_stage == "home" and session.phase != NewsroomSession.Phase.HOME):
+		_finish_tutorial()
 	match session.phase:
 		NewsroomSession.Phase.WORK:
 			var episode_id: String = CHAPTER.episode_for_day(session.day)
@@ -482,20 +496,24 @@ func _narrative_back() -> void:
 
 
 func _interface_blocked() -> bool:
-	return tutorial.visible or stamina_warning.visible or is_instance_valid(_notebook)
+	return not _tutorial_stage.is_empty() or tutorial.visible or stamina_warning.visible or is_instance_valid(_notebook)
 
 
 func _update_interface_lock() -> void:
 	_pause_dialogue_reveal()
-	var blocked := paused or _interface_blocked()
+	# Teaching pauses stamina, but the highlighted action remains playable.
+	var blocked := paused or stamina_warning.visible or is_instance_valid(_notebook) or settings_panel.visible
 	var work_blocked := blocked or view != View.WORK
 	if work_blocked:
 		work.stamp.cancel_interaction()
 	work.process_mode = Node.PROCESS_MODE_DISABLED if work_blocked else Node.PROCESS_MODE_INHERIT
 	home.process_mode = Node.PROCESS_MODE_DISABLED if blocked else Node.PROCESS_MODE_INHERIT
 	home.set_playback_paused(blocked or settings_panel.visible)
+	if _tutorial_stage.is_empty() or view != View.WORK:
+		work.tutorial_action = ""
+	work._refresh_actions()
 	# Freeze desk parallax too; the spotlight must remain on the explained item.
-	work.get_node("Canvas").motion_enabled = not work_blocked
+	work.get_node("Canvas").motion_enabled = not work_blocked and _tutorial_stage.is_empty()
 
 func _pause_dialogue_reveal() -> void:
 	var blocked := paused or settings_panel.visible
@@ -510,16 +528,28 @@ func _begin_tutorial(stage: String) -> void:
 		return
 	if _tutorial_stage != stage:
 		_tutorial_step = 0
+		_tutorial_opened = false
 	_tutorial_stage = stage
 	if stage in ["work", "pencil"]:
-		work.get_node("%Drawer").set_expanded(true, false)
-		# The desk freezes during lessons; its source must already be readable.
 		work._animate_source(false)
+	if stage == "pencil":
+		var article := session.current_article()
+		session.prepare_proofreading()
+		# Legacy saves may have generated a clean first sheet. Preserve existing
+		# marks; only a clean, unmarked draft may receive the guaranteed typo.
+		if session.proofreading.targets.is_empty() and session.proofreading.strokes.is_empty() and article != null:
+			session.proofreading.prepare(article.id, article.source_text, session.proofreading.seed, true)
+			work._display_source(article)
+		if session.proofreading.targets.is_empty():
+			_finish_tutorial()
+			return
+		work.source_pager.go_to_character(int(session.proofreading.targets[0].start))
+		work.proofreading_surface._rebuild_geometry()
 	_present_tutorial_step()
 
 
 func _maybe_begin_pencil_tutorial() -> void:
-	if _restoring or view != View.WORK or not session.proofreading_unlocked or _pencil_tutorial_done or session.awaiting_acknowledgement or work.popup.visible or work.get("_next_source") != null or tutorial.visible:
+	if _restoring or view != View.WORK or not session.proofreading_unlocked or _pencil_tutorial_done or session.awaiting_acknowledgement or work.popup.visible or work.get("_next_source") != null or not _tutorial_stage.is_empty():
 		return
 	# The desk emits this again after an acknowledged result shows its next source.
 	_begin_tutorial.call_deferred("pencil")
@@ -530,46 +560,124 @@ func _present_tutorial_step() -> void:
 	_tutorial_step = clampi(_tutorial_step, 0, steps.size() - 1)
 	var step: Dictionary = steps[_tutorial_step]
 	var targets: Array[Control] = []
+	var inputs: Array[Control] = []
+	var body: String = step.text
 	if _tutorial_stage in ["work", "pencil"]:
-		_clear_combo_demonstration()
-		work._hide_choices(false)
+		work.tutorial_action = step.target
 		if step.target == "choices":
-			work._open_choices(false)
+			if not work.choices_open:
+				work._open_choices(false)
 			targets.assign(work.cards)
-		elif step.target in ["health", "reputation", "loyalty", "qualification"]:
-			var stat: String = {"health": "Health", "reputation": "Reputation", "loyalty": "Loyalty", "qualification": "Qualification"}[step.target]
-			var panel := "Canvas/Drawer/SlidingPanel/"
-			for suffix in ["Title", "Value", "Bar", "Help"]:
-				targets.append(work.get_node(panel + stat + suffix))
+		elif step.target == "source":
+			var target: Dictionary = session.proofreading.targets[0]
+			body = body.replace("{typo}", str(target.typo))
+			_update_tutorial_word()
+			targets.append(_tutorial_word)
+			inputs.assign([work.stamp_area, work.pencil])
+		elif step.target == "result":
+			if not work.popup.visible:
+				tutorial.hide()
+				_update_interface_lock()
+				return
+			targets.append(work.popup)
 		else:
-			var paths := {"source": "%SourceText", "headline": "%HeadlineField", "stamp": "%Stamp", "publish": "%StampArea", "coffee": "%Coffee", "finish": "%FinishShift", "combo": "%ComboBurst", "pencil": "Canvas/World/Pencil", "eraser": "Canvas/World/Eraser"}
+			var paths := {"headline": "%HeadlineField", "stamp": "%Stamp", "publish": "%StampArea", "pencil": "Canvas/World/Pencil", "return": "Canvas/World/Pencil"}
 			targets.append(work.get_node(paths[step.target]))
-			if step.target == "source":
-				targets.append(work.get_node("%SourceTitle"))
-			if step.target == "combo":
-				if work._combo_tween:
-					work._combo_tween.kill()
-				work.get_node("%Combo").text = "КОМБО ×%.2f" % session.combo_multiplier(2)
-				work.get_node("%ComboDetail").text = "ФАКТЫ · 2 ПОДРЯД · ПРИМЕР"
-				work.combo_burst.modulate.a = 1.0
-				work.combo_burst.scale = Vector2.ONE
-				work.combo_burst.show()
-				_combo_demonstration = true
+			if step.target == "headline":
+				inputs.assign([work.get_node("%HeadlineField"), work.source_pager])
+			if step.target == "stamp":
+				work._hide_choices(false)
+			if step.target == "publish":
+				inputs.assign([work.stamp_area, work.stamp])
 	else:
 		targets.append(home.tutorial_target(step.target))
 	var heroine := _tutorial_stage == "home"
-	tutorial.present("НИКОЛА КОКО · ПРО СЕБЯ" if heroine else "БОСС", step.text, targets, _tutorial_step, steps.size(), heroine, "Осмотреть комнату" if heroine else "Начать работу")
+	tutorial.present("НИКОЛА КОКО · ПРО СЕБЯ" if heroine else "БОСС", body, targets, _tutorial_step, steps.size(), heroine, "", true, inputs)
 	_update_interface_lock()
 	_queue_save()
 
 
-func _tutorial_next() -> void:
+func _tutorial_next(action_completed := false) -> void:
+	if not action_completed or _tutorial_stage.is_empty():
+		return
+	_tutorial_opened = false
+	_clear_tutorial_assessment()
 	var count := _tutorial_steps().size()
 	if _tutorial_step + 1 >= count:
 		_finish_tutorial()
 	else:
 		_tutorial_step += 1
 		_present_tutorial_step()
+
+
+func _clear_tutorial_assessment() -> void:
+	_tutorial_checked = false
+	if _tutorial_evaluation != null:
+		_tutorial_evaluation.dispose()
+		_tutorial_evaluation = null
+
+
+func _update_tutorial_word() -> void:
+	if not is_instance_valid(_tutorial_word):
+		_tutorial_word = Control.new()
+		_tutorial_word.name = "TutorialTypo"
+		_tutorial_word.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		work.get_node("Canvas/World").add_child(_tutorial_word)
+	_tutorial_word.hide()
+	if session.proofreading.targets.is_empty():
+		return
+	var id := int(session.proofreading.targets[0].id)
+	var label: Control = work.proofreading_surface.label
+	for word in work.proofreading_surface._words:
+		if int(word.start) != id:
+			continue
+		var rect: Rect2 = word.rects[0]
+		_tutorial_word.position = label.get_transform() * rect.position
+		_tutorial_word.rotation = label.rotation
+		_tutorial_word.scale = label.scale
+		_tutorial_word.size = rect.size
+		_tutorial_word.show()
+		return
+
+
+func _update_tutorial_progress() -> void:
+	if _tutorial_stage.is_empty() or paused or transitioning or settings_panel.visible or view not in [View.WORK, View.HOME]:
+		return
+	var target: String = _tutorial_steps()[_tutorial_step].target
+	var completed := false
+	if _tutorial_stage == "home":
+		if target == "bed":
+			completed = home._sleep_left > 0.0
+		elif home._panels.visible:
+			_tutorial_opened = true
+			tutorial.hide()
+		elif _tutorial_opened:
+			completed = true
+	elif _tutorial_stage == "work":
+		match target:
+			"headline": completed = work.choices_open or work.selected_index >= 0
+			"choices": completed = work.selected_index >= 0
+			"stamp": completed = work.stamp.dragging or session.awaiting_acknowledgement
+			"publish": completed = session.awaiting_acknowledgement
+			"result":
+				completed = not session.awaiting_acknowledgement
+				if not completed and work.popup.visible and not tutorial.visible:
+					_present_tutorial_step()
+	else:
+		match target:
+			"pencil": completed = work.pencil.held
+			"return": completed = not work.pencil.held and not work.pencil.busy
+			"source":
+				_update_tutorial_word()
+				if not _tutorial_checked and _tutorial_evaluation == null and not session.proofreading.strokes.is_empty() and not work.proofreading_surface._drawing:
+					_tutorial_checked = true
+					_tutorial_evaluation = work.proofreading_surface.create_evaluation(work.source_pager.page_ranges())
+				if _tutorial_evaluation != null and _tutorial_evaluation.advance():
+					completed = _tutorial_evaluation.corrected_target(int(session.proofreading.targets[0].id))
+					_tutorial_evaluation.dispose()
+					_tutorial_evaluation = null
+	if completed:
+		_tutorial_next(true)
 
 
 func _tutorial_steps() -> Array[Dictionary]:
@@ -582,9 +690,8 @@ func _tutorial_steps() -> Array[Dictionary]:
 
 
 func _tutorial_back() -> void:
-	if _tutorial_step > 0:
-		_tutorial_step -= 1
-		_present_tutorial_step()
+	# Completed actions are not undone by rereading a previous instruction.
+	pass
 
 
 func _finish_tutorial() -> void:
@@ -597,6 +704,11 @@ func _finish_tutorial() -> void:
 		_home_tutorial_done = true
 	_tutorial_stage = ""
 	_tutorial_step = 0
+	_tutorial_opened = false
+	_clear_tutorial_assessment()
+	work.tutorial_action = ""
+	if is_instance_valid(_tutorial_word):
+		_tutorial_word.hide()
 	tutorial.hide()
 	_clear_combo_demonstration()
 	_update_interface_lock()
@@ -717,7 +829,9 @@ func _continue_run() -> void:
 	lesson = 0
 	var guidance: Dictionary = presentation.get("guidance", {})
 	_tutorial_stage = guidance.get("stage", "")
-	_tutorial_step = int(guidance.get("step", 0))
+	_tutorial_step = int(guidance.get("step", 0)) if int(guidance.get("version", 1)) >= 2 else 0
+	_tutorial_opened = bool(guidance.get("opened", false))
+	_clear_tutorial_assessment()
 	_work_tutorial_done = guidance.get("work_done", session.phase != NewsroomSession.Phase.IDLE)
 	_home_tutorial_done = guidance.get("home_done", session.completed_shifts > 0)
 	_pencil_tutorial_done = guidance.get("pencil_done", false)
@@ -757,6 +871,8 @@ func _continue_run() -> void:
 		_render_dialogue_part()
 	_run_active = true
 	_autosave_elapsed = 0.0
+	if not _tutorial_stage.is_empty() and view in [View.WORK, View.HOME]:
+		_begin_tutorial.call_deferred(_tutorial_stage)
 	%SaveNotice.text = GameState.save_store.error_message
 	%SaveNotice.visible = not %SaveNotice.text.is_empty()
 
@@ -779,7 +895,7 @@ func _save_progress() -> bool:
 	sections["presentation"] = {"screen": VIEW_KEYS[view], "lesson": lesson,
 		"newsroom": work.capture_presentation(),
 		"home": home.capture_presentation(),
-		"guidance": {"stage": _tutorial_stage, "step": _tutorial_step, "work_done": _work_tutorial_done, "home_done": _home_tutorial_done, "pencil_done": _pencil_tutorial_done},
+		"guidance": {"version": 2, "stage": _tutorial_stage, "step": _tutorial_step, "opened": _tutorial_opened, "work_done": _work_tutorial_done, "home_done": _home_tutorial_done, "pencil_done": _pencil_tutorial_done},
 		"stamina_warning_day": _stamina_warning_day,
 		"story": {"id": _story_id if in_story else "", "page": _story_page if in_story else 0,
 			"part": _dialogue_part if in_story else 0, "part_size": _dialogue_part_size,
@@ -839,7 +955,10 @@ static func _validate_save(sections: Dictionary) -> bool:
 	var guidance: Variant = presentation.get("guidance", {})
 	if not guidance is Dictionary or not guidance.get("stage", "") in ["", "work", "home", "pencil"]:
 		return false
-	for key in ["work_done", "home_done", "pencil_done"]:
+	var guidance_version: Variant = guidance.get("version", 1)
+	if not NewsroomSaveData._number(guidance_version) or guidance_version != floor(float(guidance_version)) or int(guidance_version) not in [1, 2]:
+		return false
+	for key in ["work_done", "home_done", "pencil_done", "opened"]:
 		if guidance.has(key) and not guidance[key] is bool:
 			return false
 	var step: Variant = guidance.get("step", 0)
@@ -847,8 +966,13 @@ static func _validate_save(sections: Dictionary) -> bool:
 		return false
 	if guidance.get("stage", "").is_empty() and step != 0:
 		return false
+	var stage: String = guidance.get("stage", "")
+	if not stage.is_empty():
+		var count: int = {"work": 11, "home": 4, "pencil": 4}[stage] if int(guidance_version) == 1 else {"work": INTERFACE_LESSONS.work(null).size(), "home": INTERFACE_LESSONS.home(null).size(), "pencil": INTERFACE_LESSONS.pencil().size()}[stage]
+		if step >= count:
+			return false
 	if guidance.get("stage", "") == "pencil":
-		if sections.run.phase != "work" or not sections.run.get("proofreading_unlocked", int(sections.run.day) >= preload("res://Data/mvp_balance.tres").proofreading_unlock_day) or step >= INTERFACE_LESSONS.pencil().size() or guidance.get("pencil_done", false):
+		if sections.run.phase != "work" or not sections.run.get("proofreading_unlocked", int(sections.run.day) >= preload("res://Data/mvp_balance.tres").proofreading_unlock_day) or guidance.get("pencil_done", false):
 			return false
 	var newsroom: Dictionary = presentation.get("newsroom", {})
 	var selected_index: Variant = newsroom.get("selected_index", -1)

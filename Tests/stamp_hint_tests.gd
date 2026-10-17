@@ -47,7 +47,7 @@ func _test_headline_lifecycle() -> void:
 	work._select_headline(0)
 	await create_timer(0.4).timeout
 	_check(stamp.enabled and _active(stamp), "Selecting a headline starts the stationary stamp hint")
-	_check(is_equal_approx(material.get_shader_parameter("hint_strength"), 0.55) and is_equal_approx(material.get_shader_parameter("hint_speed"), 0.35), "The hint uses a visible 0.55 strength and slow 0.35 Hz pulse")
+	_check(is_equal_approx(material.get_shader_parameter("hint_strength"), 0.9) and is_equal_approx(material.get_shader_parameter("hint_speed"), 0.8), "The hint uses a bright 0.9 strength and faster 0.8 Hz pulse")
 	_check(material.shader == load("res://Shaders/stamp_hint.gdshader"), "The hint shader belongs to the 2D stamp image")
 	game.transitioning = false
 	game._toggle_pause()
@@ -108,7 +108,7 @@ func _test_cached_render_pulse() -> void:
 		if brightness > max_brightness:
 			max_brightness = brightness
 			brightest = frame
-	_check(frame_hashes.size() > 4 and max_brightness - min_brightness > 5.0, "Stationary stamp visibly breathes over a complete slow pulse")
+	_check(frame_hashes.size() > 4 and max_brightness - min_brightness > 5.0, "Stationary stamp visibly breathes over a complete pulse")
 	_check(hash(rendered.get_texture().get_image().get_data()) == cached_model_hash and rendered.render_target_update_mode in [SubViewport.UPDATE_ONCE, SubViewport.UPDATE_DISABLED], "The 2D glow animates while the 3D viewport remains unchanged and cached")
 	if "--capture" in OS.get_cmdline_user_args():
 		var directory := OS.get_environment("TEMP")

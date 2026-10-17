@@ -3,6 +3,7 @@ extends RefCounted
 
 const STORIES = preload("res://Data/story_chains.gd")
 const EARLY_WINDOW := 24
+const USER_SOURCES: Array = preload("res://Data/community_articles.gd").ROWS + preload("res://Data/district_letters.gd").ROWS
 
 # The queue is finite. Only unpublished slots may move after a run starts.
 static func shuffle(articles: Array[NewsArticle], random: RandomNumberGenerator) -> void:
@@ -33,6 +34,7 @@ static func chain_for(article_id: String) -> String:
 	return ""
 
 static func order_remaining(articles: Array[NewsArticle], start: int) -> void:
+	_prioritize_user_sources(articles, start)
 	for chain in STORIES.CHAINS.values():
 		var slots: Array[int] = []
 		var members: Array[NewsArticle] = []
@@ -43,18 +45,57 @@ static func order_remaining(articles: Array[NewsArticle], start: int) -> void:
 		members.sort_custom(func(a: NewsArticle, b: NewsArticle): return chain.find(a.id) < chain.find(b.id))
 		for index in slots.size():
 			articles[slots[index]] = members[index]
-	# Moving a standalone material between adjacent chain parts keeps all chain
-	# orders intact. Never move a published prefix or the pinned current draft.
+	# Separate chain parts within their author group. Demo sources stay ahead
+	# of Codex material; never move the published prefix or pinned draft.
 	for index in range(maxi(1, start), articles.size()):
 		var chain := chain_for(articles[index].id)
 		if chain.is_empty() or chain != chain_for(articles[index - 1].id):
 			continue
 		for candidate in range(index + 1, articles.size()):
-			if chain_for(articles[candidate].id).is_empty():
+			if chain_for(articles[candidate].id) != chain and _is_user_source(articles[candidate]) == _is_user_source(articles[index]):
 				var separator := articles[candidate]
 				articles.remove_at(candidate)
 				articles.insert(index, separator)
 				break
+
+static func _is_user_source(article: NewsArticle) -> bool:
+	if article.provenance.get("author", "") == "User" or article.provenance.get("kind", "") == "user_source":
+		return true
+	# Recognise authored IDs in older saves that did not include provenance.
+	for row in USER_SOURCES:
+		if row.id == article.id:
+			return true
+	return false
+
+static func _prioritize_user_sources(articles: Array[NewsArticle], start: int) -> void:
+	var groups: Dictionary = {}
+	var remaining: Array[NewsArticle] = []
+	for index in range(start, articles.size()):
+		var article := articles[index]
+		if not _is_user_source(article):
+			remaining.append(article)
+			continue
+		var chain := chain_for(article.id)
+		var key := article.id if chain.is_empty() else chain
+		if not groups.has(key):
+			groups[key] = []
+		groups[key].append(article)
+	var ordered: Array[NewsArticle] = []
+	var previous := chain_for(articles[start - 1].id) if start > 0 else ""
+	while not groups.is_empty():
+		var chosen := ""
+		for key: String in groups:
+			if key != previous and (chosen.is_empty() or groups[key].size() > groups[chosen].size()):
+				chosen = key
+		if chosen.is_empty():
+			chosen = str(groups.keys()[0])
+		ordered.append(groups[chosen].pop_front())
+		previous = chosen
+		if groups[chosen].is_empty():
+			groups.erase(chosen)
+	ordered.append_array(remaining)
+	for index in ordered.size():
+		articles[start + index] = ordered[index]
 
 static func promote_continuations(articles: Array[NewsArticle], cursor: int, choices: Dictionary, random: RandomNumberGenerator) -> void:
 	if cursor >= articles.size():

@@ -6,6 +6,8 @@ signal stamped
 signal interaction_changed
 signal returned_to_rest
 
+var input_exclusions: Array[Control] = []
+
 @export_group("Model and light")
 @export var model_scene: PackedScene:
 	set(value):
@@ -64,12 +66,12 @@ signal returned_to_rest
 		if is_node_ready():
 			_set_lift(_lift)
 @export_group("Publication hint")
-@export_range(0.0, 1.0, 0.01) var hint_strength := 0.55:
+@export_range(0.0, 1.0, 0.01) var hint_strength := 0.9:
 	set(value):
 		hint_strength = value
 		if is_node_ready():
 			_refresh_hint()
-@export_range(0.1, 2.0, 0.05) var hint_speed := 0.35:
+@export_range(0.1, 2.0, 0.05) var hint_speed := 0.8:
 	set(value):
 		hint_speed = value
 		if is_node_ready():
@@ -149,6 +151,10 @@ func _gui_input(event: InputEvent) -> void:
 func _input(event: InputEvent) -> void:
 	if not dragging:
 		return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		for control in input_exclusions:
+			if is_instance_valid(control) and control.is_visible_in_tree() and Rect2(Vector2.ZERO, control.size).has_point(control.get_global_transform_with_canvas().affine_inverse() * event.position):
+				return
 	if event is InputEventMouseMotion:
 		move_drag(event.position)
 		get_viewport().set_input_as_handled()

@@ -10,6 +10,7 @@ Refresh authored articles and add the user's two ginger-cat/coal-dust sources.
 Apply the user's UI corrections: supplied home controls, restored original story
 scenes/endings, original work tutorial styling and one two-state Finish Shift button.
 Shorten Codex articles, add bold/italic reading cues and strengthen source pagination.
+Make lessons wait for player actions and prioritise all user sources for the demo.
 
 ## Context
 - Godot 4.7.2 Compatibility; Russian five-shift game in anthropomorphic Bripolis.
@@ -30,8 +31,11 @@ Shorten Codex articles, add bold/italic reading cues and strengthen source pagin
   c885dde: large editorial card, heroine portrait left, title banner and full text
   right, original action buttons. Boss portrait panel is hidden. No desk behind
   cutscenes. Interactive tutorial keeps its own desk presentation.
-- Next/instruction buttons removed; click/Space/Enter continue. Back/Skip have
-  equal fixed footer sizes; lessons are concise (11 work / 4 home / 4 pencil).
+- Required-action lessons now contain 5 work / 3 home / 3 pencil steps. Clicking
+  the paper or pressing Space/Enter cannot skip an action. Skip remains available.
+  The overlay passes target input; unrelated work actions and stamina drain pause.
+  Pencil teaching highlights a guaranteed typo and recognises its mark without awards.
+  Guidance v2 resumes action steps; legacy unfinished teaching restarts its practice.
 - New home art: English SLEEP/SHOP, weekdays and DAYS LEFT; cash top left.
   Bubble opens Info/Bag; cash opens ledger. Removed the permanent room notice.
 - Full room fits the viewport. Window glint plays once per pointer entry using Overlay
@@ -54,6 +58,10 @@ Shorten Codex articles, add bold/italic reading cues and strengthen source pagin
 - All 52 sources/continuations have selected bold facts and italic qualifications.
   Native font spans preserve text indices; pagination and proofreading share shaping.
 - Source navigation has larger bold arrows/counter on a contrasting paper panel.
+- All ten user sources precede Codex material; chains interleave in logical order.
+  Existing runs reorder future slots only, preserving the current draft and marks.
+- Stamp hint is bright white at .9 strength and .8 Hz; paper input exclusions keep
+  the tutorial Skip button usable while a tool is held.
 - Save migration updates only untouched future authored prose, preserving the
   current draft, published results, manual changes and proofreading strokes.
 - Supplied sound hooks are integrated; original synthetic dialogue blips retained.
@@ -121,6 +129,9 @@ without extra checks. Do not start additional tests or launches for reassurance.
   passed after the shortening; all 52 sources and 15 variants covered. Checked native
   font geometry, page text/height, typo insertion offsets, scoring and migration guards.
   No additional rendered run; final diff reviewed.
+- Contextual tutorial/demo order: 66 focused headless assertions passed. Covers action
+  gates, typo marking, save validation, home steps and author priority across 12 seeds.
+  Headless shutdown reported leftover resources; no rendered inspection in this batch.
 
 ## Known issues / uncertainties
 - Final cutscene/endings restoration and small visual changes were inspected in
@@ -131,8 +142,8 @@ without extra checks. Do not start additional tests or launches for reassurance.
 
 ## Git state
 - Workspace C:/Users/User/Desktop/gdg/DisinfoJam; branch elfat.
-- Correction base and last successful push: 2cde868 (elfat -> origin/elfat).
-- Current cohesive batch is article emphasis, navigation and shortened prose; consult
+- Correction base: 97c8361. Last successful push: 2cde868 (elfat -> origin/elfat).
+- Current cohesive batch is contextual guidance, demo source priority and stamp hint; consult
   Git for its final commit hash. Preserve unrelated scene/material/export-path work,
   old test edits, generated source UIDs and outputs/.
 - Push elfat -> origin/elfat only after three new Codex commits since last push;

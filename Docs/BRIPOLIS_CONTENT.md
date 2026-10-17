@@ -18,6 +18,11 @@ Names follow the animal-city fiction around Никола Коко, господ�
 
 ## Connections the reader can notice
 
+For the demo, all ten user sources precede Codex material. The user story chains
+interleave in logical order; Codex sources remain shuffled afterwards. Continuing
+a save or starting another shift keeps the current draft pinned and applies the
+priority to future slots only. Old IDs are recognised even without provenance.
+
 - «Рыжие Пушистики», coal dust, a stained cap and cats whose colour changes after rain recur in otherwise separate letters and transport scenes. The anxious writer has suspicions, not evidence of kidnapping.
 - Плотт and мадам Фолио connect the library's wet books, flood diary and trial evening collection; a father's Friday promise links the diary to Брист's delivery story without fixing their order in the queue.
 - Клёп's teacher, his repairer father and the mistaken dedication on «Хвост FM» share ordinary family details without turning each appearance into a formal sequel. Cassettes preserve both public radio and private voices.

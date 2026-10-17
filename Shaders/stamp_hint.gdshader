@@ -1,9 +1,9 @@
 shader_type canvas_item;
 
 uniform bool hint_active = false;
-uniform float hint_strength : hint_range(0.0, 1.0) = 0.55;
-uniform float hint_speed : hint_range(0.1, 2.0) = 0.35;
-uniform vec4 hint_color : source_color = vec4(1.0, 0.86, 0.30, 1.0);
+uniform float hint_strength : hint_range(0.0, 1.0) = 0.9;
+uniform float hint_speed : hint_range(0.1, 2.0) = 0.8;
+uniform vec4 hint_color : source_color = vec4(1.0);
 varying vec4 canvas_tint;
 
 void vertex() {
@@ -13,7 +13,7 @@ void vertex() {
 void fragment() {
 	vec4 base = texture(TEXTURE, UV) * canvas_tint;
 	if (hint_active) {
-		// A slow breath in the 2D image; the 3D viewport stays cached at rest.
+		// Pulse the 2D image; the 3D viewport stays cached at rest.
 		float pulse = 0.75 + 0.25 * sin(TIME * hint_speed * 6.283185);
 		// The 640px render is displayed at 288px: use a visible ~10px halo.
 		vec2 step_uv = TEXTURE_PIXEL_SIZE * 22.0;

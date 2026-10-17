@@ -48,6 +48,12 @@ RMB uses `DeskPencil.return_to_rest()` or the stamp's existing return path to an
 
 ## Native text geometry
 
+The action lesson highlights the exact first typo, navigates to its sheet and waits
+for a real underline/circle crossing that target. A bounded `ProofreadingEvaluation`
+checks the gesture without applying rewards or penalties; normal settlement still
+occurs at publication. A legacy clean, unmarked draft may receive one guaranteed
+typo for teaching. Existing marked drafts are not regenerated.
+
 Godot 4.7.2 RichTextLabel has no `get_character_bounds`. Geometry uses its `get_line_range`, `get_line_offset`, `get_line_height` and `get_line_width`, then shapes each line with the same font/size using `TextLine` and `TextServer.shaped_text_get_selection`. The cache rebuilds on bind, resize or theme changes; it does not scan characters each frame. The final virtual paragraph separator is clamped to the actual text length. This supports the existing plain, left-aligned source text without BBCode. References: [RichTextLabel](https://docs.godotengine.org/en/stable/classes/class_richtextlabel.html), [TextServer](https://docs.godotengine.org/en/stable/classes/class_textserver.html).
 
 ## State and saves

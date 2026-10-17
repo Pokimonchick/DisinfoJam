@@ -40,6 +40,8 @@ var session: NewsroomSession
 var selected_index := -1
 var popup_kind: DialogKind = DialogKind.NONE
 var choices_open := false
+var tutorial_action := ""
+var tutorial_paper: Control
 var _choices_animating := false
 var _choice_tween: Tween
 var _choice_overlay: Control
@@ -162,7 +164,7 @@ func _create_source_pager() -> void:
 
 func _process(_delta: float) -> void:
 	_advance_publication_evaluation()
-	$Canvas.motion_enabled = not evaluating_publication and not popup.visible and _pending_result.is_empty() and not stamp.dragging and not stamp.busy and not pencil.held and not pencil.busy and not eraser.held and not eraser.busy and not (choices.visible and GameSettings.choice_overlay_enabled)
+	$Canvas.motion_enabled = tutorial_action.is_empty() and not evaluating_publication and not popup.visible and _pending_result.is_empty() and not stamp.dragging and not stamp.busy and not pencil.held and not pencil.busy and not eraser.held and not eraser.busy and not (choices.visible and GameSettings.choice_overlay_enabled)
 
 func _exit_tree() -> void:
 	_cancel_publication_evaluation()
@@ -171,6 +173,8 @@ func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree() or not event is InputEventMouseButton:
 		return
 	if event.button_index != MOUSE_BUTTON_LEFT or not event.pressed:
+		return
+	if is_instance_valid(tutorial_paper) and tutorial_paper.is_visible_in_tree() and _pointer_over(tutorial_paper, event.position):
 		return
 	if popup.active:
 		var scrollbar := popup.body_label.get_v_scroll_bar()
@@ -253,21 +257,22 @@ func _refresh_actions() -> void:
 	var overlay_blocks := choices.visible and GameSettings.choice_overlay_enabled
 	var turning := source_pager.turning
 	var tool_held := pencil.held or pencil.busy or eraser.held or eraser.busy
-	%HeadlineField.disabled = blocked or _choices_animating or overlay_blocks or tool_held or turning
+	%HeadlineField.disabled = blocked or _choices_animating or overlay_blocks or tool_held or turning or tutorial_action not in ["", "headline", "choices"]
 	var can_publish := not (blocked or selected_index < 0 or choices_open or _choices_animating or popup.visible or overlay_blocks or tool_held or turning)
+	can_publish = can_publish and tutorial_action in ["", "stamp", "publish"]
 	stamp.set_enabled(can_publish)
 	stamp_area.set_available(can_publish)
 	pencil.enabled = session.proofreading_unlocked
 	pencil.visible = pencil.enabled
 	eraser.enabled = pencil.enabled
 	eraser.visible = pencil.visible
-	var tools_available := not (blocked or choices.visible or popup.visible or stamp.dragging or stamp.busy)
+	var tools_available := not (blocked or choices.visible or popup.visible or stamp.dragging or stamp.busy) and tutorial_action in ["", "pencil", "source", "return"]
 	pencil.interaction_enabled = tools_available and not (eraser.held or eraser.busy)
-	eraser.interaction_enabled = tools_available and not (pencil.held or pencil.busy)
-	proofreading_surface.input_enabled = pencil.enabled and tools_available and not turning
-	%FinishShift.disabled = blocked or overlay_blocks or stamp.dragging or stamp.busy or tool_held or turning
-	%Coffee.get_node("Cup").disabled = blocked or not session.coffee_ready or session.coffee_used_today or session.health >= session.balance.maximum_stat or overlay_blocks or stamp.dragging or stamp.busy or tool_held or turning
-	source_pager.enabled = not (blocked or choices.visible or popup.visible or stamp.dragging or stamp.busy or _source_reveal != null)
+	eraser.interaction_enabled = tools_available and tutorial_action.is_empty() and not (pencil.held or pencil.busy)
+	proofreading_surface.input_enabled = pencil.enabled and tools_available and not turning and tutorial_action != "return"
+	%FinishShift.disabled = blocked or overlay_blocks or stamp.dragging or stamp.busy or tool_held or turning or not tutorial_action.is_empty()
+	%Coffee.get_node("Cup").disabled = blocked or not session.coffee_ready or session.coffee_used_today or session.health >= session.balance.maximum_stat or overlay_blocks or stamp.dragging or stamp.busy or tool_held or turning or not tutorial_action.is_empty()
+	source_pager.enabled = not (blocked or choices.visible or popup.visible or stamp.dragging or stamp.busy or _source_reveal != null) and tutorial_action in ["", "headline"]
 
 func _refresh_combo() -> void:
 	if session.combo_count == _shown_combo_count and session.combo_type == _shown_combo_type:

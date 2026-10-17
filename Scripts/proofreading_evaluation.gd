@@ -74,6 +74,9 @@ func dispose() -> void:
 		_measure.queue_free()
 	_measure = null
 
+func corrected_target(target_id: int) -> bool:
+	return done and _all_corrected.has(target_id)
+
 func _step() -> void:
 	if _stroke_index >= _state.strokes.size():
 		counts = {"corrected": _all_corrected.size(), "wrong": _all_wrong.size()}

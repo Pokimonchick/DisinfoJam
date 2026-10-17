@@ -201,6 +201,8 @@ static func restore(session: NewsroomSession, sections: Dictionary) -> bool:
 		_migrate_queue(session)
 	if old_prose:
 		_migrate_authored_prose(session)
+	# Apply the demo reading order to future slots in existing runs too.
+	ArticleSequence.order_remaining(session.articles, session.article_cursor + 1)
 	preload("res://Data/legacy_article_balance.gd").restore_requested_headlines(session.articles, session.article_cursor, session.journal)
 	session._resolved_article = null
 	# Moving the pencil lesson earlier also opens it in an existing second-shift
