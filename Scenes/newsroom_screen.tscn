@@ -445,12 +445,12 @@ horizontal_alignment = 1
 unique_name_in_owner = true
 z_index = 50
 layout_mode = 0
-offset_left = 1650.0
+offset_left = 1530.0
 offset_top = 10.0
 offset_right = 1890.0
-offset_bottom = 67.0
+offset_bottom = 95.5
 mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 36
 text = "Сдать выпуск"
 script = ExtResource("finish_paper")
 

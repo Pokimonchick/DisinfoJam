@@ -12,8 +12,8 @@ work tutorial styling, shorter lessons and one two-state Finish Shift button.
 
 ## Context
 - Godot 4.7.2 Compatibility; Russian five-shift game in anthropomorphic Bripolis.
-- User asked not to run tests after restoring the previous character voices.
-  Current work used editor asset import and scene loading, without playing the game.
+- User explicitly requested full tamagotchi tests and visual inspection on October 17.
+  After the rendered pass, requested urgent completion without additional checks.
 - Names follow Никола Коко, господин де Мур and Рататуй; avoid ordinary Russian
   names/patronymics and a forced real-country naming scheme.
 
@@ -25,16 +25,23 @@ work tutorial styling, shorter lessons and one two-state Finish Shift button.
   Fish food produces a brief aquarium response without a separate needs system.
 - A 3.2-second looping night precedes the next shift. Pause/settings freeze it;
   saves retain remaining time, and sleep recovery occurs once at HOME -> WORK.
-- White centered narration on black outside home. Cream dialogue is home-only;
-  the work tutorial uses its original editorial paper, with no boss portrait.
+- Latest decision: restored the actual original cutscene and ending layout from
+  c885dde: large editorial card, heroine portrait left, title banner and full text
+  right, original action buttons. Boss portrait panel is hidden. No desk behind
+  cutscenes. Interactive tutorial keeps its own desk presentation.
 - Next/instruction buttons removed; click/Space/Enter continue. Back/Skip have
   equal fixed footer sizes; lessons are concise (11 work / 4 home / 4 pencil).
-- New home art: Sleep left, Shop right, weekdays/remaining shifts and cash top left.
+- New home art: English SLEEP/SHOP, weekdays and DAYS LEFT; cash top left.
   Bubble opens Info/Bag; cash opens ledger. Removed the permanent room notice.
-- Full room fits the viewport; glint is on the window. Heroine scale matches the
-  supplied video, with a soft shadow at the feet. Cursor reduced by 1.5.
+- Full room fits the viewport. Window glint plays once per pointer entry using Overlay
+  blend; removed from the looping video. Day contrast/saturation adjusted. Heroine
+  matches the room mockup (scale .95), shadow follows feet. Cursor reduced by 1.5.
 - Alegreya Sans/Ysabeau throughout and supplied icon (also export presets).
-- Finish Shift is one native button: provided cream PNG normally, yellow on hover.
+- Finish Shift is one native button: cream normally, yellow on hover, enlarged 1.5x.
+- Fixed wrapped-label sizing, rebuilt shop/detail/warning with supplied assets.
+  Room buttons hide behind panels; Info/Bag moved to right-side tabs.
+- Article data and headline catalog use colons instead of em dashes.
+- Fixed JSON-decoded dialogue part_size validation so current saves load.
 - Stamp image gently pulses when a headline is selected and stamping is available;
   it stops during carry, return, pause and blocked interactions.
 - Rewrote 24 base and 18 additional Codex stories, retaining IDs/types/effects.
@@ -77,27 +84,31 @@ work tutorial styling, shorter lessons and one two-state Finish Shift button.
 - Generated caches/import data: only Godot updates them.
 
 ## Remaining
-No implementation remains in this batch. In-game layout and interaction review
-is unperformed under the user's request not to run tests; do not claim it passed.
+No implementation remains in this correction batch. User requested urgent completion
+without further test runs. Original cutscene/endings layout restored in source.
 
 ## Validation
-- Source and final intended diff reviewed, including save/inventory and modal flow.
-- Asset import and final mvp_game.tscn editor load completed; final log
-  TEMP/disinfo_ui_corrections_editor_save_final.log has no script/resource errors.
-  Initial tutorial boolean-inference errors were fixed before the final load.
-- Room composition was compared with the supplied video using source frames.
-- Source/docs diff whitespace check passed. Original font licenses retain their
-  supplied trailing whitespace. No tests, game launch, export or playthrough run.
+- State/inventory/controller saves: 235 checks passed.
+- Rendered home UI interaction/layout pass: 330 checks passed; root inspected actual
+  captures of room, six items, shop, funds warning, Info/Bag, fish, pause and night.
+- Story presentation: 67 headless / 69 rendered checks passed at the stage where
+  intro was still black; existing pencil story flow: 47 passed.
+- Stamp hint: 12 headless / 16 rendered checks passed; visible slow yellow pulse
+  confirmed while the 3D viewport stayed cached.
+- Final source/diff reviewed. Latest requested intro reversal, button enlargement,
+  heroine sizing, punctuation and small panel polish were not rerun after user
+  requested urgent completion without extra checks.
 
 ## Known issues / uncertainties
-- Visual layout, video switching and buy/use/pause flows have not been observed
-  in the running game. Source/media comparison does not replace that verification.
-- Earlier native desk/audio checks had failures; they were not rerun or treated
-  as passing acceptance for this batch. Existing dirty test edits remain separate.
+- Final cutscene/endings restoration and small visual changes were inspected in
+  source/diff only; do not claim the old temporary story-presentation tests cover them.
+- Existing campaigns retain their saved article text; punctuation edit updates the
+  authored catalog, without resetting saved proofreading marks or past results.
+- Existing unrelated dirty desk/audio test changes remain separate.
 
 ## Git state
 - Workspace C:/Users/User/Desktop/gdg/DisinfoJam; branch elfat.
-- Current correction base and last successful pushed commit: 6046307.
+- Correction base: 1c0759c. Last successful pushed commit: 6046307.
 - Stage the cohesive room/editorial/audio changes only. Preserve unrelated user
   scene/material/export-path work, old test edits, generated source UIDs and outputs/.
 - Push elfat -> origin/elfat only after three new Codex commits since last push;

@@ -45,10 +45,11 @@ unique_name_in_owner = true
 layout_mode = 0
 offset_left = 14.0
 offset_top = 55.0
-offset_right = 254.0
+offset_right = 264.0
 offset_bottom = 107.0
 theme_override_colors/font_color = Color(0.77, 0.65, 0.4, 1)
-theme_override_font_sizes/font_size = 36
+theme_override_font_sizes/font_size = 44
+clip_text = true
 vertical_alignment = 1
 
 [node name="DaysPaper" type="TextureRect" parent="Canvas/DayPanel"]
@@ -79,7 +80,7 @@ offset_right = 88.0
 offset_bottom = 91.0
 theme_override_colors/font_color = Color(0.34, 0.21, 0.16, 1)
 theme_override_font_sizes/font_size = 13
-text = "ДНЕЙ\nОСТАЛОСЬ"
+text = "DAYS LEFT"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -130,10 +131,10 @@ text = "Пауза · Esc"
 [node name="HeroineInfo" type="Button" parent="Canvas"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 648.0
-offset_top = 408.0
-offset_right = 937.0
-offset_bottom = 966.0
+offset_left = 658.0
+offset_top = 373.0
+offset_right = 983.0
+offset_bottom = 1000.0
 mouse_default_cursor_shape = 2
 tooltip_text = "Никола Коко: открыть сведения"
 modulate = Color(1, 1, 1, 0)
@@ -202,7 +203,7 @@ offset_top = 910.0
 offset_right = 449.0
 offset_bottom = 1037.0
 mouse_default_cursor_shape = 2
-text = "СПАТЬ"
+text = "SLEEP"
 
 [node name="Meal" type="Button" parent="Canvas"]
 unique_name_in_owner = true
@@ -212,7 +213,7 @@ offset_top = 910.0
 offset_right = 1825.0
 offset_bottom = 1037.0
 mouse_default_cursor_shape = 2
-text = "МАГАЗИН"
+text = "SHOP"
 
 [node name="Notice" type="Label" parent="Canvas"]
 unique_name_in_owner = true

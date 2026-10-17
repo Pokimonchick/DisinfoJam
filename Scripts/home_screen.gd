@@ -6,7 +6,7 @@ signal pause_requested
 const ITEMS = preload("res://Data/home_items.gd")
 const PANELS = preload("res://Scripts/tamagotchi_panels.gd")
 const UI_ART := "res://Assets/Assets for new version of game/tamagochi/Тамагочи UIUX/"
-const WEEKDAYS := ["ПОНЕДЕЛЬНИК", "ВТОРНИК", "СРЕДА", "ЧЕТВЕРГ", "ПЯТНИЦА"]
+const WEEKDAYS := ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"]
 @export_range(2.0, 8.0, 0.1) var night_seconds := 3.2
 var session: NewsroomSession
 var _sleep_left := 0.0
@@ -23,6 +23,8 @@ func _ready() -> void:
 	_panels.purchase_requested.connect(_purchase)
 	_panels.use_requested.connect(_consume)
 	_panels.closed.connect(refresh)
+	_panels.visibility_changed.connect(_refresh_controls)
+	_panels.view_changed.connect(_refresh_controls)
 	%Meal.pressed.connect(_open_shop)
 	%Bag.pressed.connect(_open_info)
 	%HeroineInfo.pressed.connect(_open_info)
@@ -39,8 +41,9 @@ func _ready() -> void:
 	_skin_button(%Notebook, "budget background.png", Color("4c281b"))
 	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
 		%Bag.add_theme_stylebox_override(state, StyleBoxEmpty.new())
-	%Day.add_theme_font_override("font", preload("res://Scripts/game_fonts.gd").HEADING)
+	%Day.add_theme_font_override("font", preload("res://Scripts/game_fonts.gd").BOLD)
 	%DaysLeft.add_theme_font_override("font", preload("res://Scripts/game_fonts.gd").BOLD)
+	money_label.add_theme_font_override("font", preload("res://Scripts/game_fonts.gd").BOLD)
 	refresh()
 
 func _fit() -> void:
@@ -62,21 +65,12 @@ func open_evening() -> void:
 func refresh() -> void:
 	if session == null or not is_node_ready() or session.phase != NewsroomSession.Phase.HOME:
 		return
-	money_label.text = "%d $" % session.money
+	money_label.text = "$%d" % session.money
 	money_label.add_theme_color_override("font_color", Color("973b28") if session.money < 0 else Color("4c281b"))
 	%Day.text = WEEKDAYS[clampi(session.day - 1, 0, WEEKDAYS.size() - 1)]
 	%DaysLeft.text = "%02d" % maxi(0, session.campaign_days - session.day)
 	var sleeping := _sleep_left > 0.0
-	for button in [%Meal, %Bag, %HeroineInfo, %Fish, %Bed, %Notebook]:
-		button.disabled = sleeping
-	%DayPanel.visible = not sleeping
-	%MoneyPaper.visible = not sleeping
-	%Meal.visible = not sleeping
-	%Bag.visible = not sleeping
-	%Notebook.visible = not sleeping
-	%Bed.visible = not sleeping
-	%HeroineInfo.visible = not sleeping
-	%Fish.visible = not sleeping
+	_refresh_controls()
 	%Notice.visible = not sleeping and not %Notice.text.is_empty()
 	%NightCaption.visible = sleeping
 	_panels.refresh_state(session.money, session.inventory, {
@@ -84,6 +78,18 @@ func refresh() -> void:
 		"loyalty": session.loyalty, "qualification": session.qualification,
 		"maximum_stat": session.balance.maximum_stat,
 		"proofreading_unlocked": session.proofreading_unlocked})
+
+func _refresh_controls() -> void:
+	var sleeping := _sleep_left > 0.0
+	var modal_open := _panels != null and _panels.visible
+	var covered_hud: bool = modal_open and _panels.covers_room_hud()
+	%DayPanel.visible = not sleeping and not covered_hud
+	%MoneyPaper.visible = not sleeping and not covered_hud
+	for button in [%Meal, %Bag, %HeroineInfo, %Fish, %Bed]:
+		button.visible = not sleeping and not modal_open
+		button.disabled = sleeping or modal_open
+	%Notebook.visible = not sleeping
+	%Notebook.disabled = sleeping or modal_open
 
 func _open_shop() -> void:
 	if _can_interact():
@@ -104,7 +110,7 @@ func _purchase(item_id: String) -> void:
 	if not _can_interact():
 		return
 	var result := session.buy_home_item(item_id)
-	_panels.show_purchase_result(result.ok, _reason_text(result.reason))
+	_panels.show_purchase_result(result.ok, _reason_text(result.reason), result.reason)
 	if not result.ok:
 		AudioManager.play_cue(AudioManager.Cue.WARNING)
 
@@ -171,8 +177,8 @@ func tutorial_target(key: String) -> Control:
 		"bag": %Bag, "notebook": %Notebook, "bed": %Bed}.get(key, %Bag)
 
 func _skin_button(button: Button, asset: String, ink: Color) -> void:
-	button.add_theme_font_override("font", preload("res://Scripts/game_fonts.gd").HEADING)
-	button.add_theme_font_size_override("font_size", 44)
+	button.add_theme_font_override("font", preload("res://Scripts/game_fonts.gd").BOLD)
+	button.add_theme_font_size_override("font_size", 56)
 	for state in ["normal", "hover", "pressed", "disabled"]:
 		var style := StyleBoxTexture.new()
 		style.texture = load(UI_ART + asset) as Texture2D

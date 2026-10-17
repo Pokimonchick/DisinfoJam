@@ -10,10 +10,10 @@ func _ready() -> void:
 	for state in ["normal", "hover", "pressed", "disabled"]:
 		var paper := StyleBoxTexture.new()
 		paper.texture = HOVER if state in ["hover", "pressed"] else NORMAL
-		paper.content_margin_left = 10.0
-		paper.content_margin_right = 30.0
-		paper.content_margin_top = 6.0
-		paper.content_margin_bottom = 6.0
+		paper.content_margin_left = 15.0
+		paper.content_margin_right = 45.0
+		paper.content_margin_top = 9.0
+		paper.content_margin_bottom = 9.0
 		if state == "pressed":
 			paper.modulate_color = Color(0.92, 0.92, 0.92)
 		elif state == "disabled":

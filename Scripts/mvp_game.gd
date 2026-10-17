@@ -341,8 +341,8 @@ func _show_view(next: View) -> void:
 	%Narrative.visible = view in [View.INTRO, View.TUTORIAL, View.ENDING, View.STORY]
 	work.visible = view == View.WORK
 	home.visible = view == View.HOME
-	$Padding.visible = view == View.ENDING
-	%HUD.visible = false
+	$Padding.visible = view in [View.INTRO, View.TUTORIAL, View.STORY, View.ENDING]
+	%HUD.visible = view == View.ENDING
 	%PauseButton.visible = view in [View.WORK, View.HOME, View.INTRO, View.TUTORIAL, View.STORY]
 	%Location.text = {View.MENU: "НЕЗАВИСИМАЯ РЕДАКЦИЯ", View.INTRO: "ГЛАВА I · АМНЕЗИЯ", View.TUTORIAL: "ПЕРЕД ПЕРВОЙ СМЕНОЙ", View.WORK: "РАБОЧИЙ СТОЛ", View.HOME: "СЪЁМНАЯ КОМНАТА", View.ENDING: "ИТОГИ НЕДЕЛИ" if session.campaign_completed else "ПОСЛЕДНИЙ ВЫПУСК", View.PROFILE: "НОВОЕ ПРОХОЖДЕНИЕ", View.STORY: "ГЛАВА I · АМНЕЗИЯ"}[view]
 	_refresh_goal()
@@ -363,21 +363,21 @@ func _set_narrative(tag: String, title: String, body: String, visual: int, prima
 	%NarrativeBody.stop_reveal()
 	%NarrativeTag.text = tag
 	%NarrativeTitle.text = title
-	var at_home := session.phase == NewsroomSession.Phase.HOME
-	%Narrative.set_home_style(at_home)
 	_dialogue_body = body
-	_dialogue_part_size = 300 if at_home else 150
-	_dialogue_parts = _split_dialogue(body, _dialogue_part_size, _dialogue_offsets)
+	_dialogue_part_size = 300
+	_dialogue_parts.assign([body])
+	_dialogue_offsets.assign([0])
 	_dialogue_part = 0
 	_dialogue_primary = primary
 	_dialogue_speaker = DialogueReveal.Speaker.BOSS if visual == 1 else DialogueReveal.Speaker.HEROINE
-	%NarrativeTag.text = tag if view == View.ENDING else ("[Босс]" if visual == 1 else "[%s]" % NewsroomSession.CAMPAIGN_HERO_NAME)
-	%NarrativeTitle.visible = view == View.ENDING
-	%NarrativeVisual.show_heroine = false
+	%NarrativeTitle.visible = not title.is_empty()
+	%NarrativeVisual.kind = visual
+	%NarrativeVisual.sprite = HEROINE_PORTRAIT if visual == 0 else null
+	%NarrativeVisual.get_parent().visible = visual != 1
 	_render_dialogue_part()
 	%NarrativeSecondary.text = secondary
-	%NarrativeSecondary.hide()
-	%NarrativePrimary.hide()
+	%NarrativeSecondary.visible = not secondary.is_empty()
+	%NarrativePrimary.show()
 	%Narrative.focus_continue()
 
 static func _split_dialogue(body: String, maximum: int = 150, offsets: Array[int] = []) -> Array[String]:
@@ -435,8 +435,9 @@ func _render_dialogue_part() -> void:
 	else:
 		%NarrativeBody.reveal(body, _dialogue_speaker)
 	%Narrative.update_text_layout()
-	%NarrativePrimary.hide()
-	%NarrativeBack.hide()
+	%NarrativePrimary.text = _dialogue_primary
+	%NarrativePrimary.show()
+	%NarrativeBack.show()
 	%NarrativeBack.disabled = _story_page == 0 and _dialogue_part == 0
 
 func _toggle_pause() -> void:
@@ -487,19 +488,19 @@ func _interface_blocked() -> bool:
 func _update_interface_lock() -> void:
 	_pause_dialogue_reveal()
 	var blocked := paused or _interface_blocked()
-	if blocked:
+	var work_blocked := blocked or view != View.WORK
+	if work_blocked:
 		work.stamp.cancel_interaction()
-	work.process_mode = Node.PROCESS_MODE_DISABLED if blocked else Node.PROCESS_MODE_INHERIT
+	work.process_mode = Node.PROCESS_MODE_DISABLED if work_blocked else Node.PROCESS_MODE_INHERIT
 	home.process_mode = Node.PROCESS_MODE_DISABLED if blocked else Node.PROCESS_MODE_INHERIT
 	home.set_playback_paused(blocked or settings_panel.visible)
 	# Freeze desk parallax too; the spotlight must remain on the explained item.
-	work.get_node("Canvas").motion_enabled = not blocked
+	work.get_node("Canvas").motion_enabled = not work_blocked
 
 func _pause_dialogue_reveal() -> void:
 	var blocked := paused or settings_panel.visible
 	%NarrativeBody.set_reveal_paused(blocked)
 	tutorial.get_node("%Explanation").set_reveal_paused(blocked)
-	%NarrativeVisual.set_playback_paused(blocked)
 
 
 func _begin_tutorial(stage: String) -> void:
@@ -828,7 +829,7 @@ static func _validate_save(sections: Dictionary) -> bool:
 		var value: Variant = dialogue_state[key]
 		if not NewsroomSaveData._number(value) or value < 0 or value > 2147483647 or value != floor(float(value)):
 			return false
-	if dialogue_state.has("part_size") and not dialogue_state.part_size in [150, 300]:
+	if dialogue_state.has("part_size") and not int(dialogue_state.part_size) in [150, 300]:
 		return false
 	if not presentation.get("lesson", 0) is int and not presentation.get("lesson", 0) is float:
 		return false
