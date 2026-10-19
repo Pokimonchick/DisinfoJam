@@ -2,8 +2,12 @@ extends Node
 
 signal changed
 signal audio_changed
+signal language_changed
 
 const SETTINGS_PATH := "user://settings.cfg"
+const LANGUAGES := ["ru", "en"]
+
+var language := "ru"
 
 var tooltips_enabled := true
 var choice_overlay_enabled := false
@@ -15,6 +19,9 @@ var _audio_save_timer: Timer
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	TranslationServer.add_translation(preload("res://Localization/english.tres"))
+	TranslationServer.add_translation(preload("res://Localization/russian.tres"))
+	TranslationServer.set_locale(language)
 	_audio_save_timer = Timer.new()
 	_audio_save_timer.one_shot = true
 	_audio_save_timer.wait_time = 0.25
@@ -23,6 +30,10 @@ func _ready() -> void:
 	var config := ConfigFile.new()
 	if config.load(SETTINGS_PATH) != OK:
 		return
+	var saved_language: Variant = config.get_value("interface", "language", "ru")
+	if saved_language is String and saved_language in LANGUAGES:
+		language = saved_language
+	TranslationServer.set_locale(language)
 	var saved_value: Variant = config.get_value("interface", "tooltips", true)
 	if saved_value is bool:
 		tooltips_enabled = saved_value
@@ -101,7 +112,17 @@ func set_choice_overlay_enabled(value: bool) -> void:
 	changed.emit()
 
 
-func _save_interface_setting(key: String, value: bool) -> void:
+func set_language(value: String) -> void:
+	if value not in LANGUAGES or language == value:
+		return
+	language = value
+	_save_interface_setting("language", value)
+	TranslationServer.set_locale(language)
+	language_changed.emit()
+	changed.emit()
+
+
+func _save_interface_setting(key: String, value: Variant) -> void:
 	var config := ConfigFile.new()
 	config.load(SETTINGS_PATH)
 	config.set_value("interface", key, value)

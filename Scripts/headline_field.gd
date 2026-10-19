@@ -8,7 +8,7 @@ func _ready() -> void:
 	mouse_exited.connect(_highlight.bind(false))
 
 func set_headline(value: String) -> void:
-	$Text.text = value if not value.is_empty() else "Выбрать заголовок…"
+	$Text.text = tr(value) if not value.is_empty() else tr("Выбрать заголовок…")
 	var font: Font = $Text.get_theme_font("font")
 	var font_size := 32
 	while font_size > 22 and font.get_multiline_string_size($Text.text, HORIZONTAL_ALIGNMENT_LEFT, $Text.size.x, font_size).y > 112.0:
@@ -16,7 +16,7 @@ func set_headline(value: String) -> void:
 	$Text.add_theme_font_size_override("font_size", font_size)
 	$Replace.visible = not value.is_empty()
 	$Pencil.visible = value.is_empty()
-	tooltip_text = "Заменить заголовок" if not value.is_empty() else "Посмотреть варианты заголовка"
+	tooltip_text = tr("Заменить заголовок") if not value.is_empty() else tr("Посмотреть варианты заголовка")
 
 func _highlight(hovered: bool) -> void:
 	if _hover:

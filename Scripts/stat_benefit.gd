@@ -10,4 +10,4 @@ extends Resource
 
 
 func formatted(template: String) -> String:
-	return template.format({"threshold": int(threshold), "amount": str(roundi(amount))})
+	return tr(template).format({"threshold": int(threshold), "amount": str(roundi(amount))})

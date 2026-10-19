@@ -17,6 +17,7 @@ static func capture(session: NewsroomSession) -> Dictionary:
 		"journal": session.journal.duplicate(true), "last_result": session.last_result.duplicate(true),
 		"last_shift": session.last_shift.duplicate(true), "finances": session.finances.to_data(),
 		"story_choices": session.story_choices.duplicate(), "proofreading": session.proofreading.to_data(),
+		"proofreading_drafts": session.proofreading_draft_data(),
 		"inventory": session.inventory.duplicate()}
 	for key in NUMBERS + FLAGS:
 		run[key] = session.get(key)
@@ -154,6 +155,15 @@ static func validate(sections: Dictionary) -> bool:
 		var proof_id: String = run.proofreading.article_id
 		if not proof_id.is_empty() and not ids.has(proof_id):
 			return false
+	if run.has("proofreading_drafts"):
+		if not run.proofreading_drafts is Dictionary or run.proofreading_drafts.size() > 2:
+			return false
+		for locale in run.proofreading_drafts:
+			var draft: Variant = run.proofreading_drafts[locale]
+			if locale not in ["ru", "en"] or not draft is Dictionary or not ProofreadingState.validate_data(draft):
+				return false
+			if not ids.has(draft.article_id) or not run.has("proofreading") or draft.article_id != run.proofreading.article_id:
+				return false
 	for key in ["rng_seed", "rng_state"]:
 		if not content.get(key, "0") is String or not content.get(key, "0").is_valid_int():
 			return false
@@ -210,6 +220,7 @@ static func restore(session: NewsroomSession, sections: Dictionary) -> bool:
 	session.proofreading_unlocked = session.proofreading_unlocked or session.day >= session.balance.proofreading_unlock_day
 	if run.has("proofreading"):
 		session.proofreading.restore(run.proofreading)
+	session.proofreading_drafts = run.get("proofreading_drafts", {}).duplicate(true)
 	if not session.awaiting_acknowledgement and session.phase in [NewsroomSession.Phase.WORK, NewsroomSession.Phase.HOME]:
 		session.prepare_proofreading()
 	session.changed.emit()

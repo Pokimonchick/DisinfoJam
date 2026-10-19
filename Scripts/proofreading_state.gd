@@ -4,6 +4,7 @@ extends RefCounted
 const VERSION := 2
 const MAX_TARGETS := 5
 const LETTERS := "абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
+const ENGLISH_LETTERS := "abcdefghijklmnopqrstuvwxyz"
 const MAX_STROKES := 300
 const MAX_POINTS := 6000
 
@@ -14,7 +15,7 @@ var seed := 0
 var targets: Array = []
 var strokes: Array = []
 
-func prepare(id: String, source: String, random_seed: int, guaranteed: bool = false) -> void:
+func prepare(id: String, source: String, random_seed: int, guaranteed: bool = false, requested_count: int = -1) -> void:
 	article_id = id
 	source_text = source
 	display_text = source
@@ -34,14 +35,15 @@ func prepare(id: String, source: String, random_seed: int, guaranteed: bool = fa
 					positions.append(index)
 			word["positions"] = positions
 			candidates.append(word)
-	var count := mini(1 if guaranteed else random.randi_range(0, MAX_TARGETS), candidates.size())
+	var count := mini(clampi(requested_count, 0, MAX_TARGETS) if requested_count >= 0 else (1 if guaranteed else random.randi_range(0, MAX_TARGETS)), candidates.size())
 	var chosen_words: Array = []
 	for index in count:
 		var chosen: Dictionary = candidates.pop_at(random.randi_range(0, candidates.size() - 1))
 		var original: String = chosen.text
+		var alphabet := _word_alphabet(original)
 		if chosen.positions.is_empty() or random.randf() < 0.5:
 			var at := random.randi_range(1, original.length() - 1)
-			chosen["typo"] = original.substr(0, at) + LETTERS[random.randi_range(0, LETTERS.length() - 1)] + original.substr(at)
+			chosen["typo"] = original.substr(0, at) + alphabet[random.randi_range(0, alphabet.length() - 1)] + original.substr(at)
 		else:
 			var swap: int = chosen.positions[random.randi_range(0, chosen.positions.size() - 1)]
 			chosen["typo"] = original.substr(0, swap) + original[swap + 1] + original[swap] + original.substr(swap + 2)
@@ -61,11 +63,14 @@ func prepare(id: String, source: String, random_seed: int, guaranteed: bool = fa
 
 static func words(text: String) -> Array:
 	var matcher := RegEx.new()
-	matcher.compile("[А-Яа-яЁё]+")
+	matcher.compile("[A-Za-z]+|[А-Яа-яЁё]+")
 	var result: Array = []
 	for match_result in matcher.search_all(text):
 		result.append({"start": match_result.get_start(), "length": match_result.get_end() - match_result.get_start(), "text": match_result.get_string()})
 	return result
+
+static func _word_alphabet(word: String) -> String:
+	return ENGLISH_LETTERS if word[0].to_lower() in ENGLISH_LETTERS else LETTERS
 
 func add_stroke(stroke: Dictionary) -> void:
 	if strokes.size() >= MAX_STROKES or not _valid_stroke(stroke, display_text.length()):
@@ -181,8 +186,9 @@ static func validate_data(data: Dictionary) -> bool:
 		if not source_words.has(source_start) or int(source_words[source_start].length) != original.length() or source_words[source_start].text != original or original != original.to_lower():
 			return false
 		if not legacy:
+			var alphabet := _word_alphabet(original)
 			for letter in typo:
-				if letter not in LETTERS:
+				if letter not in alphabet:
 					return false
 		seen[start] = true
 		ordered.append({"start": start, "source_start": source_start, "original": original, "typo": typo})

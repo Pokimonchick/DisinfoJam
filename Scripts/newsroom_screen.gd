@@ -245,8 +245,8 @@ func _refresh_desk() -> void:
 	if session == null:
 		return
 	%Coffee.set_available(session.coffee_ready)
-	%Coffee.set_hint("Выпить: до +%d выносливости" % int(session.balance.coffee_health_restore))
-	%ShiftLabel.text = "СМЕНА %02d" % session.day
+	%Coffee.set_hint(tr("Выпить: до +%d выносливости") % int(session.balance.coffee_health_restore))
+	%ShiftLabel.text = tr("СМЕНА %02d") % session.day
 	_refresh_actions()
 	_refresh_combo()
 
@@ -289,8 +289,8 @@ func _refresh_combo() -> void:
 		_combo_tween.tween_property(combo_burst, "scale", Vector2(0.85, 0.85), 0.18)
 		_combo_tween.chain().tween_callback(combo_burst.hide)
 		return
-	%Combo.text = "КОМБО ×%.2f" % session.combo_multiplier()
-	%ComboDetail.text = "%s · %d ПОДРЯД" % [HeadlineOption.TYPE_NAMES[session.combo_type], session.combo_count]
+	%Combo.text = tr("КОМБО ×%.2f") % session.combo_multiplier()
+	%ComboDetail.text = tr("%s · %d ПОДРЯД") % [tr(HeadlineOption.TYPE_NAMES[session.combo_type]), session.combo_count]
 	combo_burst.show()
 	combo_burst.modulate.a = 0.0
 	combo_burst.scale = Vector2(1.25, 1.25)
@@ -306,16 +306,17 @@ func _display_source(article: NewsArticle, animate := false) -> void:
 	_next_source = null
 	if article == null:
 		_displayed_article_id = ""
-		%SourceTitle.text = "ВЫПУСК ГОТОВ"
-		source_pager.set_source("Все материалы разобраны. Можно сдать выпуск.")
+		%SourceTitle.text = tr("ВЫПУСК ГОТОВ")
+		source_pager.set_source(tr("Все материалы разобраны. Можно сдать выпуск."))
 		proofreading_surface.clear()
 		_animate_source(false)
 		return
 	_displayed_article_id = article.id
-	%SourceTitle.text = article.source_title
-	var targets: Array = session.proofreading.targets if session.proofreading_unlocked and session.proofreading.article_id == article.id and session.proofreading.source_text == article.source_text else []
-	source_pager.set_source(session.display_source_text(article), article.id, article.source_text, targets)
-	if session.proofreading_unlocked and session.proofreading.article_id == article.id:
+	%SourceTitle.text = tr(article.source_title)
+	var original := session.localized_source_text(article)
+	var targets: Array = session.proofreading.targets if session.proofreading_unlocked and session.proofreading.article_id == article.id and session.proofreading.source_text == original else []
+	source_pager.set_source(session.display_source_text(article), article.id, original, targets)
+	if session.proofreading_unlocked and session.proofreading.article_id == article.id and session.proofreading.source_text == original:
 		proofreading_surface.bind(%SourceText, session.proofreading, source_pager.character_offset)
 	else:
 		proofreading_surface.clear()
@@ -405,7 +406,7 @@ func show_article(absorb_ink := true) -> void:
 	%HeadlineField.set_headline("")
 	for i in cards.size():
 		var option := session.option_at(i)
-		cards[i].get_node("Content/Headline").text = option.text if option != null else ""
+		cards[i].get_node("Content/Headline").text = tr(option.text) if option != null else ""
 	_refresh_actions()
 	view_changed.emit()
 
@@ -603,27 +604,27 @@ func _show_result(result: Dictionary) -> void:
 		if article.id == result.get("article_id", ""):
 			var resolved := ArticleSequence.resolve(article, session.story_choices, session.journal)
 			# Reloads need the published source; a live result keeps the reading page.
-			if %SourceTitle.text != resolved.source_title or source_pager.source_text != result.get("source_text", session.display_source_text(resolved)):
+			if %SourceTitle.text != tr(resolved.source_title) or source_pager.source_text != session.display_source_text(resolved):
 				_display_source(resolved)
 			break
 	%HeadlineField.set_headline(result.headline)
 	_set_issue_number(session.published_today)
-	var changes := "[color=#78512c]%s · серия %d · ×%.2f[/color]\n\n" % [HeadlineOption.TYPE_NAMES[result.combo_type], result.combo_count, result.multiplier]
-	changes += "[color=#866025]Деньги:[/color] %s\n" % _colored_result_delta(int(result.money), " $")
-	changes += "[color=#2e6770]Репутация:[/color] %s\n" % _colored_result_delta(int(result.reputation))
-	changes += "[color=#685078]Лояльность:[/color] %s\n" % _colored_result_delta(int(result.loyalty))
+	var changes := tr("[color=#78512c]%s · серия %d · ×%.2f[/color]\n\n") % [tr(HeadlineOption.TYPE_NAMES[result.combo_type]), result.combo_count, result.multiplier]
+	changes += tr("[color=#866025]Деньги:[/color] %s\n") % _colored_result_delta(int(result.money), " $")
+	changes += tr("[color=#2e6770]Репутация:[/color] %s\n") % _colored_result_delta(int(result.reputation))
+	changes += tr("[color=#685078]Лояльность:[/color] %s\n") % _colored_result_delta(int(result.loyalty))
 	var stamina_cost := float(result.get("stamina_cost", session.balance.publication_health_cost))
 	var stamina_color := "#9b4033" if stamina_cost > 0.0 else "#665945"
 	var stamina_change := "−%d" % roundi(stamina_cost) if stamina_cost > 0.0 else "0"
-	changes += "[color=#6b7046]Выносливость:[/color] [color=%s][b]%s[/b][/color]\n\n%s" % [stamina_color, stamina_change, result.explanation]
+	changes += tr("[color=#6b7046]Выносливость:[/color] [color=%s][b]%s[/b][/color]\n\n%s") % [stamina_color, stamina_change, tr(result.explanation)]
 	if result.has("proofreading"):
 		var corrections: Dictionary = result.proofreading
-		changes += "\n\n[color=#78512c]Вычитка: исправлено %d · пропущено %d · неверно %d[/color]\n" % [corrections.corrected, corrections.missed, corrections.wrong]
-		changes += "Из них за вычитку: %s · Квалификация: %s" % [_colored_result_delta(int(corrections.money), " $"), _colored_result_delta(int(corrections.qualification))]
+		changes += tr("\n\n[color=#78512c]Вычитка: исправлено %d · пропущено %d · неверно %d[/color]\n") % [corrections.corrected, corrections.missed, corrections.wrong]
+		changes += tr("Из них за вычитку: %s · Квалификация: %s") % [_colored_result_delta(int(corrections.money), " $"), _colored_result_delta(int(corrections.qualification))]
 	var full_issue := session.publication_limit_reached() or session.current_article() == null
 	if full_issue:
-		changes += "\n\n[color=#78512c]%s[/color]" % ("Все материалы разобраны." if session.current_article() == null else "В текущем выпуске газеты недостаточно места для новых публикаций.")
-	popup.present(cards[maxi(selected_index, 0)], "ВЫПУСК ЗАПОЛНЕН" if full_issue else "НАПЕЧАТАНО", result.headline, changes, "Сдать выпуск и пойти домой" if full_issue else "Следующий материал", "", Vector2(640, 800))
+		changes += "\n\n[color=#78512c]%s[/color]" % (tr("Все материалы разобраны.") if session.current_article() == null else tr("В текущем выпуске газеты недостаточно места для новых публикаций."))
+	popup.present(cards[maxi(selected_index, 0)], tr("ВЫПУСК ЗАПОЛНЕН") if full_issue else tr("НАПЕЧАТАНО"), tr(result.headline), changes, tr("Сдать выпуск и пойти домой") if full_issue else tr("Следующий материал"), "", Vector2(640, 800))
 	_refresh_actions()
 	view_changed.emit()
 
@@ -633,7 +634,22 @@ func capture_presentation() -> Dictionary:
 		"choices_open": choices_open, "drawer_expanded": %Drawer.expanded,
 		"source_article_id": _displayed_article_id, "source_character": source_pager.capture_character()}
 
+func refresh_language() -> void:
+	if session == null:
+		return
+	var presentation := capture_presentation()
+	# Character offsets refer to the previous language's words.
+	presentation.source_character = 0
+	if session.phase == NewsroomSession.Phase.WORK:
+		restore_presentation(presentation)
+	_shown_combo_count = -1
+	_shown_combo_type = -1
+	_refresh_desk()
+	%Drawer._update_tab_tooltip()
+	%Drawer._refresh()
+
 func restore_presentation(data: Dictionary) -> void:
+	session.prepare_proofreading()
 	show_article(false)
 	%Drawer.set_expanded(bool(data.get("drawer_expanded", true)), false)
 	selected_index = clampi(int(data.get("selected_index", -1)), -1, 2)

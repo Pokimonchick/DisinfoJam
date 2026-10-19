@@ -5,7 +5,11 @@ signal closed
 
 
 func _ready() -> void:
-	var focus_controls: Array[Control] = [%Tooltips, %ChoiceOverlay, %MusicVolume, %SfxVolume, %Close]
+	%Language.add_item("Русский", 0)
+	%Language.add_item("English", 1)
+	%Language.item_selected.connect(func(index: int): GameSettings.set_language(GameSettings.LANGUAGES[index]))
+	GameSettings.language_changed.connect(func(): %Language.select(GameSettings.LANGUAGES.find(GameSettings.language)))
+	var focus_controls: Array[Control] = [%Language, %Tooltips, %ChoiceOverlay, %MusicVolume, %SfxVolume, %Close]
 	for index in focus_controls.size():
 		var control: Control = focus_controls[index]
 		control.focus_next = control.get_path_to(focus_controls[(index + 1) % focus_controls.size()])
@@ -27,6 +31,7 @@ func _ready() -> void:
 
 
 func present() -> void:
+	%Language.select(GameSettings.LANGUAGES.find(GameSettings.language))
 	%Tooltips.set_pressed_no_signal(GameSettings.tooltips_enabled)
 	%ChoiceOverlay.set_pressed_no_signal(GameSettings.choice_overlay_enabled)
 	%MusicVolume.set_value_no_signal(GameSettings.music_volume * 100.0)
@@ -34,7 +39,7 @@ func present() -> void:
 	%MusicPercent.text = "%d%%" % roundi(GameSettings.music_volume * 100.0)
 	%SfxPercent.text = "%d%%" % roundi(GameSettings.sfx_volume * 100.0)
 	show()
-	%Tooltips.grab_focus()
+	%Language.grab_focus()
 
 
 func close() -> void:

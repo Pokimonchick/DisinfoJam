@@ -25,6 +25,8 @@ var qualification: float = 70.0
 var proofreading_unlocked := false
 var proofreading_started := false
 var proofreading := ProofreadingState.new()
+var proofreading_drafts: Dictionary = {}
+var _proofreading_locale := ""
 var story_choices: Dictionary = {}
 var _resolved_article: NewsArticle
 var money: int
@@ -83,6 +85,8 @@ func reset(seed_value: int = -1) -> void:
 	proofreading_unlocked = false
 	proofreading_started = false
 	proofreading = ProofreadingState.new()
+	proofreading_drafts.clear()
+	_proofreading_locale = ""
 	story_choices.clear()
 	_resolved_article = null
 	money = balance.starting_money
@@ -160,19 +164,69 @@ func current_article() -> NewsArticle:
 	return _resolved_article
 
 
+func localized_source_text(article: NewsArticle) -> String:
+	return TranslationServer.translate(article.source_text)
+
+
+func _proofreading_article() -> NewsArticle:
+	# Publication advances the queue before the result leaves the desk. Language
+	# changes must keep the displayed publication's marks until acknowledgement.
+	if awaiting_acknowledgement and not last_result.is_empty():
+		for article in articles:
+			if article.id == last_result.get("article_id", ""):
+				return ArticleSequence.resolve(article, story_choices, journal)
+	return current_article()
+
+
 func display_source_text(article: NewsArticle) -> String:
-	if proofreading_unlocked and proofreading.article_id == article.id and proofreading.source_text == article.source_text:
+	var source := localized_source_text(article)
+	if proofreading_unlocked and proofreading.article_id == article.id and proofreading.source_text == source:
 		return proofreading.display_text
-	return article.source_text
+	return source
+
+
+func _active_proofreading_locale(article: NewsArticle) -> String:
+	if not _proofreading_locale.is_empty():
+		return _proofreading_locale
+	# Old saves have no locale field. Infer the saved text's language, which may
+	# differ from the interface language selected before loading the run.
+	return "ru" if proofreading.source_text == article.source_text else "en"
+
+
+func proofreading_draft_data() -> Dictionary:
+	var drafts := proofreading_drafts.duplicate(true)
+	var article := _proofreading_article()
+	if article != null and proofreading.article_id == article.id:
+		drafts[_active_proofreading_locale(article)] = proofreading.to_data()
+	return drafts
 
 
 func prepare_proofreading() -> void:
-	var article := current_article()
-	if not proofreading_unlocked or article == null:
+	var article := _proofreading_article()
+	if article == null:
+		proofreading_drafts.clear()
+		_proofreading_locale = ""
 		return
-	if proofreading.article_id == article.id and proofreading.source_text == article.source_text:
+	if proofreading.article_id != article.id:
+		proofreading_drafts.clear()
+		_proofreading_locale = ""
+	if not proofreading_unlocked:
 		return
-	proofreading.prepare(article.id, article.source_text, _rng.randi(), not proofreading_started)
+	var source := localized_source_text(article)
+	var locale := "en" if TranslationServer.get_locale().begins_with("en") else "ru"
+	if proofreading.article_id == article.id and proofreading.source_text == source:
+		_proofreading_locale = locale
+		return
+	if proofreading.article_id == article.id:
+		proofreading_drafts[_active_proofreading_locale(article)] = proofreading.to_data()
+	if proofreading_drafts.has(locale) and proofreading_drafts[locale].source_text == source:
+		proofreading.restore(proofreading_drafts[locale])
+	else:
+		# A language change must not change the number of rewards or penalties
+		# available on this article, including the first guaranteed pencil lesson.
+		var target_count := proofreading.targets.size() if proofreading.article_id == article.id else -1
+		proofreading.prepare(article.id, source, _rng.randi(), not proofreading_started, target_count)
+	_proofreading_locale = locale
 	proofreading_started = true
 
 

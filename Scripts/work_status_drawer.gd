@@ -57,14 +57,14 @@ func _toggle() -> void:
 
 
 func _update_tab_tooltip() -> void:
-	%TabButton.tooltip_text = "Скрыть показатели" if expanded else "Открыть показатели"
+	%TabButton.tooltip_text = tr("Скрыть показатели") if expanded else tr("Открыть показатели")
 
 
 func _refresh() -> void:
 	if session == null or not is_node_ready():
 		return
-	%Shift.text = "СМЕНА %02d" % session.day
-	%Player.text = NewsroomSession.CAMPAIGN_HERO_NAME
+	%Shift.text = tr("СМЕНА %02d") % session.day
+	%Player.text = tr(NewsroomSession.CAMPAIGN_HERO_NAME)
 	_set_meter(%HealthBar, %HealthValue, session.health, Color("6b7046"))
 	_set_meter(%ReputationBar, %ReputationValue, session.reputation, Color("916038"))
 	_set_meter(%LoyaltyBar, %LoyaltyValue, session.loyalty, Color("626648"))
@@ -73,7 +73,7 @@ func _refresh() -> void:
 		control.visible = qualification_visible
 	if qualification_visible:
 		_set_meter(%QualificationBar, %QualificationValue, session.qualification, Color("64697c"))
-		%QualificationHint.text = "ВЫЧИТКА ИСТОЧНИКА ДОСТУПНА"
+		%QualificationHint.text = tr("ВЫЧИТКА ИСТОЧНИКА ДОСТУПНА")
 	%QualificationHelp.tooltip_text = preload("res://Scripts/stat_descriptions.gd").text_for("qualification", session.balance)
 	var balance_y := 934.0 if qualification_visible else 784.0
 	$SlidingPanel/BalanceCard.position.y = balance_y

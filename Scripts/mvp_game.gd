@@ -110,6 +110,7 @@ func _ready() -> void:
 	pause_panel.secondary_pressed.connect(_show_menu)
 	pause_panel.settings_pressed.connect(_open_settings)
 	settings_panel.closed.connect(_on_settings_closed)
+	GameSettings.language_changed.connect(_on_language_changed)
 	# Paper navigation and the cup use their own physical action sounds.
 	AudioManager.bind_ui_buttons(self, [work.source_pager.previous, work.source_pager.next, work.get_node("%Coffee/Cup")])
 	get_window().min_size = Vector2i(960, 640)
@@ -230,7 +231,7 @@ func _show_story(episode_id: String, page: int = 0) -> void:
 	_story_page = page
 	var entry: Dictionary = CHAPTER.EPISODES[episode_id][page]
 	_show_view(View.INTRO if episode_id == "intro" else View.STORY)
-	_set_narrative(entry.tag, entry.title, entry.body.replace("{name}", NewsroomSession.CAMPAIGN_HERO_NAME), entry.visual, entry.next, "Сразу к работе" if episode_id == "intro" else "")
+	_set_narrative(entry.tag, entry.title, tr(entry.body).replace("{name}", tr(NewsroomSession.CAMPAIGN_HERO_NAME)), entry.visual, entry.next, tr("Сразу к работе") if episode_id == "intro" else "")
 	_queue_save()
 
 func _advance_story() -> void:
@@ -311,12 +312,15 @@ func _on_phase_changed() -> void:
 				_show_story("finale")
 				return
 			_show_view(View.ENDING)
-			var ending: Array = ENDINGS[session.ending]
-			var summary := "%s\n\nЗавершено смен: %d. Напечатано материалов: %d.\nДеньги: %d $ · репутация: %d · государство: %d." % [ending[1], session.completed_shifts, session.total_published, session.money, ceili(session.reputation), ceili(session.loyalty)]
-			if not session.last_result.is_empty():
-				summary += "\n\nПоследний заголовок: «%s»" % session.last_result.headline
-			_set_narrative("КОНЕЦ ПЕРВОЙ ГЛАВЫ" if session.campaign_completed else "КОНЕЦ ИСТОРИИ", ending[0], summary, ending[2], "Новая история", "В главное меню")
+			_present_ending()
 	_refresh_goal()
+
+func _present_ending() -> void:
+	var ending: Array = ENDINGS[session.ending]
+	var summary := tr("%s\n\nЗавершено смен: %d. Напечатано материалов: %d.\nДеньги: %d $ · репутация: %d · государство: %d.") % [tr(ending[1]), session.completed_shifts, session.total_published, session.money, ceili(session.reputation), ceili(session.loyalty)]
+	if not session.last_result.is_empty():
+		summary += tr("\n\nПоследний заголовок: «%s»") % tr(session.last_result.headline)
+	_set_narrative(tr("КОНЕЦ ПЕРВОЙ ГЛАВЫ") if session.campaign_completed else tr("КОНЕЦ ИСТОРИИ"), ending[0], summary, ending[2], tr("Новая история"), tr("В главное меню"))
 
 func _show_menu() -> void:
 	if _run_active and not _save_progress():
@@ -358,7 +362,7 @@ func _show_view(next: View) -> void:
 	$Padding.visible = view in [View.INTRO, View.TUTORIAL, View.STORY, View.ENDING]
 	%HUD.visible = view == View.ENDING
 	%PauseButton.visible = view in [View.WORK, View.HOME, View.INTRO, View.TUTORIAL, View.STORY]
-	%Location.text = {View.MENU: "НЕЗАВИСИМАЯ РЕДАКЦИЯ", View.INTRO: "ГЛАВА I · АМНЕЗИЯ", View.TUTORIAL: "ПЕРЕД ПЕРВОЙ СМЕНОЙ", View.WORK: "РАБОЧИЙ СТОЛ", View.HOME: "СЪЁМНАЯ КОМНАТА", View.ENDING: "ИТОГИ НЕДЕЛИ" if session.campaign_completed else "ПОСЛЕДНИЙ ВЫПУСК", View.PROFILE: "НОВОЕ ПРОХОЖДЕНИЕ", View.STORY: "ГЛАВА I · АМНЕЗИЯ"}[view]
+	_refresh_location()
 	_refresh_goal()
 	if _fade_tween:
 		_fade_tween.kill()
@@ -372,24 +376,28 @@ func _show_view(next: View) -> void:
 		transitioning = false
 	)
 
+func _refresh_location() -> void:
+	%Location.text = {View.MENU: "НЕЗАВИСИМАЯ РЕДАКЦИЯ", View.INTRO: "ГЛАВА I · АМНЕЗИЯ", View.TUTORIAL: "ПЕРЕД ПЕРВОЙ СМЕНОЙ", View.WORK: "РАБОЧИЙ СТОЛ", View.HOME: "СЪЁМНАЯ КОМНАТА", View.ENDING: "ИТОГИ НЕДЕЛИ" if session.campaign_completed else "ПОСЛЕДНИЙ ВЫПУСК", View.PROFILE: "НОВОЕ ПРОХОЖДЕНИЕ", View.STORY: "ГЛАВА I · АМНЕЗИЯ"}[view]
+
 func _set_narrative(tag: String, title: String, body: String, visual: int, primary: String, secondary: String) -> void:
 	%NarrativeBack.hide()
 	%NarrativeBody.stop_reveal()
-	%NarrativeTag.text = tag
-	%NarrativeTitle.text = title
+	%NarrativeTag.text = tr(tag)
+	%NarrativeTitle.text = tr(title)
+	body = tr(body)
 	_dialogue_body = body
 	_dialogue_part_size = 300
 	_dialogue_parts.assign([body])
 	_dialogue_offsets.assign([0])
 	_dialogue_part = 0
-	_dialogue_primary = primary
+	_dialogue_primary = tr(primary)
 	_dialogue_speaker = DialogueReveal.Speaker.BOSS if visual == 1 else DialogueReveal.Speaker.HEROINE
 	%NarrativeTitle.visible = not title.is_empty()
 	%NarrativeVisual.kind = visual
 	%NarrativeVisual.sprite = HEROINE_PORTRAIT if visual == 0 else null
 	%NarrativeVisual.get_parent().visible = visual != 1
 	_render_dialogue_part()
-	%NarrativeSecondary.text = secondary
+	%NarrativeSecondary.text = tr(secondary)
 	%NarrativeSecondary.visible = not secondary.is_empty()
 	%NarrativePrimary.show()
 	%Narrative.focus_continue()
@@ -483,6 +491,31 @@ func _on_settings_closed() -> void:
 		%MenuSettings.grab_focus()
 
 
+func _on_language_changed() -> void:
+	# Refresh presentation without changing the current screen, shift or story page.
+	session.prepare_proofreading()
+	work.refresh_language()
+	home.refresh_language()
+	%HUD.refresh()
+	_refresh_location()
+	_refresh_menu()
+	_refresh_goal()
+	if view == View.PROFILE:
+		%NewRunWarning.text = tr("Начало новой истории заменит текущее сохранение.") if GameState.save_store.exists() else tr("Прогресс будет сохраняться автоматически.")
+	if view in [View.INTRO, View.STORY] and not _story_id.is_empty():
+		var entry: Dictionary = CHAPTER.EPISODES[_story_id][_story_page]
+		_set_narrative(entry.tag, entry.title, tr(entry.body).replace("{name}", tr(NewsroomSession.CAMPAIGN_HERO_NAME)), entry.visual, entry.next, tr("Сразу к работе") if _story_id == "intro" else "")
+	elif view == View.ENDING:
+		_present_ending()
+	if paused:
+		pause_panel.present("ПАУЗА", "Выпуск подождёт.", "Выносливость не расходуется.\n\nПрогресс сохраняется автоматически. После выхода в меню можно продолжить с этого места.", "Продолжить", "Сохранить и в меню", true)
+	if not _tutorial_stage.is_empty():
+		_present_tutorial_step()
+	_pause_dialogue_reveal()
+	settings_panel.get_node("%Language").grab_focus()
+	_queue_save()
+
+
 func _narrative_back() -> void:
 	if view in [View.INTRO, View.STORY] and _dialogue_part > 0:
 		_dialogue_part -= 1
@@ -538,7 +571,7 @@ func _begin_tutorial(stage: String) -> void:
 		# Legacy saves may have generated a clean first sheet. Preserve existing
 		# marks; only a clean, unmarked draft may receive the guaranteed typo.
 		if session.proofreading.targets.is_empty() and session.proofreading.strokes.is_empty() and article != null:
-			session.proofreading.prepare(article.id, article.source_text, session.proofreading.seed, true)
+			session.proofreading.prepare(article.id, session.localized_source_text(article), session.proofreading.seed, true)
 			work._display_source(article)
 		if session.proofreading.targets.is_empty():
 			_finish_tutorial()
@@ -561,7 +594,7 @@ func _present_tutorial_step() -> void:
 	var step: Dictionary = steps[_tutorial_step]
 	var targets: Array[Control] = []
 	var inputs: Array[Control] = []
-	var body: String = step.text
+	var body: String = tr(step.text)
 	if _tutorial_stage in ["work", "pencil"]:
 		work.tutorial_action = step.target
 		if step.target == "choices":
@@ -592,7 +625,7 @@ func _present_tutorial_step() -> void:
 	else:
 		targets.append(home.tutorial_target(step.target))
 	var heroine := _tutorial_stage == "home"
-	tutorial.present("НИКОЛА КОКО · ПРО СЕБЯ" if heroine else "БОСС", body, targets, _tutorial_step, steps.size(), heroine, "", true, inputs)
+	tutorial.present(tr("НИКОЛА КОКО · ПРО СЕБЯ") if heroine else tr("БОСС"), body, targets, _tutorial_step, steps.size(), heroine, "", true, inputs)
 	_update_interface_lock()
 	_queue_save()
 
@@ -787,7 +820,7 @@ func _show_profile_setup() -> void:
 		return
 	_run_active = false
 	_show_view(View.PROFILE)
-	%NewRunWarning.text = "Начало новой истории заменит текущее сохранение." if GameState.save_store.exists() else "Прогресс будет сохраняться автоматически."
+	%NewRunWarning.text = tr("Начало новой истории заменит текущее сохранение.") if GameState.save_store.exists() else tr("Прогресс будет сохраняться автоматически.")
 	%StartStory.grab_focus()
 
 func _start_campaign() -> void:
@@ -795,23 +828,23 @@ func _start_campaign() -> void:
 
 func _refresh_goal() -> void:
 	%CampaignGoal.visible = view in [View.WORK, View.HOME, View.ENDING]
-	%CampaignGoal.text = "%s · Первая неделя: %d / %d смен" % [NewsroomSession.CAMPAIGN_HERO_NAME, session.completed_shifts, session.campaign_days]
+	%CampaignGoal.text = tr("%s · Первая неделя: %d / %d смен") % [tr(NewsroomSession.CAMPAIGN_HERO_NAME), session.completed_shifts, session.campaign_days]
 
 func _refresh_menu() -> void:
 	var document: Dictionary = GameState.save_store.load_document()
 	%ContinueGame.disabled = document.is_empty()
-	%SaveSummary.text = "Сохранений пока нет."
+	%SaveSummary.text = tr("Сохранений пока нет.")
 	if document.is_empty() and GameState.save_store.exists():
-		%SaveSummary.text = "Сохранение недоступно."
+		%SaveSummary.text = tr("Сохранение недоступно.")
 	if not document.is_empty():
 		var data: Dictionary = document.sections
-		%SaveSummary.text = "%s · день %d · %d $" % [NewsroomSession.CAMPAIGN_HERO_NAME, data.run.get("day", 0), data.run.get("money", 0)]
+		%SaveSummary.text = tr("%s · день %d · %d $") % [tr(NewsroomSession.CAMPAIGN_HERO_NAME), data.run.get("day", 0), data.run.get("money", 0)]
 		var final_seen: bool = "finale" in data.get("presentation", {}).get("story", {}).get("seen", [])
-		%ContinueGame.text = "ПОСМОТРЕТЬ ИТОГ" if data.run.phase == "ended" and (not data.run.get("campaign_completed", false) or final_seen) else "ПРОДОЛЖИТЬ"
+		%ContinueGame.text = tr("ПОСМОТРЕТЬ ИТОГ") if data.run.phase == "ended" and (not data.run.get("campaign_completed", false) or final_seen) else tr("ПРОДОЛЖИТЬ")
 	else:
-		%ContinueGame.text = "ПРОДОЛЖИТЬ"
+		%ContinueGame.text = tr("ПРОДОЛЖИТЬ")
 	if not GameState.save_store.error_message.is_empty():
-		%SaveSummary.text += "\n" + GameState.save_store.error_message
+		%SaveSummary.text += "\n" + tr(GameState.save_store.error_message)
 
 func _continue_run() -> void:
 	var document: Dictionary = GameState.save_store.load_document()
@@ -873,7 +906,7 @@ func _continue_run() -> void:
 	_autosave_elapsed = 0.0
 	if not _tutorial_stage.is_empty() and view in [View.WORK, View.HOME]:
 		_begin_tutorial.call_deferred(_tutorial_stage)
-	%SaveNotice.text = GameState.save_store.error_message
+	%SaveNotice.text = tr(GameState.save_store.error_message)
 	%SaveNotice.visible = not %SaveNotice.text.is_empty()
 
 func _queue_save() -> void:
@@ -906,11 +939,13 @@ func _save_progress() -> bool:
 	document["sections"] = SaveRepository.merge_sections(document.get("sections", {}), sections)
 	# Inventory is a complete snapshot: a consumed stack must not survive the merge.
 	document.sections.run["inventory"] = sections.run.inventory.duplicate()
+	# Draft languages are a complete snapshot of only the current article.
+	document.sections.run["proofreading_drafts"] = sections.run.proofreading_drafts.duplicate(true)
 	# Registered extensions return complete snapshots; removed items must stay removed.
 	document.sections["extensions"] = sections.extensions
 	var success: bool = GameState.save_store.write_document(document)
 	_autosave_elapsed = 0.0
-	%SaveNotice.text = GameState.save_store.error_message
+	%SaveNotice.text = tr(GameState.save_store.error_message)
 	%SaveNotice.visible = not success
 	if success:
 		_loaded_document = document

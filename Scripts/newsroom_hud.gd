@@ -35,8 +35,8 @@ func refresh() -> void:
 	var money_color := Color("a5c38d") if session.money > 0 else (Color("c58a80") if session.money < 0 else Color("d7cdb8"))
 	if %Money.get_theme_color("font_color") != money_color:
 		%Money.add_theme_color_override("font_color", money_color)
-	%Day.text = "СМЕНА %02d" % session.day
-	%Period.text = "РАБОТА" if session.phase == NewsroomSession.Phase.WORK else ("ФИНАЛ" if session.phase == NewsroomSession.Phase.ENDED else "ВЕЧЕР")
+	%Day.text = tr("СМЕНА %02d") % session.day
+	%Period.text = tr("РАБОТА") if session.phase == NewsroomSession.Phase.WORK else (tr("ФИНАЛ") if session.phase == NewsroomSession.Phase.ENDED else tr("ВЕЧЕР"))
 
 func _set_meter(bar: ProgressBar, label: Label, value: float, color: Color) -> void:
 	bar.max_value = session.balance.maximum_stat

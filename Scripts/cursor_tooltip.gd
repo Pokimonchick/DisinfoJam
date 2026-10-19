@@ -59,6 +59,7 @@ func _process(delta: float) -> void:
 	_hover_time += delta
 	if _hover_time < SHOW_DELAY:
 		return
+	tooltip = tr(tooltip)
 	if tooltip != _shown_text:
 		_shown_text = tooltip
 		_layout_text(tooltip)

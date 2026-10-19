@@ -35,6 +35,10 @@ func _set_emphasis(value: float) -> void:
 	_emphasis = value
 	queue_redraw()
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED:
+		queue_redraw()
+
 func _shape() -> PackedVector2Array:
 	return PackedVector2Array([
 		Vector2(10, 8), Vector2(size.x - 52, 0),
@@ -66,11 +70,12 @@ func _draw() -> void:
 	var font := get_theme_font("font")
 	var font_size := get_theme_font_size("font_size")
 	var available := size.x - 116.0
-	var text_width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var caption := tr(text)
+	var text_width := font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 	if text_width > available:
 		font_size = maxi(16, floori(font_size * available / text_width))
 	var baseline := (size.y - font.get_height(font_size)) * 0.5 + font.get_ascent(font_size) - 4.0
-	draw_string(font, Vector2(38, baseline), text, HORIZONTAL_ALIGNMENT_LEFT, available, font_size, text_color)
+	draw_string(font, Vector2(38, baseline), caption, HORIZONTAL_ALIGNMENT_LEFT, available, font_size, text_color)
 	if has_focus() and not disabled:
 		draw_line(Vector2(34, size.y - 17), Vector2(size.x - 64, size.y - 26), backing_color, 5.0, true)
 	draw_set_transform(Vector2.ZERO)

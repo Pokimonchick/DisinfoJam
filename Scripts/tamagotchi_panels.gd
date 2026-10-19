@@ -68,6 +68,17 @@ func set_items(items: Array[Dictionary]) -> void:
 		_rebuild_bag()
 
 
+func refresh_language() -> void:
+	# Keep the open tab/item while rebuilding text created in code.
+	_rebuild_cards()
+	_rebuild_bag()
+	refresh_state(_money, _inventory, _stats)
+	if not _selected.is_empty():
+		_detail_title.text = tr(str(_selected.get("name", "")))
+		_detail_description.text = tr(str(_selected.get("description", "")))
+		_update_detail_action()
+
+
 func refresh_state(money: int, inventory: Dictionary, stats: Dictionary) -> void:
 	_money = money
 	_inventory = inventory.duplicate(true)
@@ -79,7 +90,7 @@ func refresh_state(money: int, inventory: Dictionary, stats: Dictionary) -> void
 	for key: String in _stat_labels:
 		var label: Label = _stat_labels[key]
 		if key == "qualification" and not bool(_stats.get("proofreading_unlocked", false)):
-			label.text = "Квалификация: пока недоступна"
+			label.text = tr("Квалификация: пока недоступна")
 		else:
 			label.text = "%s: %d / %d" % [_stat_name(key), int(_stats.get(key, 0)), int(_stats.get("maximum_stat", 100))]
 		var bar: ProgressBar = _stat_bars[key]
@@ -232,7 +243,7 @@ func _rebuild_cards() -> void:
 	for index in mini(_items.size(), 6):
 		var item: Dictionary = _items[index]
 		var card := _button(_cards, "", Rect2((index % 3) * 426, (index / 3) * 312, 402, 280), _show_item.bind(item))
-		card.tooltip_text = str(item.get("name", ""))
+		card.tooltip_text = tr(str(item.get("name", "")))
 		_texture(card, ART + "Menu assets/Item background.png", Rect2(0, 0, 402, 280))
 		_texture(card, str(item.get("texture_path", "")), Rect2(18, -4, 160, 160), true)
 		var category := str(item.get("category", "food"))
@@ -242,7 +253,7 @@ func _rebuild_cards() -> void:
 		var category_icon: String = {"drink": "Drink icon.png", "food": "Food icon.png", "pet": "Pet food icon.png"}.get(category, "Food icon.png")
 		_texture(card, ART + "Menu assets/" + category_icon, Rect2(162, 137, 31, 28), true)
 		_label(card, _category_name(category), Rect2(201, 130, 193, 42), 27, true)
-		var description := _label(card, str(item.get("description", "")), Rect2(26, 187, 350, 80), 24)
+		var description := _label(card, tr(str(item.get("description", ""))), Rect2(26, 187, 350, 80), 24)
 		description.add_theme_font_override("font", BOLD)
 	AudioManager.bind_ui_buttons(self)
 
@@ -293,7 +304,7 @@ func _rebuild_bag() -> void:
 		for index in mini(owned.size(), 6):
 			var item: Dictionary = owned[index]
 			var slot := _button(_bag, "", Rect2((index % 3) * 174, (index / 3) * 120, 156, 110), _show_item.bind(item))
-			slot.tooltip_text = str(item.get("name", ""))
+			slot.tooltip_text = tr(str(item.get("name", "")))
 			_texture(slot, ART + "Menu assets/Item background.png", Rect2(0, 0, 156, 110))
 			_texture(slot, str(item.get("texture_path", "")), Rect2(24, 4, 105, 90), true)
 			_label(slot, "×%d" % int(_inventory.get(str(item.get("id", "")), 0)), Rect2(104, 73, 45, 32), 27, true, HORIZONTAL_ALIGNMENT_RIGHT)
@@ -318,11 +329,11 @@ func _build_detail() -> void:
 
 func _show_item(item: Dictionary) -> void:
 	_selected = item
-	_detail_title.text = str(item.get("name", ""))
+	_detail_title.text = tr(str(item.get("name", "")))
 	_detail_restore.text = _restore_text(item)
-	_detail_description.text = str(item.get("description", ""))
+	_detail_description.text = tr(str(item.get("description", "")))
 	_detail_image.texture = _load_texture(str(item.get("texture_path", "")))
-	_detail_price.text = "%d $" % int(item.get("price", 0)) if _mode == "shop" else "В рюкзаке: %d" % int(_inventory.get(str(item.get("id", "")), 0))
+	_detail_price.text = "%d $" % int(item.get("price", 0)) if _mode == "shop" else tr("В рюкзаке: %d") % int(_inventory.get(str(item.get("id", "")), 0))
 	_detail_notice.text = ""
 	_detail_notice.add_theme_color_override("font_color", INK)
 	_update_detail_action()
@@ -334,18 +345,18 @@ func _show_item(item: Dictionary) -> void:
 func _update_detail_action() -> void:
 	_action.disabled = false
 	if _mode == "shop":
-		_action.text = "Buy"
+		_action.text = tr("Buy")
 		return
 	var id := str(_selected.get("id", ""))
 	var count := int(_inventory.get(id, 0))
-	_detail_price.text = "В рюкзаке: %d" % count
+	_detail_price.text = tr("В рюкзаке: %d") % count
 	var category := str(_selected.get("category", "food"))
-	_action.text = "Feed" if category == "pet" else ("Drink" if category == "drink" else "Eat")
+	_action.text = tr("Feed") if category == "pet" else (tr("Drink") if category == "drink" else tr("Eat"))
 	_action.disabled = count <= 0 or (float(_selected.get("restore", 0)) > 0 and float(_stats.get("health", 0)) >= float(_stats.get("maximum_stat", 100)))
 	if count <= 0:
-		_detail_notice.text = "Закончилось. Можно купить ещё."
+		_detail_notice.text = tr("Закончилось. Можно купить ещё.")
 	elif _action.disabled:
-		_detail_notice.text = "Силы уже полностью восстановлены."
+		_detail_notice.text = tr("Силы уже полностью восстановлены.")
 	else:
 		_detail_notice.text = ""
 
@@ -370,11 +381,11 @@ func _build_warning() -> void:
 
 
 func _stat_name(key: String) -> String:
-	return {"health": "Выносливость", "reputation": "Репутация", "loyalty": "Лояльность", "qualification": "Квалификация"}.get(key, key)
+	return {"health": tr("Выносливость"), "reputation": tr("Репутация"), "loyalty": tr("Лояльность"), "qualification": tr("Квалификация")}.get(key, key)
 
 
 func _category_name(category: String) -> String:
-	return {"drink": "Recovery drink", "food": "Recovery food", "pet": "Pet food"}.get(category, "Recovery food")
+	return {"drink": tr("Recovery drink"), "food": tr("Recovery food"), "pet": tr("Pet food")}.get(category, tr("Recovery food"))
 
 
 func _restore_text(item: Dictionary) -> String:

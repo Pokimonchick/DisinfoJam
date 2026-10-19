@@ -15,6 +15,7 @@ var _all: Button
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	GameSettings.language_changed.connect(_refresh)
 	theme = NotebookTheme.create()
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	var shade := ColorRect.new()
@@ -90,32 +91,32 @@ func _refresh() -> void:
 	_today.button_pressed = not _all_days
 	_all.button_pressed = _all_days
 	if _ledger == null:
-		_text.text = "Записей пока нет."
+		_text.text = tr("Записей пока нет.")
 		return
 	var summary := _ledger.summary(-1 if _all_days else _day)
 	_text.clear()
-	_text.add_text("Все дни\n" if _all_days else "День %d\n" % _day)
+	_text.add_text(tr("Все дни\n") if _all_days else tr("День %d\n") % _day)
 	if _ledger.history_incomplete:
-		_text.add_text("Старое сохранение: история расходов неполная; сохранены известные публикации.\n\n")
-	_text.add_text("Доходы: +%d $     Расходы: −%d $     Итог: %s $\n\n" % [summary.income, summary.expenses, _signed(summary.balance)])
-	_text.add_text("РАСХОДЫ\n")
+		_text.add_text(tr("Старое сохранение: история расходов неполная; сохранены известные публикации.\n\n"))
+	_text.add_text(tr("Доходы: +%d $     Расходы: −%d $     Итог: %s $\n\n") % [summary.income, summary.expenses, _signed(summary.balance)])
+	_text.add_text(tr("РАСХОДЫ\n"))
 	for kind in Ledger.EXPENSE_KINDS:
-		_text.add_text("%s: −%d $\n" % [Ledger.EXPENSE_NAMES[kind], summary.expenses_by_kind[kind]])
-	_text.add_text("\nДОХОДЫ ОТ ПУБЛИКАЦИЙ\n")
+		_text.add_text("%s: −%d $\n" % [tr(Ledger.EXPENSE_NAMES[kind]), summary.expenses_by_kind[kind]])
+	_text.add_text(tr("\nДОХОДЫ ОТ ПУБЛИКАЦИЙ\n"))
 	for type in range(3):
-		_text.add_text("%s: %s $\n" % [Ledger.INCOME_NAMES[type], _signed(summary.publication_by_type[type])])
-	_text.add_text("Исправления при вычитке: %s $\n" % _signed(summary.proofreading_income))
+		_text.add_text("%s: %s $\n" % [tr(Ledger.INCOME_NAMES[type]), _signed(summary.publication_by_type[type])])
+	_text.add_text(tr("Исправления при вычитке: %s $\n") % _signed(summary.proofreading_income))
 	var best_names: Array[String] = []
 	for type in summary.best_types:
-		best_names.append(Ledger.INCOME_NAMES[type])
-	_text.add_text("Больше всего приносит: %s\n\n" % (", ".join(best_names) if not best_names.is_empty() else "пока нет доходов"))
-	_text.add_text("ОПЕРАЦИИ — СНАЧАЛА НОВЫЕ\n")
+		best_names.append(tr(Ledger.INCOME_NAMES[type]))
+	_text.add_text(tr("Больше всего приносит: %s\n\n") % (", ".join(best_names) if not best_names.is_empty() else tr("пока нет доходов")))
+	_text.add_text(tr("ОПЕРАЦИИ — СНАЧАЛА НОВЫЕ\n"))
 	if summary.transactions.is_empty():
-		_text.add_text("Записей пока нет.\n")
+		_text.add_text(tr("Записей пока нет.\n"))
 	for entry in summary.transactions:
-		_text.add_text("День %d · %s · %s $\n" % [entry.day, entry.label, _signed(entry.amount)])
+		_text.add_text(tr("День %d · %s · %s $\n") % [entry.day, tr(entry.label), _signed(entry.amount)])
 		if not str(entry.headline).is_empty():
-			_text.add_text("  %s\n" % entry.headline)
+			_text.add_text("  %s\n" % tr(entry.headline))
 		_text.add_text("\n")
 
 func _signed(amount: int) -> String:

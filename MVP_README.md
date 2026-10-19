@@ -54,6 +54,7 @@
 | Значение шкал | `Scripts/stat_descriptions.gd`, `Scenes/work_status_drawer.tscn`, `Scenes/newsroom_hud.tscn` |
 | Финансовый блокнот и анимация списаний | `Scripts/finance_ledger.gd`, `Scenes/finance_notebook.tscn`, `Scripts/finance_notebook.gd`, `Scripts/money_delta.gd` |
 | Музыка, эффекты и громкость | `Scenes/audio_manager.tscn`, `Scripts/audio_manager.gd`, `Scenes/audio_cue.tscn`, `Scripts/game_settings.gd`, `Docs/AUDIO.md` |
+| Русский / English в настройках, переводы и вычитка | `Localization/`, `Scripts/game_settings.gd`, `Scenes/settings_panel.tscn`; описание — `Docs/LOCALIZATION.md` |
 | Вечер, магазин, рюкзак и ночь | `Scenes/home_screen.tscn`, `Scripts/home_screen.gd`, `Scripts/tamagotchi_room.gd`, `Scripts/tamagotchi_panels.gd`, `Data/home_items.gd` |
 | Порядок экранов, история, меню, автосохранение | `Scenes/mvp_game.tscn`, `Scripts/mvp_game.gd`, `Data/chapter_one.gd` |
 | Стиль окон, шрифты и появление реплик | `Data/editorial_ui_theme.tres`, `Scripts/game_fonts.gd`, `Scripts/editorial_card.gd`, `Scripts/dialogue_reveal.gd`, `Docs/UI_STYLE.md` |

@@ -41,6 +41,10 @@ window/stretch/aspect="expand"
 timers/tooltip_delay_sec=3600.0
 theme/custom_font="res://Assets/Assets for new version of game/tamagochi/Alegreya_Sans,Ysabeau/Alegreya_Sans/AlegreyaSans-Regular.ttf"
 
+[internationalization]
+
+locale/fallback="ru"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

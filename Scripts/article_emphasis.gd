@@ -8,10 +8,11 @@ const PAGE_RANGES := &"article_emphasis_page"
 static func ranges_for(id: String, source: String, targets: Array = []) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for entry: Dictionary in CATALOG.ENTRIES.get(id, []):
-		var start := source.find(str(entry.text))
+		var phrase := str(TranslationServer.translate(str(entry.text)))
+		var start := source.find(phrase)
 		if start < 0:
 			continue
-		var end := start + str(entry.text).length()
+		var end := start + phrase.length()
 		result.append({"start": _display_offset(start, targets), "end": _display_offset(end, targets), "italic": bool(entry.get("italic", false))})
 	result.sort_custom(func(a: Dictionary, b: Dictionary): return a.start < b.start)
 	return result

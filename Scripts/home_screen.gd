@@ -67,7 +67,10 @@ func refresh() -> void:
 		return
 	money_label.text = "$%d" % session.money
 	money_label.add_theme_color_override("font_color", Color("973b28") if session.money < 0 else Color("4c281b"))
-	%Day.text = WEEKDAYS[clampi(session.day - 1, 0, WEEKDAYS.size() - 1)]
+	%Day.text = tr(WEEKDAYS[clampi(session.day - 1, 0, WEEKDAYS.size() - 1)])
+	var day_font: Font = %Day.get_theme_font("font")
+	var day_width := day_font.get_string_size(%Day.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 44).x
+	%Day.add_theme_font_size_override("font_size", mini(44, floori(44.0 * %Day.size.x / maxf(1.0, day_width))))
 	%DaysLeft.text = "%02d" % maxi(0, session.campaign_days - session.day)
 	var sleeping := _sleep_left > 0.0
 	_refresh_controls()
@@ -78,6 +81,11 @@ func refresh() -> void:
 		"loyalty": session.loyalty, "qualification": session.qualification,
 		"maximum_stat": session.balance.maximum_stat,
 		"proofreading_unlocked": session.proofreading_unlocked})
+
+func refresh_language() -> void:
+	_panels.refresh_language()
+	%Notice.text = ""
+	refresh()
 
 func _refresh_controls() -> void:
 	var sleeping := _sleep_left > 0.0
@@ -127,9 +135,9 @@ func _consume(item_id: String) -> void:
 	if result.category == "pet":
 		_panels.hide_all()
 		room.play_fish_feedback()
-		%Notice.text = "Рыбки получили ужин. Кажется, обе довольны."
+		%Notice.text = tr("Рыбки получили ужин. Кажется, обе довольны.")
 	else:
-		%Notice.text = "%s: +%d к выносливости." % [item.name, int(result.restore)]
+		%Notice.text = tr("%s: +%d к выносливости.") % [tr(item.name), int(result.restore)]
 		if result.category == "drink":
 			AudioManager.play_cue(AudioManager.Cue.COFFEE)
 	%Notice.show()

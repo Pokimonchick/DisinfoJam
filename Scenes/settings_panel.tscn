@@ -73,6 +73,23 @@ theme_override_colors/font_color = Color(0.38, 0.12, 0.16, 1)
 theme_override_font_sizes/font_size = 15
 text = "01  /  ИНТЕРФЕЙС"
 
+[node name="LanguageRow" type="HBoxContainer" parent="Center/Paper/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Label" type="Label" parent="Center/Paper/Layout/LanguageRow"]
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+text = "Язык / Language"
+
+[node name="Language" type="OptionButton" parent="Center/Paper/Layout/LanguageRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 2
+auto_translate_mode = 2
+
 [node name="Tooltips" type="CheckBox" parent="Center/Paper/Layout"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
