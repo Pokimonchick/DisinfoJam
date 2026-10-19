@@ -1,0 +1,32 @@
+sequenceDiagram
+    actor Player as Игрок
+    participant Screen as NewsroomScreen
+    participant Stamp as DeskStamp
+    participant Surface as ProofreadingSurface
+    participant Job as ProofreadingEvaluation
+    participant Session as NewsroomSession
+
+    Player->>Screen: Выбрать заголовок
+    Screen->>Screen: Сохранить selected_index
+    Player->>Stamp: Взять штамп и нажать на область печати
+    Stamp-->>Screen: Сигнал stamped после удара
+
+    opt Вычитка открыта и есть штрихи
+        Screen->>Surface: create_evaluation(page_ranges)
+        Surface-->>Screen: Задача ProofreadingEvaluation
+        loop До завершения, порциями между кадрами
+            Screen->>Job: advance(budget_usec)
+            Job-->>Screen: Готовность и counts
+        end
+    end
+
+    Screen->>Session: publish_headline(index, counts)
+    Session->>Session: Применить выбор, комбо и вычитку
+    Session->>Session: Обновить показатели и финансовый журнал
+    Session->>Session: Продвинуть article_cursor и проверить концовку
+    Session-->>Screen: Сигнал published(result)
+    Screen->>Screen: Дождаться возврата штампа и показать результат
+    Player->>Screen: Закрыть записку результата
+    Screen->>Session: acknowledge_publication()
+    Session-->>Screen: Сигнал article_changed
+    Screen->>Screen: Показать следующую статью
