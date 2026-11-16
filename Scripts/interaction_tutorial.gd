@@ -4,37 +4,116 @@ signal next_requested
 signal previous_requested
 signal skip_requested
 
-@export_group("Портреты")
-@export var boss_portrait: Texture2D
-@export var heroine_portrait: Texture2D = preload("res://Assets/Characters/Mask group (22).png")
 @export_group("Оформление")
 @export_range(0.0, 1.0, 0.01) var dim_opacity := 0.76
 @export_range(0.0, 30.0, 1.0) var highlight_margin := 10.0
 
 var _targets: Array[Control] = []
+var _input_targets: Array[Control] = []
+var _wait_for_action := false
 var _highlight := Rect2()
 var _redraw_size := Vector2(-1.0, -1.0)
 var _redraw_dim_opacity := -1.0
+const HOME_PAPER = preload("res://Assets/Assets for new version of game/tamagochi/Тамагочи/dialogue/dialogue background.png")
+var _editorial_style: StyleBox
+var _home_style: StyleBoxTexture
 @onready var _panel: PanelContainer = $Paper
 
 func _ready() -> void:
-	%Next.pressed.connect(func(): next_requested.emit())
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_editorial_style = _panel.get_theme_stylebox("panel")
+	_home_style = StyleBoxTexture.new()
+	_home_style.texture = HOME_PAPER
+	_home_style.texture_margin_left = 18.0
+	_home_style.texture_margin_right = 18.0
+	_home_style.texture_margin_top = 18.0
+	_home_style.texture_margin_bottom = 18.0
+	_home_style.content_margin_left = 30.0
+	_home_style.content_margin_right = 30.0
+	_home_style.content_margin_top = 20.0
+	_home_style.content_margin_bottom = 20.0
+	%Speaker.add_theme_font_override("font", preload("res://Scripts/game_fonts.gd").BOLD)
+	%Explanation.add_theme_font_override("normal_font", preload("res://Scripts/game_fonts.gd").BODY)
+	for button in [%Back, %Skip]:
+		for state in ["normal", "hover", "pressed", "disabled"]:
+			button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+		for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+			button.add_theme_color_override(color_name, Color("4c2840"))
+		button.add_theme_color_override("font_disabled_color", Color("aa948b"))
+	_panel.gui_input.connect(_on_paper_input)
 	%Back.pressed.connect(func(): previous_requested.emit())
 	%Skip.pressed.connect(func(): skip_requested.emit())
 
-func present(speaker: String, body: String, targets: Array[Control], step: int, count: int, heroine: bool, last_caption: String) -> void:
+func present(speaker: String, body: String, targets: Array[Control], step: int, count: int, heroine: bool, _last_caption: String, wait_for_action: bool = false, input_targets: Array[Control] = []) -> void:
 	_targets = targets
-	%Speaker.text = "%s · %d / %d" % [speaker, step + 1, count]
-	%Explanation.text = body
+	_wait_for_action = wait_for_action
+	_input_targets = targets if input_targets.is_empty() else input_targets
+	_panel.focus_mode = Control.FOCUS_NONE if _wait_for_action else Control.FOCUS_ALL
+	if _wait_for_action and _panel.has_focus():
+		_panel.release_focus()
+	_panel.set("draw_paper", not heroine)
+	_panel.add_theme_stylebox_override("panel", _home_style if heroine else _editorial_style)
+	%Explanation.add_theme_color_override("default_color", Color("4c2840") if heroine else Color("273533"))
+	%Speaker.text = "[%s] · %d / %d" % [speaker, step + 1, count]
 	%Back.disabled = step == 0
-	%Next.text = last_caption if step == count - 1 else "Дальше"
-	%Portrait.texture = heroine_portrait if heroine else boss_portrait
-	%Portrait.visible = %Portrait.texture != null
-	%BossPlaceholder.visible = not %Portrait.visible
+	%Back.visible = not _wait_for_action
 	show()
-	%Next.grab_focus()
+	%Explanation.reveal(body, DialogueReveal.Speaker.HEROINE if heroine else DialogueReveal.Speaker.BOSS)
+	focus_continue()
 	_position_paper()
 	queue_redraw()
+
+func focus_continue() -> void:
+	if _wait_for_action:
+		%Skip.focus_next = %Skip.get_path_to(%Skip)
+		%Skip.focus_previous = %Skip.get_path_to(%Skip)
+		return
+	var first: Control = %Skip if %Back.disabled else %Back
+	_panel.focus_next = _panel.get_path_to(first)
+	_panel.focus_previous = _panel.get_path_to(%Skip)
+	%Back.focus_next = %Back.get_path_to(%Skip)
+	%Back.focus_previous = %Back.get_path_to(_panel)
+	%Skip.focus_next = %Skip.get_path_to(_panel)
+	%Skip.focus_previous = %Skip.get_path_to(_panel if %Back.disabled else %Back)
+	_panel.grab_focus()
+
+func _on_paper_input(event: InputEvent) -> void:
+	var click: bool = event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed
+	var key: bool = event is InputEventKey and event.pressed and not event.echo and event.keycode in [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]
+	if not click and not key:
+		return
+	_panel.accept_event()
+	focus_continue()
+	if not %Explanation.finish_reveal() and not _wait_for_action:
+		next_requested.emit()
+
+func _input(event: InputEvent) -> void:
+	if not is_visible_in_tree() or not _wait_for_action:
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode in [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]:
+		if %Skip.has_focus():
+			return
+		%Explanation.finish_reveal()
+
+func _has_point(point: Vector2) -> bool:
+	if not _wait_for_action:
+		return Rect2(Vector2.ZERO, size).has_point(point)
+	var viewport_point := get_global_transform_with_canvas() * point
+	if contains_paper(viewport_point):
+		return true
+	for target in _input_targets:
+		if not is_instance_valid(target) or not target.is_visible_in_tree():
+			continue
+		var target_point := target.get_global_transform_with_canvas().affine_inverse() * viewport_point
+		if Rect2(Vector2.ZERO, target.size).has_point(target_point):
+			return false
+	return Rect2(Vector2.ZERO, size).has_point(point)
+
+func contains_paper(viewport_point: Vector2) -> bool:
+	if not is_visible_in_tree():
+		return false
+	var paper_point := _panel.get_global_transform_with_canvas().affine_inverse() * viewport_point
+	return Rect2(Vector2.ZERO, _panel.size).has_point(paper_point)
 
 func _process(_delta: float) -> void:
 	if visible:

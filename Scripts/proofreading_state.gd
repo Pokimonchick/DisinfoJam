@@ -1,0 +1,252 @@
+class_name ProofreadingState
+extends RefCounted
+
+const VERSION := 2
+const MAX_TARGETS := 5
+const LETTERS := "абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
+const ENGLISH_LETTERS := "abcdefghijklmnopqrstuvwxyz"
+const MAX_STROKES := 300
+const MAX_POINTS := 6000
+
+var article_id := ""
+var source_text := ""
+var display_text := ""
+var seed := 0
+var targets: Array = []
+var strokes: Array = []
+
+func prepare(id: String, source: String, random_seed: int, guaranteed: bool = false, requested_count: int = -1) -> void:
+	article_id = id
+	source_text = source
+	display_text = source
+	seed = random_seed
+	targets.clear()
+	strokes.clear()
+	var random := RandomNumberGenerator.new()
+	random.seed = random_seed
+	var candidates: Array = []
+	for word in words(source):
+		var text: String = word.text
+		# Uppercase tokens include names, abbreviations and sentence openings.
+		if text.length() >= 5 and text == text.to_lower():
+			var positions: Array = []
+			for index in range(1, text.length() - 1):
+				if text[index] != text[index + 1]:
+					positions.append(index)
+			word["positions"] = positions
+			candidates.append(word)
+	var count := mini(clampi(requested_count, 0, MAX_TARGETS) if requested_count >= 0 else (1 if guaranteed else random.randi_range(0, MAX_TARGETS)), candidates.size())
+	var chosen_words: Array = []
+	for index in count:
+		var chosen: Dictionary = candidates.pop_at(random.randi_range(0, candidates.size() - 1))
+		var original: String = chosen.text
+		var alphabet := _word_alphabet(original)
+		if chosen.positions.is_empty() or random.randf() < 0.5:
+			var at := random.randi_range(1, original.length() - 1)
+			chosen["typo"] = original.substr(0, at) + alphabet[random.randi_range(0, alphabet.length() - 1)] + original.substr(at)
+		else:
+			var swap: int = chosen.positions[random.randi_range(0, chosen.positions.size() - 1)]
+			chosen["typo"] = original.substr(0, swap) + original[swap + 1] + original[swap] + original.substr(swap + 2)
+		chosen_words.append(chosen)
+	chosen_words.sort_custom(func(a: Dictionary, b: Dictionary): return a.start < b.start)
+	# Added letters shift later display offsets. Keep source and displayed word
+	# positions separate so paging, hit areas and saved marks use the visible text.
+	display_text = ""
+	var cursor := 0
+	for chosen in chosen_words:
+		display_text += source.substr(cursor, int(chosen.start) - cursor)
+		var start := display_text.length()
+		display_text += chosen.typo
+		targets.append({"id": start, "start": start, "source_start": int(chosen.start), "length": chosen.typo.length(), "original": chosen.text, "typo": chosen.typo})
+		cursor = int(chosen.start + chosen.length)
+	display_text += source.substr(cursor)
+
+static func words(text: String) -> Array:
+	var matcher := RegEx.new()
+	matcher.compile("[A-Za-z]+|[А-Яа-яЁё]+")
+	var result: Array = []
+	for match_result in matcher.search_all(text):
+		result.append({"start": match_result.get_start(), "length": match_result.get_end() - match_result.get_start(), "text": match_result.get_string()})
+	return result
+
+static func _word_alphabet(word: String) -> String:
+	return ENGLISH_LETTERS if word[0].to_lower() in ENGLISH_LETTERS else LETTERS
+
+func add_stroke(stroke: Dictionary) -> void:
+	if strokes.size() >= MAX_STROKES or not _valid_stroke(stroke, display_text.length()):
+		return
+	strokes.append(stroke.duplicate(true))
+
+func undo_last() -> bool:
+	if strokes.is_empty():
+		return false
+	strokes.pop_back()
+	return true
+
+static func stroke_page_anchor(stroke: Dictionary) -> int:
+	if stroke.has("page_character"):
+		return int(stroke.page_character)
+	# Old mixed-anchor marks belong to their first text line, or the first sheet.
+	for segment in stroke.segments:
+		if segment.anchor == "text":
+			return int(segment.character)
+	return 0
+
+func settlement(money_penalty_limit := 20, qualification_penalty_limit := 20, evaluated_counts: Dictionary = {}) -> Dictionary:
+	var corrected_ids: Dictionary = {}
+	var wrong_words: Dictionary = {}
+	var valid_ids: Dictionary = {}
+	for target in targets:
+		valid_ids[int(target.id)] = true
+	if evaluated_counts.is_empty():
+		# Compatibility for already-classified data and callers without scene geometry.
+		for stroke in strokes:
+			for target_id in stroke.get("corrected", []):
+				if valid_ids.has(int(target_id)):
+					corrected_ids[int(target_id)] = true
+			for word_start in stroke.get("wrong", []):
+				if not valid_ids.has(int(word_start)):
+					wrong_words[int(word_start)] = true
+	var corrected := clampi(int(evaluated_counts.get("corrected", corrected_ids.size())), 0, targets.size())
+	var missed := targets.size() - corrected
+	var wrong := maxi(0, int(evaluated_counts.get("wrong", wrong_words.size())))
+	var penalties := penalty_breakdown(missed, wrong, money_penalty_limit, qualification_penalty_limit)
+	return {"corrected": corrected, "missed": missed, "wrong": wrong, "money": corrected * 2 - penalties.missed_money - penalties.wrong_money, "qualification": corrected - penalties.qualification}
+
+static func penalty_breakdown(missed: int, wrong: int, money_limit: int, qualification_limit: int) -> Dictionary:
+	# Cap the total deductions for this article, preserving correction rewards.
+	# Allocate missed-typo costs first so ledger categories match the actual debit.
+	var missed_money := mini(missed, maxi(0, money_limit))
+	return {"missed_money": missed_money, "wrong_money": mini(wrong, maxi(0, money_limit - missed_money)), "qualification": mini(missed * 2 + wrong, maxi(0, qualification_limit))}
+
+func to_data() -> Dictionary:
+	return {"version": VERSION, "article_id": article_id, "source_text": source_text, "display_text": display_text, "seed": seed, "targets": targets.duplicate(true), "strokes": strokes.duplicate(true)}
+
+func restore(data: Dictionary) -> void:
+	if not validate_data(data):
+		return
+	article_id = data.article_id
+	source_text = data.source_text
+	display_text = data.display_text
+	seed = int(data.seed)
+	targets = data.targets.duplicate(true)
+	strokes = data.strokes.duplicate(true)
+	# JSON decodes integer-valued numbers as floats; keep the in-memory schema stable.
+	for target in targets:
+		target["source_start"] = int(target.start) if int(data.version) == 1 else int(target.source_start)
+		for key in ["id", "start", "source_start", "length"]:
+			target[key] = int(target[key])
+	targets.sort_custom(func(a: Dictionary, b: Dictionary): return a.source_start < b.source_start)
+	for stroke in strokes:
+		if stroke.has("page_character"):
+			stroke.page_character = int(stroke.page_character)
+		for segment in stroke.segments:
+			if segment.anchor == "text":
+				segment.character = int(segment.character)
+		for key in ["corrected", "wrong"]:
+			stroke[key] = stroke.get(key, []).map(func(value): return int(value))
+
+static func validate_data(data: Dictionary) -> bool:
+	if not _integer(data.get("version")) or int(data.version) not in [1, VERSION]:
+		return false
+	for key in ["article_id", "source_text", "display_text"]:
+		if not data.get(key) is String:
+			return false
+	if not _integer(data.get("seed")) or not data.get("targets") is Array or not data.get("strokes") is Array:
+		return false
+	var legacy := int(data.version) == 1
+	if data.targets.size() > (2 if legacy else MAX_TARGETS) or data.strokes.size() > MAX_STROKES:
+		return false
+	if legacy and data.source_text.length() != data.display_text.length():
+		return false
+	var ordered: Array = []
+	var seen: Dictionary = {}
+	var source_words: Dictionary = {}
+	for word in words(data.source_text):
+		source_words[int(word.start)] = word
+	for target in data.targets:
+		if not target is Dictionary:
+			return false
+		for key in ["id", "start", "length"]:
+			if not _integer(target.get(key)):
+				return false
+		if not target.get("original") is String or not target.get("typo") is String:
+			return false
+		if not legacy and not _integer(target.get("source_start")):
+			return false
+		var start := int(target.start)
+		var source_start := int(target.get("source_start", start)) if not legacy else start
+		var length := int(target.length)
+		var original: String = target.original
+		var typo: String = target.typo
+		if start < 0 or length < 5 or start + length > data.display_text.length() or int(target.id) != start or seen.has(start):
+			return false
+		if typo.length() != length or original.length() < 5 or length not in [original.length(), original.length() + (0 if legacy else 1)] or original == typo:
+			return false
+		if not source_words.has(source_start) or int(source_words[source_start].length) != original.length() or source_words[source_start].text != original or original != original.to_lower():
+			return false
+		if not legacy:
+			var alphabet := _word_alphabet(original)
+			for letter in typo:
+				if letter not in alphabet:
+					return false
+		seen[start] = true
+		ordered.append({"start": start, "source_start": source_start, "original": original, "typo": typo})
+	ordered.sort_custom(func(a: Dictionary, b: Dictionary): return a.source_start < b.source_start)
+	var rebuilt := ""
+	var cursor := 0
+	for target in ordered:
+		if int(target.source_start) < cursor:
+			return false
+		rebuilt += data.source_text.substr(cursor, int(target.source_start) - cursor)
+		if rebuilt.length() != int(target.start):
+			return false
+		rebuilt += target.typo
+		cursor = int(target.source_start) + target.original.length()
+	rebuilt += data.source_text.substr(cursor)
+	if rebuilt != data.display_text:
+		return false
+	var word_starts: Dictionary = {}
+	for word in words(data.display_text):
+		word_starts[int(word.start)] = word
+	for stroke in data.strokes:
+		if not stroke is Dictionary or not _valid_stroke(stroke, rebuilt.length()):
+			return false
+		for target_id in stroke.get("corrected", []):
+			if not seen.has(int(target_id)):
+				return false
+		for wrong_start in stroke.get("wrong", []):
+			if not word_starts.has(int(wrong_start)) or seen.has(int(wrong_start)):
+				return false
+	return true
+
+static func _integer(value: Variant) -> bool:
+	return value is int or (value is float and is_finite(value) and value == floor(value))
+
+static func _valid_stroke(stroke: Dictionary, text_length: int) -> bool:
+	if stroke.has("page_character") and (not _integer(stroke.page_character) or int(stroke.page_character) < 0 or int(stroke.page_character) >= maxi(1, text_length)):
+		return false
+	if not stroke.get("segments") is Array or stroke.segments.is_empty() or stroke.segments.size() > MAX_POINTS:
+		return false
+	var total := 0
+	for segment in stroke.segments:
+		if not segment is Dictionary or segment.get("anchor") not in ["desk", "text"] or not segment.get("points") is Array:
+			return false
+		if segment.anchor == "text" and (not _integer(segment.get("character")) or int(segment.character) < 0 or int(segment.character) >= text_length):
+			return false
+		total += segment.points.size()
+		if total > MAX_POINTS or segment.points.size() < 2:
+			return false
+		for point in segment.points:
+			if not point is Array or point.size() != 2:
+				return false
+			for number in point:
+				if not (number is float or number is int) or not is_finite(float(number)) or absf(float(number)) > 100:
+					return false
+	for key in ["corrected", "wrong"]:
+		if not stroke.get(key, []) is Array:
+			return false
+		for value in stroke.get(key, []):
+			if not _integer(value) or int(value) < 0 or int(value) >= text_length:
+				return false
+	return true

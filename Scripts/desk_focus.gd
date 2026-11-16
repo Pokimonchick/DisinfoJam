@@ -5,13 +5,15 @@ signal primary_pressed
 signal secondary_pressed
 signal close_pressed
 
-const ZOOM_TIME := 0.26
+@export_range(0.2, 2.0, 0.05) var opening_seconds := 0.7
+@export_range(0.2, 2.0, 0.05) var closing_seconds := 0.45
 
 var active := false
 var _origin: Control
 var _motion: Tween
 var _opening := false
 var _version := 0
+var _target_size := Vector2.ZERO
 
 @onready var body_label: RichTextLabel = %Body
 @onready var primary_button: Button = %Primary
@@ -48,18 +50,19 @@ func present(origin: Control, tag: String, title: String, body: String, primary:
 	var available_size: Vector2 = (get_parent() as Control).size - Vector2(32.0, 24.0)
 	var zoom: float = minf(minf(preferred_size.x / origin.size.x, preferred_size.y / origin.size.y), minf(available_size.x / origin.size.x, available_size.y / origin.size.y))
 	var target_size: Vector2 = origin.size * zoom
+	_target_size = target_size
 	_origin.hide()
 	active = true
 	_opening = true
 	modulate.a = 0.0
 	show()
+	AudioManager.play_cue(AudioManager.Cue.PAPER_TURN)
 	# Let wrapped text recalculate its minimum size at the new width before
 	# exposing the paper; otherwise the first opening can grow off-screen.
 	size = target_size
 	await get_tree().process_frame
 	if version != _version or not active:
 		return
-	_opening = false
 	size = target_size
 	pivot_offset = target_size / 2.0
 	var origin_transform := _origin_transform()
@@ -68,17 +71,47 @@ func present(origin: Control, tag: String, title: String, body: String, primary:
 	rotation = origin_transform.get_rotation()
 	modulate.a = 1.0
 	$Margin.modulate.a = 0.0
-	_motion = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_motion.tween_property(self, "position", (get_parent().size - target_size) / 2.0, ZOOM_TIME)
-	_motion.tween_property(self, "scale", Vector2.ONE, ZOOM_TIME)
-	_motion.tween_property(self, "rotation", -0.015, ZOOM_TIME)
-	_motion.tween_property($Margin, "modulate:a", 1.0, ZOOM_TIME * 0.75).set_delay(ZOOM_TIME * 0.25)
+	_motion = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_motion.tween_property(self, "position", (get_parent().size - target_size) / 2.0, opening_seconds)
+	_motion.tween_property(self, "scale", Vector2.ONE, opening_seconds)
+	_motion.tween_property(self, "rotation", -0.015, opening_seconds)
+	_motion.tween_property($Margin, "modulate:a", 1.0, opening_seconds * 0.75).set_delay(opening_seconds * 0.25)
+	_motion.chain().tween_callback(func():
+		if version == _version:
+			_opening = false
+			_motion = null
+	)
+
+func is_opening() -> bool:
+	return active and _opening
+
+func finish_opening() -> bool:
+	if not is_opening():
+		return false
+	# Consume this press even during the initial text-layout frame.
+	_version += 1
+	if _motion and _motion.is_valid():
+		_motion.kill()
+	_motion = null
+	_opening = false
+	size = _target_size
+	pivot_offset = size * 0.5
+	position = ((get_parent() as Control).size - size) * 0.5
+	scale = Vector2.ONE
+	rotation = -0.015
+	modulate.a = 1.0
+	$Margin.modulate.a = 1.0
+	return true
 
 func close(after_close: Callable = Callable()) -> void:
 	if not active:
 		return
 	active = false
+	AudioManager.play_cue(AudioManager.Cue.PAPER_PUT)
 	_version += 1
+	if _motion and _motion.is_valid():
+		_motion.kill()
+	_motion = null
 	if _opening:
 		_opening = false
 		if is_instance_valid(_origin):
@@ -88,14 +121,13 @@ func close(after_close: Callable = Callable()) -> void:
 		if after_close.is_valid():
 			after_close.call()
 		return
-	if _motion and _motion.is_valid():
-		_motion.kill()
-	_motion = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	_motion = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	var origin_transform := _origin_transform()
-	_motion.tween_property(self, "position", origin_transform * (_origin.size * 0.5) - size * 0.5, ZOOM_TIME * 0.75)
-	_motion.tween_property(self, "scale", Vector2.ONE * (_origin.size.x / size.x) * origin_transform.get_scale().x, ZOOM_TIME * 0.75)
-	_motion.tween_property(self, "rotation", origin_transform.get_rotation(), ZOOM_TIME * 0.75)
-	_motion.tween_property($Margin, "modulate:a", 0.0, ZOOM_TIME * 0.5)
+	_motion.tween_property(self, "position", origin_transform * (_origin.size * 0.5) - size * 0.5, closing_seconds)
+	_motion.tween_property(self, "scale", Vector2.ONE * (_origin.size.x / size.x) * origin_transform.get_scale().x, closing_seconds)
+	_motion.tween_property(self, "rotation", origin_transform.get_rotation(), closing_seconds)
+	_motion.tween_property(self, "modulate:a", 0.0, closing_seconds)
+	_motion.tween_property($Margin, "modulate:a", 0.0, closing_seconds * 0.75)
 	_motion.chain().tween_callback(func():
 		if is_instance_valid(_origin):
 			_origin.show()

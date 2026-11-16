@@ -4,6 +4,8 @@ signal view_changed
 signal pause_requested
 
 const CHOICE_OVERLAY: PackedScene = preload("res://Scenes/headline_choice_overlay.tscn")
+const Pager = preload("res://Scripts/source_pager.gd")
+const Evaluation = preload("res://Scripts/proofreading_evaluation.gd")
 const NUMBER_ART: Array[Texture2D] = [
 	preload("res://Assets/Assets for new version of game/Untitled (22)/image 10.png"),
 	preload("res://Assets/Assets for new version of game/Untitled (22)/IMG_1370 1.png"),
@@ -19,15 +21,27 @@ const NUMBER_ART: Array[Texture2D] = [
 
 enum DialogKind { NONE, RESULT }
 
+@export_group("Publication result")
+@export_range(0.0, 5.0, 0.1) var result_delay_seconds := 0.5
+@export_group("Text motion")
+@export_range(0.0, 2.0, 0.05) var source_reveal_seconds := 1.8
+@export var source_ink_material: ShaderMaterial = preload("res://Data/source_ink.tres")
+@export var source_page_scene: PackedScene = preload("res://Scenes/source_pager.tscn")
+@export_group("Proofreading")
+@export var pencil_rest_position := Vector2(800, 940)
+@export var eraser_rest_position := Vector2(600, 940)
+@export_range(0.1, 4.0, 0.1) var proofreading_budget_ms := 2.0
 @export_group("Audio")
-@export var headline_appear_sound: AudioStream = preload("res://Assets/Sounds/paper - Part_1.wav")
-@export_range(-40.0, 6.0, 0.5) var headline_appear_volume_db: float = 0.0
+@export var headline_appear_sound: AudioStream = preload("res://Assets/Sounds/Бумага перелистывание.wav")
+@export_range(-40.0, 6.0, 0.5) var headline_appear_volume_db: float = -5.0
 
 var session: NewsroomSession
 # Selected is the article's draft, not a published headline.
 var selected_index := -1
 var popup_kind: DialogKind = DialogKind.NONE
 var choices_open := false
+var tutorial_action := ""
+var tutorial_paper: Control
 var _choices_animating := false
 var _choice_tween: Tween
 var _choice_overlay: Control
@@ -35,12 +49,46 @@ var _choice_close_button: Button
 var _shown_combo_count := -1
 var _shown_combo_type := -1
 var _combo_tween: Tween
+var _pending_result: Dictionary = {}
+var _result_delay: Tween
+var _source_reveal: Tween
+var _next_source: NewsArticle
+var _source_material: ShaderMaterial
+var _page_material: ShaderMaterial
+var _displayed_article_id := ""
+var source_pager: Pager
+var pencil: DeskPencil
+var proofreading_surface: ProofreadingSurface
+var eraser: DeskPencil
+var _evaluation: Evaluation
+var _publication_index := -1
+var _publication_article_id := ""
+var _publication_state: ProofreadingState
+var evaluating_publication: bool:
+	get:
+		return _evaluation != null
 @onready var cards: Array[Button] = [%Headline1, %Headline2, %Headline3]
 @onready var popup: DeskFocus = $Canvas/DeskFocus
 @onready var combo_burst: Control = %ComboBurst
 @onready var choices: Control = $Canvas/World/Choices
+@onready var stamp: DeskStamp = %Stamp
+@onready var stamp_area: StampArea = %StampArea
 
 func _ready() -> void:
+	_source_material = source_ink_material.duplicate(true) as ShaderMaterial
+	_page_material = _source_material.duplicate() as ShaderMaterial
+	%SourceText.material = _page_material
+	for ink_item in [%SourceTitle, %ArticleNumber, %ArticleNumber.get_node("NumberArt")]:
+		ink_item.material = _source_material
+	_create_proofreading_tools()
+	_create_source_pager()
+	visibility_changed.connect(func():
+		if not is_visible_in_tree():
+			_cancel_publication_evaluation(true)
+		_animate_source(is_visible_in_tree())
+	)
+	stamp_area.absorption_progress_changed.connect(_on_source_absorption)
+	stamp_area.ink_time_changed.connect(func(time: float): _set_source_ink_parameter("ink_time", time))
 	_choice_overlay = CHOICE_OVERLAY.instantiate() as Control
 	choices.add_child(_choice_overlay)
 	choices.move_child(_choice_overlay, 0)
@@ -53,23 +101,87 @@ func _ready() -> void:
 	%HeadlineField.pressed.connect(_toggle_choices)
 	%Coffee.activated.connect(_drink_coffee)
 	%FinishShift.pressed.connect(_finish_shift)
-	%Publish.pressed.connect(_publish_selected)
+	stamp.stamped.connect(_publish_selected)
+	stamp.interaction_changed.connect(_refresh_actions)
+	stamp.returned_to_rest.connect(_start_result_delay)
 	%Drawer.toggled.connect(func(_expanded: bool): view_changed.emit())
 	popup.primary_pressed.connect(_on_primary)
 	popup.secondary_pressed.connect(_close_focus)
 	popup.close_pressed.connect(_close_focus)
 
+func _create_proofreading_tools() -> void:
+	var world: Control = $Canvas/World
+	proofreading_surface = ProofreadingSurface.new()
+	proofreading_surface.name = "Proofreading"
+	proofreading_surface.size = $Canvas.design_size
+	proofreading_surface.z_index = 4
+	proofreading_surface.set_ink_material(_source_material)
+	proofreading_surface.paper = stamp_area
+	world.add_child(proofreading_surface)
+	stamp_area.ink_color = proofreading_surface.pencil_color
+	proofreading_surface.changed.connect(func():
+		if session != null:
+			session.proofreading_changed()
+		view_changed.emit()
+	)
+	pencil = preload("res://Scenes/desk_pencil.tscn").instantiate() as DeskPencil
+	pencil.position = pencil_rest_position
+	pencil.z_index = 9
+	world.add_child(pencil)
+	pencil.set_surface(proofreading_surface)
+	pencil.interaction_changed.connect(_refresh_actions)
+	eraser = preload("res://Scenes/desk_eraser.tscn").instantiate() as DeskPencil
+	eraser.position = eraser_rest_position
+	eraser.z_index = 9
+	world.add_child(eraser)
+	eraser.set_surface(proofreading_surface)
+	eraser.interaction_changed.connect(_refresh_actions)
+
+func _create_source_pager() -> void:
+	source_pager = source_page_scene.instantiate() as Pager
+	$Canvas/World.add_child(source_pager)
+	source_pager.page_changed.connect(func(offset: int):
+		proofreading_surface.set_page_offset(offset)
+		_refresh_actions()
+		view_changed.emit()
+	)
+	source_pager.turning_changed.connect(func():
+		proofreading_surface.finish_stroke()
+		_refresh_actions()
+	)
+	source_pager.ink_progress_changed.connect(func(absorption: float, reveal: float):
+		_set_page_ink_parameter("page_absorption_progress", absorption)
+		_set_page_ink_parameter("page_reveal_progress", reveal)
+	)
+	source_pager.bind(%SourceText)
+	for ink_control in [source_pager.get_node("Backdrop"), source_pager.previous, source_pager.counter, source_pager.next]:
+		ink_control.material = _page_material
+	pencil.input_exclusions.assign([eraser, source_pager])
+	eraser.input_exclusions.assign([pencil, source_pager])
+	# Coffee and navigation are drawn above the ink; paper beneath them stays writable.
+	proofreading_surface.exclusions.assign([%HeadlineField])
+	stamp_area.excluded_controls.append(stamp_area.get_path_to(source_pager))
+
 func _process(_delta: float) -> void:
-	$Canvas.motion_enabled = not popup.visible and not (choices.visible and GameSettings.choice_overlay_enabled)
+	_advance_publication_evaluation()
+	$Canvas.motion_enabled = tutorial_action.is_empty() and not evaluating_publication and not popup.visible and _pending_result.is_empty() and not stamp.dragging and not stamp.busy and not pencil.held and not pencil.busy and not eraser.held and not eraser.busy and not (choices.visible and GameSettings.choice_overlay_enabled)
+
+func _exit_tree() -> void:
+	_cancel_publication_evaluation()
 
 func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree() or not event is InputEventMouseButton:
 		return
 	if event.button_index != MOUSE_BUTTON_LEFT or not event.pressed:
 		return
+	if is_instance_valid(tutorial_paper) and tutorial_paper.is_visible_in_tree() and _pointer_over(tutorial_paper, event.position):
+		return
 	if popup.active:
-		if not Rect2(Vector2.ZERO, popup.size).has_point(popup.get_local_mouse_position()):
-			_close_focus()
+		var scrollbar := popup.body_label.get_v_scroll_bar()
+		if scrollbar.visible and _pointer_over(scrollbar, event.position):
+			return
+		_close_focus()
+		get_viewport().set_input_as_handled()
 	elif choices_open and GameSettings.choice_overlay_enabled:
 		if _pointer_over(_choice_close_button, event.position):
 			return
@@ -99,14 +211,16 @@ func _update_choice_overlay() -> void:
 	var overlay_blocks := choices.visible and GameSettings.choice_overlay_enabled
 	%Drawer.visible = not overlay_blocks
 	%FinishShift.visible = not overlay_blocks
-	%Publish.visible = not overlay_blocks
+	stamp.visible = true
+	pencil.visible = session != null and session.proofreading_unlocked
+	eraser.visible = pencil.visible
 	if session != null:
 		_refresh_actions()
 
 func bind(model: NewsroomSession) -> void:
 	session = model
 	session.article_changed.connect(show_article)
-	session.published.connect(_show_result)
+	session.published.connect(_on_published)
 	session.changed.connect(_refresh_desk)
 	session.phase_changed.connect(_phase_changed)
 	%Drawer.bind(session)
@@ -114,27 +228,51 @@ func bind(model: NewsroomSession) -> void:
 
 func _phase_changed() -> void:
 	if session.phase != NewsroomSession.Phase.WORK:
+		_cancel_publication_evaluation()
+		_next_source = null
+		source_pager.finish_turn()
+		_animate_source(false)
+		_clear_pending_result()
+		stamp_area.reset()
 		popup.reset()
 		popup_kind = DialogKind.NONE
 		_hide_choices(false)
+		pencil.cancel_interaction()
+		eraser.cancel_interaction()
 	_refresh_desk()
 
 func _refresh_desk() -> void:
 	if session == null:
 		return
 	%Coffee.set_available(session.coffee_ready)
-	%Coffee.set_hint("Выпить: до +%d выносливости" % int(session.balance.coffee_health_restore))
-	%ShiftLabel.text = "СМЕНА %02d" % session.day
+	%Coffee.set_hint(tr("Выпить: до +%d выносливости") % int(session.balance.coffee_health_restore))
+	%ShiftLabel.text = tr("СМЕНА %02d") % session.day
 	_refresh_actions()
 	_refresh_combo()
 
 func _refresh_actions() -> void:
-	var blocked := session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached()
+	if session == null:
+		return
+	var blocked := evaluating_publication or session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached() or _next_source != null
 	var overlay_blocks := choices.visible and GameSettings.choice_overlay_enabled
-	%HeadlineField.disabled = blocked or _choices_animating or overlay_blocks
-	%Publish.disabled = blocked or selected_index < 0 or choices_open or _choices_animating or popup.visible or overlay_blocks
-	%FinishShift.disabled = blocked or overlay_blocks
-	%Coffee.get_node("Cup").disabled = blocked or not session.coffee_ready or session.coffee_used_today or session.health >= session.balance.maximum_stat or overlay_blocks
+	var turning := source_pager.turning
+	var tool_held := pencil.held or pencil.busy or eraser.held or eraser.busy
+	%HeadlineField.disabled = blocked or _choices_animating or overlay_blocks or tool_held or turning or tutorial_action not in ["", "headline", "choices"]
+	var can_publish := not (blocked or selected_index < 0 or choices_open or _choices_animating or popup.visible or overlay_blocks or tool_held or turning)
+	can_publish = can_publish and tutorial_action in ["", "stamp", "publish"]
+	stamp.set_enabled(can_publish)
+	stamp_area.set_available(can_publish)
+	pencil.enabled = session.proofreading_unlocked
+	pencil.visible = pencil.enabled
+	eraser.enabled = pencil.enabled
+	eraser.visible = pencil.visible
+	var tools_available := not (blocked or choices.visible or popup.visible or stamp.dragging or stamp.busy) and tutorial_action in ["", "pencil", "source", "return"]
+	pencil.interaction_enabled = tools_available and not (eraser.held or eraser.busy)
+	eraser.interaction_enabled = tools_available and tutorial_action.is_empty() and not (pencil.held or pencil.busy)
+	proofreading_surface.input_enabled = pencil.enabled and tools_available and not turning and tutorial_action != "return"
+	%FinishShift.disabled = blocked or overlay_blocks or stamp.dragging or stamp.busy or tool_held or turning or not tutorial_action.is_empty()
+	%Coffee.get_node("Cup").disabled = blocked or not session.coffee_ready or session.coffee_used_today or session.health >= session.balance.maximum_stat or overlay_blocks or stamp.dragging or stamp.busy or tool_held or turning or not tutorial_action.is_empty()
+	source_pager.enabled = not (blocked or choices.visible or popup.visible or stamp.dragging or stamp.busy or _source_reveal != null) and tutorial_action in ["", "headline"]
 
 func _refresh_combo() -> void:
 	if session.combo_count == _shown_combo_count and session.combo_type == _shown_combo_type:
@@ -151,8 +289,8 @@ func _refresh_combo() -> void:
 		_combo_tween.tween_property(combo_burst, "scale", Vector2(0.85, 0.85), 0.18)
 		_combo_tween.chain().tween_callback(combo_burst.hide)
 		return
-	%Combo.text = "КОМБО ×%.2f" % session.combo_multiplier()
-	%ComboDetail.text = "%s · %d ПОДРЯД" % [HeadlineOption.TYPE_NAMES[session.combo_type], session.combo_count]
+	%Combo.text = tr("КОМБО ×%.2f") % session.combo_multiplier()
+	%ComboDetail.text = tr("%s · %d ПОДРЯД") % [tr(HeadlineOption.TYPE_NAMES[session.combo_type]), session.combo_count]
 	combo_burst.show()
 	combo_burst.modulate.a = 0.0
 	combo_burst.scale = Vector2(1.25, 1.25)
@@ -162,13 +300,80 @@ func _refresh_combo() -> void:
 
 func _drink_coffee() -> void:
 	if not (choices.visible and GameSettings.choice_overlay_enabled):
-		session.drink_coffee()
+		AudioManager.play_cue(AudioManager.Cue.COFFEE if session.drink_coffee() else AudioManager.Cue.WARNING)
 
-func _display_source(article: NewsArticle) -> void:
-	%SourceTitle.text = article.source_title
-	%SourceText.text = article.source_text
+func _display_source(article: NewsArticle, animate := false) -> void:
+	_next_source = null
+	if article == null:
+		_displayed_article_id = ""
+		%SourceTitle.text = tr("ВЫПУСК ГОТОВ")
+		source_pager.set_source(tr("Все материалы разобраны. Можно сдать выпуск."))
+		proofreading_surface.clear()
+		_animate_source(false)
+		return
+	_displayed_article_id = article.id
+	%SourceTitle.text = tr(article.source_title)
+	var original := session.localized_source_text(article)
+	var targets: Array = session.proofreading.targets if session.proofreading_unlocked and session.proofreading.article_id == article.id and session.proofreading.source_text == original else []
+	source_pager.set_source(session.display_source_text(article), article.id, original, targets)
+	if session.proofreading_unlocked and session.proofreading.article_id == article.id and session.proofreading.source_text == original:
+		proofreading_surface.bind(%SourceText, session.proofreading, source_pager.character_offset)
+	else:
+		proofreading_surface.clear()
 	%SourceText.scroll_to_line(0)
 	_set_issue_number(session.published_today + 1)
+	_animate_source(animate)
+
+func _animate_source(animate := true) -> void:
+	if _next_source != null:
+		# Leaving/restoring the desk completes the transient handover immediately.
+		var article := _next_source
+		_next_source = null
+		stamp_area.reset()
+		_display_source(article, animate)
+		_refresh_actions()
+		return
+	if _source_reveal:
+		_source_reveal.kill()
+		_source_reveal = null
+	var should_animate := animate and is_visible_in_tree() and source_reveal_seconds > 0.0
+	for label in [%SourceTitle, %SourceText]:
+		label.self_modulate.a = 1.0
+	_set_source_ink_parameter("absorption_progress", 0.0)
+	_set_source_ink_parameter("ink_origin", %SourceText.get_global_transform_with_canvas().origin)
+	_set_source_reveal(0.0 if should_animate else 1.0)
+	if should_animate:
+		_source_reveal = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		_source_reveal.tween_method(_set_source_reveal, 0.0, 1.0, source_reveal_seconds)
+		_source_reveal.tween_callback(func():
+			_source_reveal = null
+			_refresh_actions()
+		)
+	_refresh_actions()
+
+func _set_source_reveal(progress: float) -> void:
+	_set_source_ink_parameter("reveal_progress", progress)
+
+func _set_source_ink_parameter(parameter: StringName, value: Variant) -> void:
+	_source_material.set_shader_parameter(parameter, value)
+	_page_material.set_shader_parameter(parameter, value)
+	if is_instance_valid(proofreading_surface):
+		(proofreading_surface.material as ShaderMaterial).set_shader_parameter(parameter, value)
+
+func _set_page_ink_parameter(parameter: StringName, value: Variant) -> void:
+	_page_material.set_shader_parameter(parameter, value)
+	if is_instance_valid(proofreading_surface):
+		(proofreading_surface.material as ShaderMaterial).set_shader_parameter(parameter, value)
+
+func _on_source_absorption(progress: float) -> void:
+	if _next_source == null:
+		return
+	# One clock fades the old source, article number and actual stamped ink together.
+	_set_source_ink_parameter("absorption_progress", progress)
+	if progress >= 1.0:
+		_display_source(_next_source, true)
+		_refresh_actions()
+		view_changed.emit()
 
 func _set_issue_number(number: int) -> void:
 	var has_art := number >= 1 and number <= NUMBER_ART.size()
@@ -177,17 +382,31 @@ func _set_issue_number(number: int) -> void:
 	if has_art:
 		%ArticleNumber.get_node("NumberArt").texture = NUMBER_ART[number - 1]
 
-func show_article() -> void:
+func show_article(absorb_ink := true) -> void:
+	_cancel_publication_evaluation()
+	# Restores and new runs can reach this while the session is still IDLE.
+	var fade_previous := absorb_ink and session.phase == NewsroomSession.Phase.WORK and is_visible_in_tree() and stamp_area.printed and stamp_area.imprint.visible and stamp_area.absorption_seconds > 0.0
+	_next_source = null
+	_animate_source(false)
+	if fade_previous:
+		_next_source = session.current_article()
+	stamp_area.reset(fade_previous)
 	if session.phase != NewsroomSession.Phase.WORK:
 		return
 	selected_index = -1
+	_clear_pending_result()
+	stamp.cancel_interaction()
+	pencil.cancel_interaction()
+	eraser.cancel_interaction()
 	popup.reset()
 	popup_kind = DialogKind.NONE
 	_hide_choices(false)
-	_display_source(session.current_article())
+	if not fade_previous:
+		_display_source(session.current_article(), absorb_ink)
 	%HeadlineField.set_headline("")
 	for i in cards.size():
-		cards[i].get_node("Content/Headline").text = session.option_at(i).text
+		var option := session.option_at(i)
+		cards[i].get_node("Content/Headline").text = tr(option.text) if option != null else ""
 	_refresh_actions()
 	view_changed.emit()
 
@@ -199,7 +418,7 @@ func _toggle_choices() -> void:
 		_open_choices()
 
 func _open_choices(animate := true) -> void:
-	if session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached():
+	if session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or session.publication_limit_reached() or _next_source != null or session.current_article() == null or pencil.held or pencil.busy or eraser.held or eraser.busy:
 		return
 	if _choice_tween:
 		_choice_tween.kill()
@@ -252,6 +471,7 @@ func _hide_choices(animate := true) -> void:
 		choices.hide()
 		_update_choice_overlay()
 		return
+	AudioManager.play_cue(AudioManager.Cue.PAPER_PUT)
 	_choice_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	for card in cards:
 		card.disabled = true
@@ -289,12 +509,50 @@ func _on_primary() -> void:
 		_close_focus()
 
 func _publish_selected() -> void:
-	if selected_index < 0 or choices_open or _choices_animating or popup.visible:
+	if not can_process() or not is_visible_in_tree() or evaluating_publication or session.phase != NewsroomSession.Phase.WORK or session.awaiting_acknowledgement or selected_index < 0 or choices_open or _choices_animating or popup.visible:
 		return
-	session.publish_headline(selected_index)
+	var article := session.current_article()
+	if article == null or session.publication_limit_reached():
+		return
+	if session.proofreading_unlocked and session.proofreading.article_id == article.id and not session.proofreading.strokes.is_empty():
+		_publication_index = selected_index
+		_publication_article_id = article.id
+		_publication_state = session.proofreading
+		_evaluation = proofreading_surface.create_evaluation(source_pager.page_ranges())
+		_refresh_actions()
+	else:
+		session.publish_headline(selected_index, {"corrected": 0, "wrong": 0})
+
+func _advance_publication_evaluation() -> void:
+	if _evaluation == null:
+		return
+	var article := session.current_article()
+	if session.phase != NewsroomSession.Phase.WORK or session.proofreading != _publication_state or article == null or article.id != _publication_article_id:
+		_cancel_publication_evaluation(true)
+		return
+	if not _evaluation.advance(roundi(proofreading_budget_ms * 1000.0)):
+		return
+	# Only a complete assessment reaches the session. An interrupted job leaves
+	# an unpublished draft in saves, without partial rewards or stale hit caches.
+	session.publish_headline(_publication_index, _evaluation.counts)
+	_cancel_publication_evaluation()
+	_refresh_actions()
+
+func _cancel_publication_evaluation(clear_imprint := false) -> void:
+	if _evaluation != null:
+		_evaluation.dispose()
+		_evaluation = null
+		if clear_imprint:
+			stamp_area.reset()
+	_publication_index = -1
+	_publication_article_id = ""
+	_publication_state = null
 
 func _close_focus() -> void:
 	if not popup.active:
+		return
+	if popup.finish_opening():
+		get_viewport().set_input_as_handled()
 		return
 	var was_result := popup_kind == DialogKind.RESULT
 	popup_kind = DialogKind.NONE
@@ -309,41 +567,96 @@ func _colored_result_delta(value: int, suffix := "") -> String:
 	var color := "#3f6a3d" if value > 0 else ("#9b4033" if value < 0 else "#665945")
 	return "[color=%s][b]%+d%s[/b][/color]" % [color, value, suffix]
 
+func _on_published(result: Dictionary) -> void:
+	if stamp.busy or evaluating_publication:
+		# A large assessment may finish after the stamp has already returned.
+		_pending_result = result.duplicate(true)
+		if not stamp.busy:
+			_start_result_delay()
+	else:
+		_show_result(result)
+
+func _start_result_delay() -> void:
+	if _pending_result.is_empty() or (_result_delay and _result_delay.is_valid()):
+		return
+	# A node-bound tween also pauses while the interface is disabled.
+	_result_delay = create_tween()
+	_result_delay.tween_interval(result_delay_seconds)
+	_result_delay.tween_callback(func():
+		var result := _pending_result
+		_pending_result = {}
+		_result_delay = null
+		if is_visible_in_tree() and session.phase == NewsroomSession.Phase.WORK and session.awaiting_acknowledgement:
+			_show_result(result)
+	)
+
+func _clear_pending_result() -> void:
+	_pending_result = {}
+	if _result_delay and _result_delay.is_valid():
+		_result_delay.kill()
+	_result_delay = null
+
 func _show_result(result: Dictionary) -> void:
+	_clear_pending_result()
 	_hide_choices(false)
 	popup_kind = DialogKind.RESULT
 	for article in session.articles:
 		if article.id == result.get("article_id", ""):
-			_display_source(article)
+			var resolved := ArticleSequence.resolve(article, session.story_choices, session.journal)
+			# Reloads need the published source; a live result keeps the reading page.
+			if %SourceTitle.text != tr(resolved.source_title) or source_pager.source_text != session.display_source_text(resolved):
+				_display_source(resolved)
 			break
 	%HeadlineField.set_headline(result.headline)
 	_set_issue_number(session.published_today)
-	var changes := "[color=#78512c]%s · серия %d · ×%.2f[/color]\n\n" % [HeadlineOption.TYPE_NAMES[result.combo_type], result.combo_count, result.multiplier]
-	changes += "[color=#866025]Деньги:[/color] %s\n" % _colored_result_delta(int(result.money), " $")
-	changes += "[color=#2e6770]Репутация:[/color] %s\n" % _colored_result_delta(int(result.reputation))
-	changes += "[color=#685078]Лояльность:[/color] %s\n" % _colored_result_delta(int(result.loyalty))
+	var changes := tr("[color=#78512c]%s · серия %d · ×%.2f[/color]\n\n") % [tr(HeadlineOption.TYPE_NAMES[result.combo_type]), result.combo_count, result.multiplier]
+	changes += tr("[color=#866025]Деньги:[/color] %s\n") % _colored_result_delta(int(result.money), " $")
+	changes += tr("[color=#2e6770]Репутация:[/color] %s\n") % _colored_result_delta(int(result.reputation))
+	changes += tr("[color=#685078]Лояльность:[/color] %s\n") % _colored_result_delta(int(result.loyalty))
 	var stamina_cost := float(result.get("stamina_cost", session.balance.publication_health_cost))
 	var stamina_color := "#9b4033" if stamina_cost > 0.0 else "#665945"
 	var stamina_change := "−%d" % roundi(stamina_cost) if stamina_cost > 0.0 else "0"
-	changes += "[color=#6b7046]Выносливость:[/color] [color=%s][b]%s[/b][/color]\n\n%s" % [stamina_color, stamina_change, result.explanation]
-	var full_issue := session.publication_limit_reached()
+	changes += tr("[color=#6b7046]Выносливость:[/color] [color=%s][b]%s[/b][/color]\n\n%s") % [stamina_color, stamina_change, tr(result.explanation)]
+	if result.has("proofreading"):
+		var corrections: Dictionary = result.proofreading
+		changes += tr("\n\n[color=#78512c]Вычитка: исправлено %d · пропущено %d · неверно %d[/color]\n") % [corrections.corrected, corrections.missed, corrections.wrong]
+		changes += tr("Из них за вычитку: %s · Квалификация: %s") % [_colored_result_delta(int(corrections.money), " $"), _colored_result_delta(int(corrections.qualification))]
+	var full_issue := session.publication_limit_reached() or session.current_article() == null
 	if full_issue:
-		changes += "\n\n[color=#78512c]В текущем выпуске газеты недостаточно места для новых публикаций.[/color]"
-	popup.present(cards[maxi(selected_index, 0)], "ВЫПУСК ЗАПОЛНЕН" if full_issue else "НАПЕЧАТАНО", result.headline, changes, "Сдать выпуск и пойти домой" if full_issue else "Следующий материал", "", Vector2(640, 800))
+		changes += "\n\n[color=#78512c]%s[/color]" % (tr("Все материалы разобраны.") if session.current_article() == null else tr("В текущем выпуске газеты недостаточно места для новых публикаций."))
+	popup.present(cards[maxi(selected_index, 0)], tr("ВЫПУСК ЗАПОЛНЕН") if full_issue else tr("НАПЕЧАТАНО"), tr(result.headline), changes, tr("Сдать выпуск и пойти домой") if full_issue else tr("Следующий материал"), "", Vector2(640, 800))
 	_refresh_actions()
 	view_changed.emit()
 
 func capture_presentation() -> Dictionary:
 	return {"layout_version": 2, "dialog": "result" if popup_kind == DialogKind.RESULT else "none",
 		"selected_index": selected_index,
-		"choices_open": choices_open, "drawer_expanded": %Drawer.expanded}
+		"choices_open": choices_open, "drawer_expanded": %Drawer.expanded,
+		"source_article_id": _displayed_article_id, "source_character": source_pager.capture_character()}
+
+func refresh_language() -> void:
+	if session == null:
+		return
+	var presentation := capture_presentation()
+	# Character offsets refer to the previous language's words.
+	presentation.source_character = 0
+	if session.phase == NewsroomSession.Phase.WORK:
+		restore_presentation(presentation)
+	_shown_combo_count = -1
+	_shown_combo_type = -1
+	_refresh_desk()
+	%Drawer._update_tab_tooltip()
+	%Drawer._refresh()
 
 func restore_presentation(data: Dictionary) -> void:
-	show_article()
+	session.prepare_proofreading()
+	show_article(false)
 	%Drawer.set_expanded(bool(data.get("drawer_expanded", true)), false)
 	selected_index = clampi(int(data.get("selected_index", -1)), -1, 2)
 	if session.awaiting_acknowledgement:
+		stamp_area.restore_result()
 		_show_result(session.last_result)
+		_restore_source_page(data)
 		return
 	var dialog := str(data.get("dialog", "none"))
 	var legacy := int(data.get("layout_version", 1)) < 2
@@ -357,4 +670,10 @@ func restore_presentation(data: Dictionary) -> void:
 		%HeadlineField.set_headline(session.option_at(selected_index).text)
 	if bool(data.get("choices_open", false)) and dialog != "confirm":
 		_open_choices(false)
+	_restore_source_page(data)
 	_refresh_actions()
+
+func _restore_source_page(data: Dictionary) -> void:
+	var anchor = data.get("source_character", 0)
+	if data.get("source_article_id", "") == _displayed_article_id and (anchor is int or anchor is float) and is_finite(float(anchor)):
+		source_pager.go_to_character(int(clampf(float(anchor), 0.0, source_pager.source_text.length())))

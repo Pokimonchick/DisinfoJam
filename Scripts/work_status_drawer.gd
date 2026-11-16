@@ -57,17 +57,28 @@ func _toggle() -> void:
 
 
 func _update_tab_tooltip() -> void:
-	%TabButton.tooltip_text = "Скрыть показатели" if expanded else "Открыть показатели"
+	%TabButton.tooltip_text = tr("Скрыть показатели") if expanded else tr("Открыть показатели")
 
 
 func _refresh() -> void:
 	if session == null or not is_node_ready():
 		return
-	%Shift.text = "СМЕНА %02d" % session.day
-	%Player.text = NewsroomSession.CAMPAIGN_HERO_NAME
+	%Shift.text = tr("СМЕНА %02d") % session.day
+	%Player.text = tr(NewsroomSession.CAMPAIGN_HERO_NAME)
 	_set_meter(%HealthBar, %HealthValue, session.health, Color("6b7046"))
 	_set_meter(%ReputationBar, %ReputationValue, session.reputation, Color("916038"))
 	_set_meter(%LoyaltyBar, %LoyaltyValue, session.loyalty, Color("626648"))
+	var qualification_visible := session.proofreading_unlocked
+	for control: Control in [%QualificationTitle, %QualificationBar, %QualificationValue, %QualificationHelp, %QualificationHint]:
+		control.visible = qualification_visible
+	if qualification_visible:
+		_set_meter(%QualificationBar, %QualificationValue, session.qualification, Color("64697c"))
+		%QualificationHint.text = tr("ВЫЧИТКА ИСТОЧНИКА ДОСТУПНА")
+	%QualificationHelp.tooltip_text = preload("res://Scripts/stat_descriptions.gd").text_for("qualification", session.balance)
+	var balance_y := 934.0 if qualification_visible else 784.0
+	$SlidingPanel/BalanceCard.position.y = balance_y
+	%MoneyValue.position.y = balance_y + 12.0
+	$SlidingPanel/MoneyTitle.position.y = balance_y + 12.0
 	var support: StatBenefit = session.balance.reader_support
 	var support_text := support.ready_text if session.reputation >= support.threshold else support.locked_text
 	%ReputationHint.text = support.formatted(support_text)
@@ -81,8 +92,8 @@ func _refresh() -> void:
 		approval_text = approval.ready_text
 	%LoyaltyHint.text = approval.formatted(approval_text)
 	%LoyaltyHelp.tooltip_text = preload("res://Scripts/stat_descriptions.gd").text_for("loyalty", session.balance)
-	%MoneyValue.text = "%d $" % session.money
-	var money_color := Color("ff9f82") if session.money < 0 else Color("f8e9c7")
+	%MoneyValue.text = "+%d $" % session.money if session.money > 0 else "%d $" % session.money
+	var money_color := Color("a6c87a") if session.money > 0 else (Color("e18778") if session.money < 0 else Color("e5d0a5"))
 	if %MoneyValue.get_theme_color("font_color") != money_color:
 		%MoneyValue.add_theme_color_override("font_color", money_color)
 

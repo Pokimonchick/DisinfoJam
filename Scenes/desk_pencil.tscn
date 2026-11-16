@@ -1,0 +1,182 @@
+[gd_scene load_steps=22 format=3]
+
+[ext_resource type="Script" path="res://Scripts/desk_pencil.gd" id="pencil"]
+[ext_resource type="Shader" path="res://Shaders/note_shadow.gdshader" id="shadow"]
+[ext_resource type="Shader" path="res://Shaders/worn_pencil.gdshader" id="wear"]
+[ext_resource type="Shader" path="res://Shaders/pencil_wood.gdshader" id="wood"]
+[ext_resource type="Shader" path="res://Shaders/pencil_ferrule.gdshader" id="ferrule"]
+[ext_resource type="Texture2D" path="res://Assets/Desk/pencil_lacquer.png" id="lacquer"]
+
+[sub_resource type="ViewportTexture" id="Texture"]
+viewport_path = NodePath("Render")
+
+[sub_resource type="ShaderMaterial" id="ShadowMaterial"]
+resource_local_to_scene = true
+shader = ExtResource("shadow")
+shader_parameter/shadow_strength = 0.26
+shader_parameter/blur_pixels = 3.0
+
+[sub_resource type="Environment" id="Environment"]
+ambient_light_source = 3
+ambient_light_color = Color(1, 0.88, 0.72, 1)
+ambient_light_energy = 0.65
+
+[sub_resource type="World3D" id="World"]
+resource_local_to_scene = true
+environment = SubResource("Environment")
+
+[sub_resource type="ShaderMaterial" id="Paint"]
+shader = ExtResource("wear")
+shader_parameter/paint_color = Color(0.74, 0.055, 0.025, 1)
+shader_parameter/wood_color = Color(0.82, 0.70, 0.49, 1)
+shader_parameter/lacquer_texture = ExtResource("lacquer")
+shader_parameter/wear = 0.36
+shader_parameter/grain_strength = 0.20
+shader_parameter/bite_strength = 0.65
+
+[sub_resource type="ShaderMaterial" id="Wood"]
+shader = ExtResource("wood")
+shader_parameter/wood_color = Color(0.82, 0.70, 0.49, 1)
+shader_parameter/paint_color = Color(0.74, 0.055, 0.025, 1)
+shader_parameter/lacquer_texture = ExtResource("lacquer")
+shader_parameter/grain_strength = 0.32
+
+[sub_resource type="StandardMaterial3D" id="Pigment"]
+albedo_color = Color(0.60, 0.025, 0.015, 1)
+roughness = 0.82
+metallic_specular = 0.12
+
+[sub_resource type="ShaderMaterial" id="Aluminum"]
+shader = ExtResource("ferrule")
+shader_parameter/aluminum_color = Color(0.72, 0.72, 0.70, 1)
+shader_parameter/bite_strength = 0.65
+
+[sub_resource type="StandardMaterial3D" id="Rubber"]
+albedo_color = Color(0.83, 0.72, 0.48, 1)
+roughness = 0.94
+metallic_specular = 0.08
+
+[sub_resource type="CylinderMesh" id="Barrel"]
+material = SubResource("Paint")
+top_radius = 0.122
+bottom_radius = 0.122
+height = 2.781667
+radial_segments = 72
+rings = 64
+
+[sub_resource type="CylinderMesh" id="TipWood"]
+material = SubResource("Wood")
+top_radius = 0.032
+bottom_radius = 0.122
+height = 0.34
+radial_segments = 72
+rings = 32
+
+[sub_resource type="CylinderMesh" id="TipLead"]
+material = SubResource("Pigment")
+top_radius = 0.0
+bottom_radius = 0.032
+height = 0.085
+radial_segments = 48
+rings = 8
+
+[sub_resource type="CylinderMesh" id="Ferrule"]
+material = SubResource("Aluminum")
+top_radius = 0.128
+bottom_radius = 0.128
+height = 0.286667
+radial_segments = 72
+rings = 64
+
+[sub_resource type="CylinderMesh" id="RearEraser"]
+material = SubResource("Rubber")
+top_radius = 0.12
+bottom_radius = 0.115
+height = 0.116667
+radial_segments = 48
+rings = 8
+
+[sub_resource type="SphereMesh" id="EraserCap"]
+material = SubResource("Rubber")
+radius = 1.0
+height = 2.0
+radial_segments = 48
+rings = 16
+
+[node name="Pencil" type="Control"]
+editor_description = "Красный деревянный карандаш. Клик — взять; удержание левой кнопки — рисовать; правая — положить."
+offset_right = 550.0
+offset_bottom = 130.0
+script = ExtResource("pencil")
+grab_rect = Rect2(0, 0, 550, 130)
+lift_height = 0.22
+rest_tilt_degrees = Vector3(0, -18, 0)
+lift_tilt_degrees = Vector3(0, 55, 35)
+model_contact = Vector3(-1.985, 0.127, 0)
+
+[node name="Shadow" type="TextureRect" parent="."]
+material = SubResource("ShadowMaterial")
+offset_left = -3.0
+offset_top = -205.0
+offset_right = 547.0
+offset_bottom = 345.0
+mouse_filter = 2
+texture = SubResource("Texture")
+expand_mode = 1
+
+[node name="Image" type="TextureRect" parent="."]
+offset_top = -210.0
+offset_right = 550.0
+offset_bottom = 340.0
+mouse_filter = 2
+texture = SubResource("Texture")
+expand_mode = 1
+
+[node name="Render" type="SubViewport" parent="."]
+transparent_bg = true
+world_3d = SubResource("World")
+gui_disable_input = true
+size = Vector2i(1100, 1100)
+msaa_3d = 1
+render_target_update_mode = 1
+
+[node name="Camera" type="Camera3D" parent="Render"]
+position = Vector3(0, 12, 0.4)
+current = true
+fov = 20.0
+
+[node name="Sun" type="DirectionalLight3D" parent="Render"]
+light_color = Color(1, 0.91, 0.73, 1)
+light_energy = 1.0
+
+[node name="ModelRoot" type="Node3D" parent="Render"]
+
+[node name="Barrel" type="MeshInstance3D" parent="Render/ModelRoot"]
+position = Vector3(-0.169167, 0.127, 0)
+rotation = Vector3(0, 0, 1.5707963)
+mesh = SubResource("Barrel")
+
+[node name="TipWood" type="MeshInstance3D" parent="Render/ModelRoot"]
+position = Vector3(-1.73, 0.127, 0)
+rotation = Vector3(0, 0, 1.5707963)
+mesh = SubResource("TipWood")
+
+[node name="TipLead" type="MeshInstance3D" parent="Render/ModelRoot"]
+position = Vector3(-1.9425, 0.127, 0)
+rotation = Vector3(0, 0, 1.5707963)
+mesh = SubResource("TipLead")
+
+[node name="Ferrule" type="MeshInstance3D" parent="Render/ModelRoot"]
+position = Vector3(1.365, 0.127, 0)
+rotation = Vector3(0, 0, 1.5707963)
+mesh = SubResource("Ferrule")
+
+[node name="RearEraser" type="MeshInstance3D" parent="Render/ModelRoot"]
+position = Vector3(1.558333, 0.127, 0)
+rotation = Vector3(0, 0, 1.5707963)
+mesh = SubResource("RearEraser")
+
+[node name="EraserCap" type="MeshInstance3D" parent="Render/ModelRoot"]
+position = Vector3(1.628333, 0.127, 0)
+scale = Vector3(0.036667, 0.115, 0.115)
+mesh = SubResource("EraserCap")

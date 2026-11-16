@@ -80,7 +80,7 @@ func _run() -> void:
 
 func _test_catalog() -> void:
 	var s := _fresh()
-	_check(s.articles.size() == 32, "The shared pool includes eight community stories")
+	_check(s.articles.size() == 50, "The finite pool includes eight community stories and eighteen new Bripolis materials")
 	var catalog_order: Array[String] = []
 	for article in preload("res://Data/article_catalog.gd").create_articles():
 		catalog_order.append(article.id)
@@ -107,7 +107,7 @@ func _test_catalog() -> void:
 		if article.high_risk:
 			dangerous += 1
 		_check(not article.high_risk or has_risky_choice, "High-risk articles retain a risky choice after rebalancing")
-	_check(dangerous == 8, "The eight original high-risk stories remain in the pool")
+	_check(dangerous == 10, "Eight original and two new high-risk stories remain in the pool")
 
 func _test_day_cycle() -> void:
 	var s := _fresh()
@@ -163,6 +163,9 @@ func _test_publication_queue() -> void:
 	s = _fresh()
 	s.balance.maximum_stat = 10000
 	s.balance.publication_health_cost = 0
+	s.balance.campaign_days = 100
+	s.campaign_days = 100
+	s.balance.proofreading_unlock_day = 100
 	s.reputation = 10000
 	s.loyalty = 10000
 	s.start_shift()
@@ -175,7 +178,7 @@ func _test_publication_queue() -> void:
 		s.acknowledge_publication()
 		if s.phase == NewsroomSession.Phase.HOME:
 			s.start_shift()
-	_check(seen.size() == 32 and s.current_article().id == s.articles[0].id, "All stories appear before the shuffled pool cycles")
+	_check(seen.size() == 50 and s.current_article() == null and not s.publish_headline(0), "Every material appears once and the finite pool never cycles")
 	_check(orders.size() > 1, "Headline positions vary between stories")
 
 func _test_publication_limit() -> void:
@@ -404,7 +407,7 @@ func _test_scenes() -> void:
 	var drawer: Control = work.get_node("%Drawer")
 	_check(work.size == root.get_visible_rect().size and not game.get_node("Padding").visible, "Work desk fills the viewport without the old header")
 	_check(work.get_node("%SourceText").text == game.session.current_article().source_text and not popup.active, "Source is readable directly on the desk")
-	_check(not work.choices.visible and work.get_node("%Publish").disabled, "A new article waits for a headline")
+	_check(not work.choices.visible and not work.stamp.enabled, "A new article waits for a headline")
 	_check(drawer.expanded, "Stats are visible when starting the new desk")
 	drawer.set_expanded(true)
 	game.session.coffee_ready = true
@@ -424,7 +427,7 @@ func _test_scenes() -> void:
 	work.cards[0].pressed.emit()
 	await create_timer(0.4).timeout
 	_check(not popup.active and work.selected_index == 0 and game.session.total_published == 0 and not work.choices.visible, "Clicking a note sets a draft directly without payment")
-	_check(work.get_node("%HeadlineField/Text").text == game.session.option_at(0).text and not work.get_node("%Publish").disabled, "Draft appears in the green field and enables publication")
+	_check(work.get_node("%HeadlineField/Text").text == game.session.option_at(0).text and work.stamp.enabled, "Draft appears in the green field and enables publication")
 	await _capture("desk_03_draft")
 	work.get_node("%HeadlineField").pressed.emit()
 	await create_timer(0.65).timeout
@@ -432,12 +435,19 @@ func _test_scenes() -> void:
 	work.cards[1].pressed.emit()
 	await create_timer(0.4).timeout
 	_check(work.selected_index == 1 and game.session.total_published == 0, "Replacing a draft still does not publish")
-	work.get_node("%Publish").pressed.emit()
-	_check(game.session.total_published == 1 and popup.active and work.popup_kind == work.DialogKind.RESULT, "Separate publication button applies effects and shows result")
-	await create_timer(0.3).timeout
+	var grip: Vector2 = work.stamp.get_global_transform_with_canvas() * Vector2(144, 105)
+	var contact: Vector2 = work.stamp_area.get_global_transform_with_canvas() * (work.stamp_area.size * 0.5)
+	work.stamp.begin_drag(grip)
+	work.stamp.move_drag(grip + contact - work.stamp.contact_position())
+	work.stamp.finish_drag()
+	await create_timer(0.25).timeout
+	_check(game.session.total_published == 1 and not popup.active, "Stamp contact applies effects before showing the result")
+	await work.stamp.returned_to_rest
+	await create_timer(work.result_delay_seconds + popup.opening_seconds + 0.1).timeout
+	_check(popup.active and work.popup_kind == work.DialogKind.RESULT, "The result opens after the stamp returns and the delay finishes")
 	_check(is_equal_approx(popup.size.x / popup.size.y, work.cards[1].size.x / work.cards[1].size.y), "Printed result zoom preserves the note's aspect ratio")
 	var paid: int = game.session.money
-	work.get_node("%Publish").pressed.emit()
+	work._publish_selected()
 	_check(game.session.money == paid and game.session.total_published == 1, "Repeated publication cannot award twice")
 	await create_timer(0.3).timeout
 	await _capture("desk_05_result")

@@ -1,0 +1,116 @@
+classDiagram
+    direction TB
+
+    class MvpGame {
+        <<Control script>>
+        view : View
+        _show_view(next)
+        _update_tutorial_progress()
+        _save_progress()
+    }
+    class GameState {
+        <<Autoload Node>>
+        session : NewsroomSession
+        save_store : SaveRepository
+    }
+    class NewsroomScreen {
+        <<Control script>>
+        selected_index : int
+        bind(session)
+        _publish_selected()
+    }
+    class HomeScreen {
+        <<Control script>>
+        bind(session)
+        _purchase(item_id)
+        _consume(item_id)
+    }
+    class InteractionTutorial {
+        <<Control script>>
+        present(...)
+    }
+    class NewsroomSession {
+        <<RefCounted>>
+        phase : Phase
+        inventory : Dictionary
+        start_shift()
+        finish_shift()
+        publish_headline(index, counts)
+        buy_home_item(id)
+        use_home_item(id)
+    }
+    class NewsroomBalance {
+        <<Resource>>
+        publication_limit : int
+        publication_health_cost : float
+    }
+    class NewsArticle {
+        <<Resource>>
+        id : String
+        source_text : String
+        headlines : Array
+    }
+    class HeadlineOption {
+        <<Resource>>
+        text : String
+        editorial_type : int
+        money : int
+        reputation : int
+        loyalty : int
+    }
+    class ProofreadingState {
+        <<RefCounted>>
+        targets : Array
+        strokes : Array
+        prepare(...)
+        settlement(...)
+    }
+    class FinanceLedger {
+        <<RefCounted>>
+        entries : Array
+        record(...)
+    }
+    class NewsroomSaveData {
+        <<static utility>>
+        capture(session)
+        validate(sections)
+        restore(session, sections)
+    }
+    class SaveRepository {
+        <<RefCounted>>
+        path : String
+        load_document()
+        write_document(document)
+    }
+
+    MvpGame ..> GameState : получает общую сессию
+    GameState --> "1" NewsroomSession : session
+    GameState --> "1" SaveRepository : save_store
+    MvpGame *-- "1" NewsroomScreen : дочерняя сцена
+    MvpGame *-- "1" HomeScreen : дочерняя сцена
+    MvpGame *-- "1" InteractionTutorial : дочерняя сцена
+    MvpGame --> NewsroomSession : вызывает методы и слушает сигналы
+    NewsroomScreen --> NewsroomSession : bind и игровые команды
+    HomeScreen --> NewsroomSession : bind и игровые команды
+    NewsroomSession --> "1" NewsroomBalance : balance
+    NewsroomSession --> "0..*" NewsArticle : articles
+    NewsArticle "1" *-- "3" HeadlineOption : headlines
+    NewsroomSession *-- "1" ProofreadingState : proofreading
+    NewsroomSession *-- "1" FinanceLedger : finances
+    MvpGame ..> NewsroomSaveData : снимок и восстановление
+    MvpGame ..> SaveRepository : чтение и запись через GameState
+    NewsroomSaveData ..> NewsroomSession : сериализация состояния
+
+    style MvpGame fill:#e5eef6,stroke:#3b617f,color:#162d40
+    style NewsroomScreen fill:#e5eef6,stroke:#3b617f,color:#162d40
+    style HomeScreen fill:#e5eef6,stroke:#3b617f,color:#162d40
+    style InteractionTutorial fill:#e5eef6,stroke:#3b617f,color:#162d40
+    style GameState fill:#eee8f5,stroke:#71578a,color:#34213f
+    style SaveRepository fill:#eee8f5,stroke:#71578a,color:#34213f
+    style NewsroomSaveData fill:#eee8f5,stroke:#71578a,color:#34213f
+    style NewsroomSession fill:#fff0d5,stroke:#906e35,color:#3f2f15
+    style NewsroomBalance fill:#fff0d5,stroke:#906e35,color:#3f2f15
+    style NewsArticle fill:#fff0d5,stroke:#906e35,color:#3f2f15
+    style HeadlineOption fill:#fff0d5,stroke:#906e35,color:#3f2f15
+    style ProofreadingState fill:#fff0d5,stroke:#906e35,color:#3f2f15
+    style FinanceLedger fill:#fff0d5,stroke:#906e35,color:#3f2f15

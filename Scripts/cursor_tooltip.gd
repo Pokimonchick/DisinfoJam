@@ -4,6 +4,9 @@ const SHOW_DELAY := 0.45
 const CURSOR_OFFSET := Vector2(18.0, 20.0)
 const EDGE_MARGIN := 8.0
 const MAX_TEXT_WIDTH := 520.0
+const GAME_CURSOR = preload("res://Assets/Assets for new version of game/tamagochi/Тамагочи/курсор.png")
+const CURSOR_HOTSPOT := Vector2(8, 5)
+const CURSOR_SCALE := 1.0 / 1.5
 
 var _source: Control
 var _hover_time := 0.0
@@ -13,6 +16,11 @@ var _label: Label
 
 
 func _ready() -> void:
+	var cursor_image := GAME_CURSOR.get_image()
+	cursor_image.resize(roundi(cursor_image.get_width() * CURSOR_SCALE), roundi(cursor_image.get_height() * CURSOR_SCALE), Image.INTERPOLATE_NEAREST)
+	var cursor_texture := ImageTexture.create_from_image(cursor_image)
+	for shape in [Input.CURSOR_ARROW, Input.CURSOR_IBEAM, Input.CURSOR_POINTING_HAND, Input.CURSOR_CROSS, Input.CURSOR_WAIT, Input.CURSOR_BUSY, Input.CURSOR_DRAG, Input.CURSOR_CAN_DROP, Input.CURSOR_FORBIDDEN, Input.CURSOR_VSIZE, Input.CURSOR_HSIZE, Input.CURSOR_BDIAGSIZE, Input.CURSOR_FDIAGSIZE, Input.CURSOR_MOVE, Input.CURSOR_VSPLIT, Input.CURSOR_HSPLIT, Input.CURSOR_HELP]:
+		Input.set_custom_mouse_cursor(cursor_texture, shape, (CURSOR_HOTSPOT * CURSOR_SCALE).round())
 	layer = 120
 	_paper = Panel.new()
 	_paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -51,6 +59,7 @@ func _process(delta: float) -> void:
 	_hover_time += delta
 	if _hover_time < SHOW_DELAY:
 		return
+	tooltip = tr(tooltip)
 	if tooltip != _shown_text:
 		_shown_text = tooltip
 		_layout_text(tooltip)

@@ -5,14 +5,33 @@ signal closed
 
 
 func _ready() -> void:
+	%Language.add_item("Русский", 0)
+	%Language.add_item("English", 1)
+	%Language.item_selected.connect(func(index: int): GameSettings.set_language(GameSettings.LANGUAGES[index]))
+	GameSettings.language_changed.connect(func(): %Language.select(GameSettings.LANGUAGES.find(GameSettings.language)))
+	var focus_controls: Array[Control] = [%Language, %Tooltips, %ChoiceOverlay, %MusicVolume, %SfxVolume, %Close]
+	for index in focus_controls.size():
+		var control: Control = focus_controls[index]
+		control.focus_next = control.get_path_to(focus_controls[(index + 1) % focus_controls.size()])
+		control.focus_previous = control.get_path_to(focus_controls[(index - 1 + focus_controls.size()) % focus_controls.size()])
+		control.focus_neighbor_top = control.focus_previous
+		control.focus_neighbor_bottom = control.focus_next
+		control.focus_neighbor_left = control.focus_previous
+		control.focus_neighbor_right = control.focus_next
 	%Tooltips.toggled.connect(GameSettings.set_tooltips_enabled)
 	%ChoiceOverlay.toggled.connect(GameSettings.set_choice_overlay_enabled)
 	%MusicVolume.value_changed.connect(_on_music_volume_changed)
 	%SfxVolume.value_changed.connect(_on_sfx_volume_changed)
+	for slider: Slider in [%MusicVolume, %SfxVolume]:
+		slider.drag_ended.connect(func(changed: bool):
+			if changed:
+				AudioManager.play_cue(AudioManager.Cue.UI_CLICK)
+		)
 	%Close.pressed.connect(close)
 
 
 func present() -> void:
+	%Language.select(GameSettings.LANGUAGES.find(GameSettings.language))
 	%Tooltips.set_pressed_no_signal(GameSettings.tooltips_enabled)
 	%ChoiceOverlay.set_pressed_no_signal(GameSettings.choice_overlay_enabled)
 	%MusicVolume.set_value_no_signal(GameSettings.music_volume * 100.0)
@@ -20,7 +39,7 @@ func present() -> void:
 	%MusicPercent.text = "%d%%" % roundi(GameSettings.music_volume * 100.0)
 	%SfxPercent.text = "%d%%" % roundi(GameSettings.sfx_volume * 100.0)
 	show()
-	%Tooltips.grab_focus()
+	%Language.grab_focus()
 
 
 func close() -> void:

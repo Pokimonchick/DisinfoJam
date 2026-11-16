@@ -2,6 +2,7 @@ class_name NewsroomSession
 extends RefCounted
 
 const CAMPAIGN_HERO_NAME := "Никола Коко"
+const HOME_ITEMS = preload("res://Data/home_items.gd")
 
 signal changed
 signal phase_changed
@@ -11,7 +12,7 @@ signal save_requested
 signal transaction_recorded(entry: Dictionary)
 
 enum Phase { IDLE, WORK, HOME, ENDED }
-enum Ending { NONE, EXHAUSTION, OFFICE_FIRE, ARREST, DEBT, VICTORY, GOAL_MISSED }
+enum Ending { NONE, EXHAUSTION, OFFICE_FIRE, ARREST, DEBT, VICTORY, GOAL_MISSED, QUALIFICATION_FIRED }
 
 var balance: NewsroomBalance = preload("res://Data/mvp_balance.tres")
 var articles: Array[NewsArticle] = []
@@ -20,6 +21,14 @@ var ending: Ending = Ending.NONE
 var health: float
 var reputation: float
 var loyalty: float
+var qualification: float = 70.0
+var proofreading_unlocked := false
+var proofreading_started := false
+var proofreading := ProofreadingState.new()
+var proofreading_drafts: Dictionary = {}
+var _proofreading_locale := ""
+var story_choices: Dictionary = {}
+var _resolved_article: NewsArticle
 var money: int
 var day: int = 0
 # Inert legacy save fields. Work no longer counts down or ends on a deadline.
@@ -32,6 +41,7 @@ var coffee_used_today: bool = false
 var approval_time_applied: bool = false
 var approval_stamina_applied: bool = false
 var food_stocked: bool = false
+var inventory: Dictionary = {}
 var combo_type: int = -1
 var combo_count: int = 0
 var awaiting_acknowledgement: bool = false
@@ -71,6 +81,14 @@ func reset(seed_value: int = -1) -> void:
 	health = balance.starting_health
 	reputation = balance.starting_reputation
 	loyalty = balance.starting_loyalty
+	qualification = balance.starting_qualification
+	proofreading_unlocked = false
+	proofreading_started = false
+	proofreading = ProofreadingState.new()
+	proofreading_drafts.clear()
+	_proofreading_locale = ""
+	story_choices.clear()
+	_resolved_article = null
 	money = balance.starting_money
 	day = 0
 	time_left = 0.0
@@ -81,6 +99,7 @@ func reset(seed_value: int = -1) -> void:
 	approval_time_applied = false
 	approval_stamina_applied = false
 	food_stocked = false
+	inventory.clear()
 	combo_type = -1
 	combo_count = 0
 	awaiting_acknowledgement = false
@@ -105,6 +124,11 @@ func start_shift() -> void:
 	if phase == Phase.HOME:
 		health = minf(balance.maximum_stat, health + balance.sleep_health)
 	day += 1
+	if day > 1:
+		ArticleSequence.promote_continuations(articles, article_cursor, story_choices, _rng)
+		_resolved_article = null
+	proofreading_unlocked = day >= balance.proofreading_unlock_day
+	prepare_proofreading()
 	approval_stamina_applied = loyalty >= balance.state_approval.threshold
 	if approval_stamina_applied:
 		health = minf(balance.maximum_stat, health + balance.state_approval.amount)
@@ -133,18 +157,91 @@ func tick_work(delta: float) -> void:
 
 
 func current_article() -> NewsArticle:
-	if articles.is_empty():
+	if article_cursor >= articles.size():
 		return null
-	return articles[article_cursor % articles.size()]
+	if _resolved_article == null or _resolved_article.id != articles[article_cursor].id:
+		_resolved_article = ArticleSequence.resolve(articles[article_cursor], story_choices, journal)
+	return _resolved_article
+
+
+func localized_source_text(article: NewsArticle) -> String:
+	return TranslationServer.translate(article.source_text)
+
+
+func _proofreading_article() -> NewsArticle:
+	# Publication advances the queue before the result leaves the desk. Language
+	# changes must keep the displayed publication's marks until acknowledgement.
+	if awaiting_acknowledgement and not last_result.is_empty():
+		for article in articles:
+			if article.id == last_result.get("article_id", ""):
+				return ArticleSequence.resolve(article, story_choices, journal)
+	return current_article()
+
+
+func display_source_text(article: NewsArticle) -> String:
+	var source := localized_source_text(article)
+	if proofreading_unlocked and proofreading.article_id == article.id and proofreading.source_text == source:
+		return proofreading.display_text
+	return source
+
+
+func _active_proofreading_locale(article: NewsArticle) -> String:
+	if not _proofreading_locale.is_empty():
+		return _proofreading_locale
+	# Old saves have no locale field. Infer the saved text's language, which may
+	# differ from the interface language selected before loading the run.
+	return "ru" if proofreading.source_text == article.source_text else "en"
+
+
+func proofreading_draft_data() -> Dictionary:
+	var drafts := proofreading_drafts.duplicate(true)
+	var article := _proofreading_article()
+	if article != null and proofreading.article_id == article.id:
+		drafts[_active_proofreading_locale(article)] = proofreading.to_data()
+	return drafts
+
+
+func prepare_proofreading() -> void:
+	var article := _proofreading_article()
+	if article == null:
+		proofreading_drafts.clear()
+		_proofreading_locale = ""
+		return
+	if proofreading.article_id != article.id:
+		proofreading_drafts.clear()
+		_proofreading_locale = ""
+	if not proofreading_unlocked:
+		return
+	var source := localized_source_text(article)
+	var locale := "en" if TranslationServer.get_locale().begins_with("en") else "ru"
+	if proofreading.article_id == article.id and proofreading.source_text == source:
+		_proofreading_locale = locale
+		return
+	if proofreading.article_id == article.id:
+		proofreading_drafts[_active_proofreading_locale(article)] = proofreading.to_data()
+	if proofreading_drafts.has(locale) and proofreading_drafts[locale].source_text == source:
+		proofreading.restore(proofreading_drafts[locale])
+	else:
+		# A language change must not change the number of rewards or penalties
+		# available on this article, including the first guaranteed pencil lesson.
+		var target_count := proofreading.targets.size() if proofreading.article_id == article.id else -1
+		proofreading.prepare(article.id, source, _rng.randi(), not proofreading_started, target_count)
+	_proofreading_locale = locale
+	proofreading_started = true
+
+
+func proofreading_changed() -> void:
+	changed.emit()
+	save_requested.emit()
 
 
 func option_at(display_index: int) -> HeadlineOption:
-	if display_index < 0 or display_index >= option_order.size():
+	if display_index < 0 or display_index >= option_order.size() or current_article() == null:
 		return null
 	return current_article().headlines[option_order[display_index]]
 
 
-func publish_headline(display_index: int) -> bool:
+func publish_headline(display_index: int, proofreading_counts: Dictionary = {}) -> bool:
 	if phase != Phase.WORK or awaiting_acknowledgement or publication_limit_reached():
 		return false
 	var option := option_at(display_index)
@@ -155,8 +252,11 @@ func publish_headline(display_index: int) -> bool:
 	combo_type = option.editorial_type
 	var multiplier := combo_multiplier()
 	var stamina_cost := publication_stamina_cost()
+	var article := current_article()
 	last_result = {
-		"article_id": current_article().id,
+		"article_id": article.id,
+		"option_index": option_order[display_index],
+		"source_text": display_source_text(article),
 		"headline": option.text,
 		"money": roundi(option.money * multiplier * balance.publication_income_multiplier),
 		"reputation": roundi(option.reputation * multiplier),
@@ -170,6 +270,19 @@ func publish_headline(display_index: int) -> bool:
 	}
 	money += last_result.money
 	_record_transaction("publication", last_result.money, "Публикация", combo_type, option.text)
+	if proofreading_unlocked and proofreading.article_id == article.id:
+		var corrections := proofreading.settlement(balance.proofreading_money_penalty_limit, balance.proofreading_qualification_penalty_limit, proofreading_counts)
+		var penalties := ProofreadingState.penalty_breakdown(corrections.missed, corrections.wrong, balance.proofreading_money_penalty_limit, balance.proofreading_qualification_penalty_limit)
+		last_result["proofreading"] = corrections
+		last_result["publication_money"] = last_result.money
+		last_result.money += corrections.money
+		money += corrections.money
+		qualification = clampf(qualification + corrections.qualification, 0.0, balance.maximum_stat)
+		for transaction in [["proofreading_reward", corrections.corrected * 2, "Вычитка: исправления"],
+			["proofreading_missed", -penalties.missed_money, "Вычитка: пропущенные опечатки"],
+			["proofreading_wrong", -penalties.wrong_money, "Вычитка: неверные пометки"]]:
+			if transaction[1] != 0:
+				_record_transaction(transaction[0], transaction[1], transaction[2], -1, option.text)
 	reputation = clampf(reputation + last_result.reputation, 0.0, balance.maximum_stat)
 	loyalty = clampf(loyalty + last_result.loyalty, 0.0, balance.maximum_stat)
 	health = maxf(0.0, health - stamina_cost)
@@ -177,9 +290,11 @@ func publish_headline(display_index: int) -> bool:
 	total_published += 1
 	earned_today += last_result.money
 	journal.append(last_result.duplicate())
+	story_choices[article.id] = option_order[display_index]
 	# A published article leaves the queue immediately, even if the shift ends
 	# while its feedback is visible. Unconfirmed articles keep their cursor.
 	article_cursor += 1
+	_resolved_article = null
 	_shuffle_options()
 	changed.emit()
 	if not _check_ending():
@@ -192,9 +307,10 @@ func acknowledge_publication() -> void:
 	if phase != Phase.WORK or not awaiting_acknowledgement:
 		return
 	awaiting_acknowledgement = false
-	if publication_limit_reached():
+	if publication_limit_reached() or current_article() == null:
 		finish_shift()
 		return
+	prepare_proofreading()
 	article_changed.emit()
 	save_requested.emit()
 
@@ -255,6 +371,45 @@ func buy_coffee() -> bool:
 	return true
 
 
+func buy_home_item(id: String) -> Dictionary:
+	if phase != Phase.HOME:
+		return {"ok": false, "reason": "wrong_phase"}
+	var item: Dictionary = HOME_ITEMS.get_item(id)
+	if item.is_empty():
+		return {"ok": false, "reason": "unknown_item"}
+	if int(inventory.get(id, 0)) >= HOME_ITEMS.MAX_COUNT:
+		return {"ok": false, "reason": "inventory_full"}
+	money -= int(item.price)
+	inventory[id] = int(inventory.get(id, 0)) + 1
+	var kind: String = {"drink": "home_drink", "food": "home_food", "pet": "pet_food"}[item.category]
+	_record_transaction(kind, -int(item.price), item.name)
+	changed.emit()
+	_check_ending()
+	save_requested.emit()
+	return {"ok": true, "reason": ""}
+
+
+func use_home_item(id: String) -> Dictionary:
+	if phase != Phase.HOME:
+		return {"ok": false, "reason": "wrong_phase", "category": "", "restore": 0}
+	var item: Dictionary = HOME_ITEMS.get_item(id)
+	if item.is_empty():
+		return {"ok": false, "reason": "unknown_item", "category": "", "restore": 0}
+	if int(inventory.get(id, 0)) < 1:
+		return {"ok": false, "reason": "not_owned", "category": item.category, "restore": 0}
+	if int(item.restore) > 0 and health >= balance.maximum_stat:
+		return {"ok": false, "reason": "health_full", "category": item.category, "restore": 0}
+	var previous_health := health
+	if int(item.restore) > 0:
+		health = minf(balance.maximum_stat, health + int(item.restore))
+	inventory[id] = int(inventory[id]) - 1
+	if inventory[id] == 0:
+		inventory.erase(id)
+	changed.emit()
+	save_requested.emit()
+	return {"ok": true, "reason": "", "category": item.category, "restore": health - previous_health}
+
+
 func drink_coffee() -> bool:
 	if phase != Phase.WORK or awaiting_acknowledgement or not coffee_ready or coffee_used_today or publication_limit_reached() or health >= balance.maximum_stat:
 		return false
@@ -294,6 +449,8 @@ func _check_ending() -> bool:
 		ending = Ending.ARREST
 	elif money <= balance.debt_limit:
 		ending = Ending.DEBT
+	elif proofreading_unlocked and qualification <= 0.0:
+		ending = Ending.QUALIFICATION_FIRED
 	else:
 		return false
 	phase = Phase.ENDED
@@ -304,11 +461,7 @@ func _check_ending() -> bool:
 
 
 func _shuffle_articles() -> void:
-	for i in range(articles.size() - 1, 0, -1):
-		var other := _rng.randi_range(0, i)
-		var previous: NewsArticle = articles[i]
-		articles[i] = articles[other]
-		articles[other] = previous
+	ArticleSequence.shuffle(articles, _rng)
 
 
 func _shuffle_options() -> void:

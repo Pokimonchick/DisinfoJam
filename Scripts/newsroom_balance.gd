@@ -11,8 +11,8 @@ extends Resource
 @export_storage var shift_seconds: float = 180.0
 @export_range(1, 100, 1) var publication_limit: int = 10
 @export_storage var coffee_bonus_seconds: float = 60.0
-@export_range(0.0, 1.0) var health_drain_per_second: float = 1.0 / 15.0
-@export_range(0.0, 10.0) var publication_health_cost: float = 4.0
+@export_range(0.0, 1.0) var health_drain_per_second: float = 1.0 / 22.5
+@export_range(0.0, 10.0) var publication_health_cost: float = 4.0 / 1.5
 
 @export_group("Доход")
 ## Scales catalogue payouts, including saved articles; rounding happens after combo.
@@ -38,6 +38,12 @@ extends Resource
 @export var starting_loyalty: float = 65.0
 @export var starting_money: int = 35
 @export var maximum_stat: float = 100.0
+
+@export_group("Вычитка")
+@export_range(1, 100, 1) var proofreading_unlock_day: int = 2
+@export_range(1.0, 100.0, 1.0) var starting_qualification: float = 70.0
+@export_range(0, 1000, 1) var proofreading_money_penalty_limit: int = 20
+@export_range(0, 100, 1) var proofreading_qualification_penalty_limit: int = 20
 
 @export_group("Вечер")
 @export var rent: int = 45

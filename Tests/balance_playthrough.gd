@@ -308,7 +308,7 @@ func _play_ui(main: Dictionary) -> void:
 			var selected := s.option_order.find(choose(s, main.policy, slot))
 			game.work.cards[selected].pressed.emit()
 			await create_timer(0.35).timeout
-			game.work.get_node("%Publish").pressed.emit()
+			game.work._publish_selected()
 			check(s.awaiting_acknowledgement and game.work.popup.active, "Publication feedback %d" % s.total_published)
 			if not s.awaiting_acknowledgement:
 				break
