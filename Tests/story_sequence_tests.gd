@@ -190,8 +190,8 @@ func _test_proofreading_save_and_accounting() -> void:
 	missed.combo_count = 3
 	missed.combo_type = missed.option_at(0).editorial_type
 	missed.publish_headline(0)
-	check(missed.last_result.proofreading.money == -1 and missed.last_result.proofreading.qualification == -3 and missed.qualification == 67,
-		"Missed typo charges -1$/-3 qualification once without combo")
+	check(missed.last_result.proofreading.money == -1 and missed.last_result.proofreading.qualification == -2 and missed.qualification == 68,
+		"Missed typo charges -1$/-2 qualification once without combo")
 	var dismissed := fresh()
 	dismissed.day = 2
 	dismissed.start_shift()

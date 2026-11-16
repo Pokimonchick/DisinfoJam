@@ -13,10 +13,8 @@ float dent(vec2 uv, vec2 center, vec2 radius) {
 	return 1.0 - smoothstep(0.3, 1.0, dot(distance, distance));
 }
 float bites(vec2 uv) {
-	return max(max(dent(uv, vec2(0.24, 0.92), vec2(0.035, 0.025)),
-		dent(uv, vec2(0.28, 0.97), vec2(0.028, 0.020))),
-		max(dent(uv, vec2(0.73, 0.91), vec2(0.032, 0.025)),
-		dent(uv, vec2(0.77, 0.965), vec2(0.028, 0.022))));
+	// CylinderMesh maps the barrel side to V = 0..0.5; the rear is V = 0.5.
+	return dent(uv, vec2(0.222, 0.497), vec2(0.055, 0.012));
 }
 void vertex() {
 	// Extra rings let the small tooth dents change the actual silhouette.
@@ -44,10 +42,15 @@ float noise(vec2 p) {
 	return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1)), f.x), f.y);
 }
 void fragment() {
+	vec3 dent_normal = normalize(cross(dFdx(VERTEX), dFdy(VERTEX)));
+	dent_normal = dot(dent_normal, NORMAL) < 0.0 ? -dent_normal : dent_normal;
+	NORMAL = normalize(mix(NORMAL, dent_normal, smoothstep(0.01, 0.30, bites(UV))
+		* smoothstep(0.0, 0.2, bite_strength)));
 	float patches = noise(UV * vec2(18.0, 14.0));
 	float grain = noise(UV * vec2(65.0, 5.0));
 	float scratches = noise(UV * vec2(100.0, 8.0));
-	float tooth_chips = smoothstep(0.18, 0.55, bites(UV)) * smoothstep(0.0, 0.2, bite_strength);
+	float tooth_chips = smoothstep(0.18, 0.55, bites(UV) + (noise(UV * vec2(145.0, 330.0)) - 0.5) * 0.13)
+		* smoothstep(0.0, 0.2, bite_strength);
 	float chip_noise = noise(UV * vec2(95.0, 130.0));
 	float spots = max(max(dent(UV, vec2(0.24, 0.47), vec2(0.022, 0.014)),
 		dent(UV, vec2(0.72, 0.64), vec2(0.022, 0.014))),

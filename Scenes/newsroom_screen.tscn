@@ -17,13 +17,12 @@
 [ext_resource type="Shader" uid="uid://bgolf23saair2" path="res://Shaders/desk_art_shadows.gdshader" id="shadow_shader"]
 [ext_resource type="Script" uid="uid://2d7f24dnyoe6" path="res://Scripts/headline_sheet.gd" id="sheet"]
 [ext_resource type="Texture2D" uid="uid://bj4gn2ijhx0lt" path="res://Assets/Assets for new version of game/Untitled (22)/Rectangle 8.png" id="source_rule"]
+[ext_resource type="PackedScene" path="res://Scenes/desk_stamp.tscn" id="stamp"]
+[ext_resource type="PackedScene" path="res://Scenes/stamp_area.tscn" id="stamp_area"]
 [ext_resource type="Script" uid="uid://biu2vgjwc8ae4" path="res://Scripts/desk_sunlight.gd" id="sunlight_script"]
 [ext_resource type="Shader" uid="uid://cm1rhhc2mtioc" path="res://Shaders/desk_sunlight.gdshader" id="sunlight_shader"]
 [ext_resource type="PackedScene" path="res://Scenes/desk_sun_dust.tscn" id="sun_dust"]
 [ext_resource type="Texture2D" uid="uid://c1nyeito38cas" path="res://Assets/Assets for new version of game/Untitled (22)/image 9.png" id="tab"]
-[ext_resource type="PackedScene" path="res://Scenes/desk_stamp.tscn" id="stamp"]
-[ext_resource type="PackedScene" path="res://Scenes/stamp_area.tscn" id="stamp_area"]
-
 [ext_resource type="Script" path="res://Scripts/finish_shift_button.gd" id="finish_paper"]
 
 [sub_resource type="ShaderMaterial" id="ShadowMaterial"]
@@ -49,7 +48,7 @@ shader_parameter/width_variation = 0.47
 shader_parameter/shimmer = 0.18
 shader_parameter/light_position = Vector2(0.975, -0.035)
 shader_parameter/rect_size = Vector2(2120, 1240)
-shader_parameter/animation_time = 902.3908620000954
+shader_parameter/animation_time = 76.60049133333133
 
 [node name="Newsroom" type="Control" unique_id=946518030]
 editor_description = "Макет рабочего стола: фон и статья — Canvas/World; номер смены, кнопки и панель показателей — Canvas. Текст и чашка здесь служат образцом для редактора."
@@ -290,10 +289,11 @@ theme_override_colors/default_color = Color(0.19, 0.17, 0.09, 1)
 theme_override_font_sizes/normal_font_size = 28
 text = "Каждый вечер я вижу одного чёрного кота у своего подъезда. Мне кажется, он за мной следит! Соседка говорит, что кот ждёт хозяйку из ночной смены. К полиции я пока не обращалась. Пожалуйста, выясните, что происходит."
 
-[node name="StampArea" parent="Canvas/World" instance=ExtResource("stamp_area")]
+[node name="StampArea" parent="Canvas/World" unique_id=2070687620 instance=ExtResource("stamp_area")]
 unique_name_in_owner = true
 editor_description = "Прямоугольная область печати поверх текста и пустого места статьи. Чернила остаются под чашкой. Размер оттиска — Imprint Size."
 z_index = 5
+anchors_preset = 0
 offset_left = 535.0
 offset_top = 430.0
 offset_right = 1648.0
@@ -301,9 +301,10 @@ offset_bottom = 1080.0
 rotation = -0.022
 excluded_controls = Array[NodePath]([NodePath("../HeadlineField")])
 
-[node name="Stamp" parent="Canvas/World" instance=ExtResource("stamp")]
+[node name="Stamp" parent="Canvas/World" unique_id=1533192320 instance=ExtResource("stamp")]
 unique_name_in_owner = true
 z_index = 8
+anchors_preset = 0
 offset_left = 1644.0
 offset_top = 75.0
 offset_right = 1932.0

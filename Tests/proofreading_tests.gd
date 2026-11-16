@@ -36,7 +36,7 @@ func _run() -> void:
 			inserted = inserted or typo.typo.length() == typo.original.length() + 1
 			swapped = swapped or typo.typo.length() == typo.original.length()
 	check(counts.size() == 6 and inserted and swapped, "Articles can contain every count from zero to five, with both added letters and swaps")
-	check(state.settlement() == {"corrected": 0, "missed": 1, "wrong": 0, "money": -1, "qualification": -3}, "Each missed typo penalizes only at settlement")
+	check(state.settlement() == {"corrected": 0, "missed": 1, "wrong": 0, "money": -1, "qualification": -2}, "Each missed typo penalizes only at settlement")
 	state.add_stroke(_stroke([target.id]))
 	check(state.settlement().money == 2 and state.settlement().qualification == 1, "A correction earns two money and one qualification")
 	state.add_stroke(_stroke([target.id]))

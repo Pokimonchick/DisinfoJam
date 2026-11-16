@@ -39,6 +39,11 @@ func _capture(name: String) -> void:
 
 func _run() -> void:
 	AudioServer.set_bus_mute(0, true)
+	var audio: Node = root.get_node("AudioManager")
+	var loop_voice: AudioStreamPlayer = audio._sfx_loop_player
+	var settings: Node = root.get_node("GameSettings")
+	var saved_sfx_volume: float = settings.sfx_volume
+	settings.sfx_volume = 1.0
 	root.mode = Window.MODE_WINDOWED
 	root.size = Vector2i(1280, 720)
 	var global_state := root.get_node("GameState")
@@ -143,7 +148,13 @@ func _run() -> void:
 	check(pencil.contact_position().distance_to(point - Vector2(10, 0)) < 2, "Red-core model retains its contact point at the pointer after pickup rotation")
 	await _button(point - Vector2(10, 0), true)
 	await _move(point + Vector2(10, 0), true)
+	check(loop_voice.playing and audio._sfx_loop_owner == pencil and audio._sfx_loop_source == pencil.pencil_sound, "Moving the drawing pencil starts its dedicated friction loop")
+	await create_timer(0.15).timeout
+	check(not loop_voice.playing and pencil.held, "A stationary held pencil becomes silent without returning")
+	await _move(point + Vector2(11, 0), true)
+	check(loop_voice.playing, "Moving again resumes pencil friction")
 	await _button(point + Vector2(10, 0), false)
+	check(not loop_voice.playing, "Releasing LMB immediately stops pencil friction")
 	check(proof.strokes.size() == 1 and proof.strokes[0].corrected.is_empty() and proof.strokes[0].wrong.is_empty() and pencil.held, "Held LMB saves an unclassified mark and release preserves the held pencil")
 	if proof.strokes.is_empty():
 		quit(1)
@@ -170,7 +181,10 @@ func _run() -> void:
 	check(eraser.z_index < work.get_node("Canvas/World/Shadows").z_index, "Desk shadows overlay the eraser")
 	await _capture("eraser-held")
 	await _button(point, true)
+	await _move(point + Vector2(1, 0), true)
+	check(loop_voice.playing and audio._sfx_loop_owner == eraser and audio._sfx_loop_source == eraser.eraser_sound, "Only moving eraser contact starts the eraser friction loop")
 	await _button(point, false)
+	check(not loop_voice.playing, "Releasing the eraser stops its loop")
 	check(proof.strokes.is_empty() and proof.settlement().corrected == 0 and eraser.held, "Physical eraser removes the correction and its reward")
 	await _button(point, true, MOUSE_BUTTON_RIGHT)
 	await _button(point, false, MOUSE_BUTTON_RIGHT)
@@ -236,7 +250,12 @@ func _run() -> void:
 	work.stamp.cancel_interaction()
 	check(pencil.interaction_enabled and proof.to_data() == original_marks, "Returning the stamp preserves marks and re-enables the pencil")
 	check(pencil.begin_pickup(grip), "Pencil can be lifted before pausing")
+	await _move(point)
+	await _button(point, true)
+	await _move(point + Vector2(2, 0), true)
+	check(loop_voice.playing, "Pause fixture starts an active drawing sound")
 	game._toggle_pause()
+	check(not loop_voice.playing, "Pausing the desk stops active tool friction")
 	check(game.paused and not pencil.held and not pencil.can_process() and proof.to_data() == original_marks, "Pause returns and disables the pencil while retaining completed marks")
 	game._toggle_pause()
 	check(pencil.can_process() and pencil.interaction_enabled, "Resume restores pencil interaction")
@@ -312,6 +331,8 @@ func _run() -> void:
 	game._run_active = false
 	game.queue_free()
 	await process_frame
+	audio.stop_sfx()
+	settings.sfx_volume = saved_sfx_volume
 	print("PENCIL DESK INTEGRATION: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)
 

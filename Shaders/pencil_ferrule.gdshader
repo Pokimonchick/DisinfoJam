@@ -6,13 +6,16 @@ uniform float bite_strength : hint_range(0.0, 1.0) = 0.65;
 uniform float ferrule_length = 0.286667;
 uniform float ferrule_radius = 0.128;
 
-float dent(vec2 uv, vec2 center) {
-	vec2 distance = (uv - center) / vec2(0.040, 0.095);
+float dent(vec2 uv, vec2 center, vec2 radius) {
+	vec2 distance = (uv - center) / radius;
 	return 1.0 - smoothstep(0.15, 1.0, dot(distance, distance));
 }
 float bites(vec2 uv) {
-	return max(max(dent(uv, vec2(0.25, 0.42)), dent(uv, vec2(0.29, 0.64))),
-		max(dent(uv, vec2(0.73, 0.40)), dent(uv, vec2(0.78, 0.66))));
+	// Four separated tooth dents on the visible top, front and lower rim.
+	return max(max(dent(uv, vec2(0.361, 0.223), vec2(0.055, 0.075)),
+		dent(uv, vec2(0.278, 0.454), vec2(0.045, 0.060))),
+		max(dent(uv, vec2(0.125, 0.346), vec2(0.060, 0.075)),
+		dent(uv, vec2(0.069, 0.138), vec2(0.060, 0.065))));
 }
 float profile(vec2 uv) {
 	float ring_distance = min(min(abs(uv.y - 0.10), abs(uv.y - 0.20)),
@@ -29,7 +32,7 @@ void vertex() {
 		float across = (profile(UV + vec2(0.002, 0.0)) - profile(UV - vec2(0.002, 0.0))) / 0.004;
 		// Smooth normals follow the rings and tooth dents rather than a plain cylinder.
 		NORMAL = normalize(radial - tangent * across / (6.2831853 * radius)
-			+ vec3(0.0, along * ferrule_radius / ferrule_length, 0.0));
+			+ vec3(0.0, along * ferrule_radius / (2.0 * ferrule_length), 0.0));
 	}
 	VERTEX.xz *= radius;
 }
